@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+body {
+  margin: 0;
+  background: #000;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  overflow-x: hidden;
+}
+
+/* Glassmorphism - simplified */
+.glass {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Navbar glass */
+.navbar-glass {
+  @apply bg-black/80 backdrop-blur-sm border-b border-white/10;
+}
+
+/* Navbar logo */
+.navbar-logo {
+  height: 48px; /* Within 40-50px range */
+  width: auto;
+}
+
+/* Navbar links */
+.navbar-link {
+  @apply px-3 py-2 rounded text-sm font-medium hover:text-pink-400 transition-colors;
+}
+
+/* Neon pink glow - simplified */
+.neon-pink {
+  box-shadow: 0 0 5px #ec4899, 0 0 10px #ec4899;
+}
+
+/* Simple hover lift */
+.hover-lift {
+  transition: transform 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* Premium buttons - simplified */
+.btn-premium {
+  @apply px-6 py-3 text-lg font-semibold rounded-lg transition-all hover:shadow-lg;
+  background: linear-gradient(to right, #f472b6, #ec4899);
+  color: white;
+  border: none;
+}
+.btn-premium-outline {
+  @apply px-6 py-3 text-lg font-semibold rounded-lg border border-pink-500 hover:border-pink-400 hover:text-pink-400;
+  background: transparent;
+  color: white;
+}
+
+/* Glass cards - simplified */
+.glass-card {
+  @apply bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4;
+}
+.glass-card-lg {
+  @apply bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-xl p-6;
+}
+
+/* Text gradient for neon pink text */
+.bg-gradient-neon {
+  background: linear-gradient(to right, #f472b6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Ensure images are responsive and optimized */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Increase heading sizes */
+h1 { font-size: 2.25rem; } /* 36px */
+h2 { font-size: 1.875rem; } /* 30px */
+h3 { font-size: 1.5rem; } /* 24px */
+
+/* Remove unnecessary complex effects */
+/* Remove hero-glow, floating animations, deal-card styling, etc. */
