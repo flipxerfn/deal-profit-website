@@ -128,13 +128,29 @@ const App = () => {
             <div className="mt-4 md:mt-0">
               <div className="grid gap-6 md:grid-cols-2">
                 {/* First deal screenshot */}
-                <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden">
-                  <img src={deal1} alt="Gaming PC Deal - RTX 5060 for $39.99" className="w-full h-full object-cover" />
+                <div className="relative group">
+                  <div className="aspect-w-8 aspect-h-5 w-full rounded-xl overflow-hidden bg-black/50">
+                    <img 
+                      src={deal1} 
+                      alt="Gaming PC Deal - RTX 5060 for $39.99" 
+                      className="w-full h-full object-cover object-center"
+                    />
+                    {/* Subtle glow effect on hover */}
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                  </div>
                 </div>
 
                 {/* Second deal screenshot */}
-                <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden">
-                  <img src={deal2} alt="Electronics Deal - Deep Discounts" className="w-full h-full object-cover" />
+                <div className="relative group">
+                  <div className="aspect-w-8 aspect-h-5 w-full rounded-xl overflow-hidden bg-black/50">
+                    <img 
+                      src={deal2} 
+                      alt="Electronics Deal - Deep Discounts" 
+                      className="w-full h-full object-cover object-center"
+                    />
+                    {/* Subtle glow effect on hover */}
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -153,21 +169,41 @@ const App = () => {
           </p>
           <div className="grid gap-8 md:grid-cols-2">
             {/* First card - Discord Channels */}
-            <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-xl p-6">
-              <img src={discord1} alt="Discord Channels" className="w-full h-[200px] object-cover rounded-lg mb-4" />
-              <h3 className="mb-3 text-xl font-bold text-center">Real-time Deal Alerts</h3>
-              <p className="text-center text-sm text-gray-300">
-                Get instant notifications when we find price errors, penny deals, or glitch deals so you never miss an opportunity.
-              </p>
+            <div className="relative group">
+              <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-xl p-6">
+                <div className="relative">
+                  <img 
+                    src={discord1} 
+                    alt="Discord Channels" 
+                    className="w-full h-[200px] object-cover rounded-lg mb-4"
+                  />
+                  {/* Subtle glow effect on hover */}
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
+                </div>
+                <h3 className="mb-3 text-xl font-bold text-center">Real-time Deal Alerts</h3>
+                <p className="text-center text-sm text-gray-300">
+                  Get instant notifications when we find price errors, penny deals, or glitch deals so you never miss an opportunity.
+                </p>
+              </div>
             </div>
 
             {/* Second card - Product Finds */}
-            <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-xl p-6">
-              <img src={discord2} alt="Deal Alerts" className="w-full h-[200px] object-cover rounded-lg mb-4" />
-              <h3 className="mb-3 text-xl font-bold text-center">Product Finds & Opportunities</h3>
-              <p className="text-center text-sm text-gray-300">
-                Discover profitable reselling opportunities and exclusive product finds shared only with our members.
-              </p>
+            <div className="relative group">
+              <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-xl p-6">
+                <div className="relative">
+                  <img 
+                    src={discord2} 
+                    alt="Deal Alerts" 
+                    className="w-full h-[200px] object-cover rounded-lg mb-4"
+                  />
+                  {/* Subtle glow effect on hover */}
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
+                </div>
+                <h3 className="mb-3 text-xl font-bold text-center">Product Finds & Opportunities</h3>
+                <p className="text-center text-sm text-gray-300">
+                  Discover profitable reselling opportunities and exclusive product finds shared only with our members.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -184,50 +220,89 @@ const App = () => {
           </p>
           <div className="grid gap-6 md:grid-cols-3">
             {/* PC Deal Card */}
-            <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
-              <img src={deal1} alt="Gaming PC Deal" className="w-full h-[200px] object-cover rounded-t-lg mb-3" />
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2 mb-1">
-                  <FaFire className="text-pink-400" />
-                  <h3 className="font-semibold text-white text-lg">Gaming PC</h3>
+            <div className="relative group">
+              <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
+                <div className="relative">
+                  {/* Image container with fixed aspect ratio and custom positioning */}
+                  <div className="aspect-w-4 aspect-h-3 w-full rounded-lg overflow-hidden mb-3">
+                    <img 
+                      src={deal1} 
+                      alt="Gaming PC Deal" 
+                      className="w-full h-full object-cover object-[center_top]"
+                    />
+                    {/* Subtle glow effect on hover */}
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <FaFire className="text-pink-400" />
+                      <h3 className="font-semibold text-white text-lg">Gaming PC</h3>
+                    </div>
+                    <p className="mb-1 text-sm text-gray-300">RTX 5060 Gaming PC</p>
+                    <p className="text-sm text-pink-400 font-semibold">$39.99</p>
+                    <span className="inline-block mt-2 px-2 py-1 text-xs text-pink-400 bg-pink-500/20 rounded">
+                      FOUND BY DEAL PROFIT
+                    </span>
+                  </div>
                 </div>
-                <p className="mb-1 text-sm text-gray-300">RTX 5060 Gaming PC</p>
-                <p className="text-sm text-pink-400 font-semibold">$39.99</p>
-                <span className="inline-block mt-2 px-2 py-1 text-xs text-pink-400 bg-pink-500/20 rounded">
-                  FOUND BY DEAL PROFIT
-                </span>
               </div>
             </div>
 
             {/* Penny Deals Card */}
-            <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
-              <img src={discord1} alt="Penny Deals Discord" className="w-full h-[200px] object-cover rounded-t-lg mb-3" />
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2 mb-1">
-                  <FaFire className="text-pink-400" />
-                  <h3 className="font-semibold text-white text-lg">Penny Deals</h3>
+            <div className="relative group">
+              <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
+                <div className="relative">
+                  {/* Image container with fixed aspect ratio and custom positioning */}
+                  <div className="aspect-w-4 aspect-h-3 w-full rounded-lg overflow-hidden mb-3">
+                    <img 
+                      src={discord1} 
+                      alt="Penny Deals Discord" 
+                      className="w-full h-full object-cover object-[center]"
+                    />
+                    {/* Subtle glow effect on hover */}
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <FaFire className="text-pink-400" />
+                      <h3 className="font-semibold text-white text-lg">Penny Deals</h3>
+                    </div>
+                    <p className="mb-1 text-sm text-gray-300">Penny finds from the community</p>
+                    <p className="text-sm text-pink-400 font-semibold">As low as $0.01</p>
+                    <span className="inline-block mt-2 px-2 py-1 text-xs text-pink-400 bg-pink-500/20 rounded">
+                      FOUND BY DEAL PROFIT
+                    </span>
+                  </div>
                 </div>
-                <p className="mb-1 text-sm text-gray-300">Penny finds from the community</p>
-                <p className="text-sm text-pink-400 font-semibold">As low as $0.01</p>
-                <span className="inline-block mt-2 px-2 py-1 text-xs text-pink-400 bg-pink-500/20 rounded">
-                  FOUND BY DEAL PROFIT
-                </span>
               </div>
             </div>
 
             {/* Other Real Deal Card */}
-            <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
-              <img src={deal2} alt="Other Real Deal" className="w-full h-[200px] object-cover rounded-t-lg mb-3" />
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2 mb-1">
-                  <FaFire className="text-pink-400" />
-                  <h3 className="font-semibold text-white text-lg">Other Real Deal</h3>
+            <div className="relative group">
+              <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
+                <div className="relative">
+                  {/* Image container with fixed aspect ratio and custom positioning */}
+                  <div className="aspect-w-4 aspect-h-3 w-full rounded-lg overflow-hidden mb-3">
+                    <img 
+                      src={deal2} 
+                      alt="Other Real Deal" 
+                      className="w-full h-full object-cover object-[center]"
+                    />
+                    {/* Subtle glow effect on hover */}
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <FaFire className="text-pink-400" />
+                      <h3 className="font-semibold text-white text-lg">Other Real Deal</h3>
+                    </div>
+                    <p className="mb-1 text-sm text-gray-300">Real deal found by members</p>
+                    <p className="text-sm text-pink-400 font-semibold">See deal details</p>
+                    <span className="inline-block mt-2 px-2 py-1 text-xs text-pink-400 bg-pink-500/20 rounded">
+                      FOUND BY DEAL PROFIT
+                    </span>
+                  </div>
                 </div>
-                <p className="mb-1 text-sm text-gray-300">Real deal found by members</p>
-                <p className="text-sm text-pink-400 font-semibold">See deal details</p>
-                <span className="inline-block mt-2 px-2 py-1 text-xs text-pink-400 bg-pink-500/20 rounded">
-                  FOUND BY DEAL PROFIT
-                </span>
               </div>
             </div>
           </div>
@@ -245,69 +320,93 @@ const App = () => {
           </p>
           <div className="grid gap-6 md:grid-cols-3">
             {/* Instant Deal Alerts */}
-            <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
-              <div className="flex items-center space-x-3 mb-2">
-                <FaBell className="text-pink-400 text-2xl"/>
-                <h3 className="mb-2 text-xl font-bold text-center">Instant Deal Alerts</h3>
+            <div className="relative group">
+              <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
+                <div className="flex items-center space-x-3 mb-2">
+                  <FaBell className="text-pink-400 text-2xl"/>
+                  <h3 className="mb-2 text-xl font-bold text-center">Instant Deal Alerts</h3>
+                </div>
+                <p className="text-center text-sm text-gray-300">
+                  Get notified the moment we find a price error or glitch deal - never miss an opportunity.
+                </p>
+                {/* Subtle glow effect on hover */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
               </div>
-              <p className="text-center text-sm text-gray-300">
-                Get notified the moment we find a price error or glitch deal - never miss an opportunity.
-              </p>
             </div>
 
             {/* Penny Finds */}
-            <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
-              <div className="flex items-center space-x-3 mb-2">
-                <FaFire className="text-pink-400 text-2xl"/>
-                <h3 className="mb-2 text-xl font-bold text-center">Penny Finds</h3>
+            <div className="relative group">
+              <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
+                <div className="flex items-center space-x-3 mb-2">
+                  <FaFire className="text-pink-400 text-2xl"/>
+                  <h3 className="mb-2 text-xl font-bold text-center">Penny Finds</h3>
+                </div>
+                <p className="text-center text-sm text-gray-300">
+                  Discover deals where products are available for pennies or even free due to pricing errors.
+                </p>
+                {/* Subtle glow effect on hover */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
               </div>
-              <p className="text-center text-sm text-gray-300">
-                Discover deals where products are available for pennies or even free due to pricing errors.
-              </p>
             </div>
 
             {/* Hidden Discounts */}
-            <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
-              <div className="flex items-center space-x-3 mb-2">
-                <FaSearch className="text-pink-400 text-2xl"/>
-                <h3 className="mb-2 text-xl font-bold text-center">Hidden Discounts</h3>
+            <div className="relative group">
+              <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
+                <div className="flex items-center space-x-3 mb-2">
+                  <FaSearch className="text-pink-400 text-2xl"/>
+                  <h3 className="mb-2 text-xl font-bold text-center">Hidden Discounts</h3>
+                </div>
+                <p className="text-center text-sm text-gray-300">
+                  Find deep discounts that aren't advertised publicly - exclusive to our members.
+                </p>
+                {/* Subtle glow effect on hover */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
               </div>
-              <p className="text-center text-sm text-gray-300">
-                Find deep discounts that aren't advertised publicly - exclusive to our members.
-              </p>
             </div>
 
             {/* Reselling Opportunities */}
-            <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
-              <div className="flex items-center space-x-3 mb-2">
-                <FaChartLine className="text-pink-400 text-2xl"/>
-                <h3 className="mb-2 text-xl font-bold text-center">Reselling Opportunities</h3>
+            <div className="relative group">
+              <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
+                <div className="flex items-center space-x-3 mb-2">
+                  <FaChartLine className="text-pink-400 text-2xl"/>
+                  <h3 className="mb-2 text-xl font-bold text-center">Reselling Opportunities</h3>
+                </div>
+                <p className="text-center text-sm text-gray-300">
+                  Many members use our deals to source products for resale on eBay, Amazon, Facebook Marketplace, and more.
+                </p>
+                {/* Subtle glow effect on hover */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
               </div>
-              <p className="text-center text-sm text-gray-300">
-                Many members use our deals to source products for resale on eBay, Amazon, Facebook Marketplace, and more.
-              </p>
             </div>
 
             {/* Community Support */}
-            <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
-              <div className="flex items-center space-x-3 mb-2">
-                <FaUsers className="text-pink-400 text-2xl"/>
-                <h3 className="mb-2 text-xl font-bold text-center">Community Support</h3>
+            <div className="relative group">
+              <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
+                <div className="flex items-center space-x-3 mb-2">
+                  <FaUsers className="text-pink-400 text-2xl"/>
+                  <h3 className="mb-2 text-xl font-bold text-center">Community Support</h3>
+                </div>
+                <p className="text-center text-sm text-gray-300">
+                  Learn from experienced members, get help with deals, and share your own finds in our active Discord community.
+                </p>
+                {/* Subtle glow effect on hover */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
               </div>
-              <p className="text-center text-sm text-gray-300">
-                Learn from experienced members, get help with deals, and share your own finds in our active Discord community.
-              </p>
             </div>
 
             {/* Exclusive Channels */}
-            <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
-              <div className="flex items-center space-x-3 mb-2">
-                <FaShieldAlt className="text-pink-400 text-2xl"/>
-                <h3 className="mb-2 text-xl font-bold text-center">Exclusive Channels</h3>
+            <div className="relative group">
+              <div className="bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4">
+                <div className="flex items-center space-x-3 mb-2">
+                  <FaShieldAlt className="text-pink-400 text-2xl"/>
+                  <h3 className="mb-2 text-xl font-bold text-center">Exclusive Channels</h3>
+                </div>
+                <p className="text-center text-sm text-gray-300">
+                  Get access to private channels with even better deals, early alerts, and member-only opportunities.
+                </p>
+                {/* Subtle glow effect on hover */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
               </div>
-              <p className="text-center text-sm text-gray-300">
-                Get access to private channels with even better deals, early alerts, and member-only opportunities.
-              </p>
             </div>
           </div>
         </div>
@@ -324,47 +423,63 @@ const App = () => {
           </p>
           <div className="grid gap-6 md:grid-cols-2">
             {/* Benefit 1: Access premium deal channels */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3 mb-2">
-                <FaCheck className="text-pink-400 text-2xl"/>
-                <h3 className="mb-2 text-xl font-bold text-center">Access premium deal channels</h3>
+            <div className="relative group">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 mb-2">
+                  <FaCheck className="text-pink-400 text-2xl"/>
+                  <h3 className="mb-2 text-xl font-bold text-center">Access premium deal channels</h3>
+                </div>
+                <p className="text-sm text-gray-300">
+                  Get instant access to all our exclusive deal channels where the best opportunities are shared first.
+                </p>
+                {/* Subtle glow effect on hover */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
               </div>
-              <p className="text-sm text-gray-300">
-                Get instant access to all our exclusive deal channels where the best opportunities are shared first.
-              </p>
             </div>
 
             {/* Benefit 2: Instant alerts */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3 mb-2">
-                <FaCheck className="text-pink-400 text-2xl"/>
-                <h3 className="mb-2 text-xl font-bold text-center">Instant alerts</h3>
+            <div className="relative group">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 mb-2">
+                  <FaCheck className="text-pink-400 text-2xl"/>
+                  <h3 className="mb-2 text-xl font-bold text-center">Instant alerts</h3>
+                </div>
+                <p className="text-sm text-gray-300">
+                  Receive deal notifications the moment they're found - no delay, no missed opportunities.
+                </p>
+                {/* Subtle glow effect on hover */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
               </div>
-              <p className="text-sm text-gray-300">
-                Receive deal notifications the moment they're found - no delay, no missed opportunities.
-              </p>
             </div>
 
             {/* Benefit 3: Community support */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3 mb-2">
-                <FaCheck className="text-pink-400 text-2xl"/>
-                <h3 className="mb-2 text-xl font-bold text-center">Community support</h3>
+            <div className="relative group">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 mb-2">
+                  <FaCheck className="text-pink-400 text-2xl"/>
+                  <h3 className="mb-2 text-xl font-bold text-center">Community support</h3>
+                </div>
+                <p className="text-sm text-gray-300">
+                  Get help from experienced deal hunters in our Discord community when you need assistance.
+                </p>
+                {/* Subtle glow effect on hover */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
               </div>
-              <p className="text-sm text-gray-300">
-                Get help from experienced deal hunters in our Discord community when you need assistance.
-              </p>
             </div>
 
             {/* Benefit 4: No commitment */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3 mb-2">
-                <FaCheck className="text-pink-400 text-2xl"/>
-                <h3 className="mb-2 text-xl font-bold text-center">No commitment</h3>
+            <div className="relative group">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 mb-2">
+                  <FaCheck className="text-pink-400 text-2xl"/>
+                  <h3 className="mb-2 text-xl font-bold text-center">No commitment</h3>
+                </div>
+                <p className="text-sm text-gray-300">
+                  Cancel anytime during the trial period - no credit card required to start.
+                </p>
+                {/* Subtle glow effect on hover */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
               </div>
-              <p className="text-sm text-gray-300">
-                Cancel anytime during the trial period - no credit card required to start.
-              </p>
             </div>
           </div>
           <a
@@ -378,6 +493,8 @@ const App = () => {
           <p className="mt-4 text-center text-sm text-gray-400">
             Instant access • Cancel anytime
           </p>
+          {/* Subtle glow effect on hover */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
         </div>
       </section>
 
@@ -401,6 +518,8 @@ const App = () => {
           <p className="mt-4 text-center text-sm text-gray-500">
             24/7 deal posting • Exclusive channels • Friendly community • No lurkers
           </p>
+          {/* Subtle glow effect on hover */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-lg"></div>
         </div>
       </section>
 
