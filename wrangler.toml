@@ -10,6 +10,17 @@ binding = "ASSETS"
 not_found_handling = "single-page-application"
 run_worker_first = [ "/api/*" ]
 
+# Persistent store for admin-managed config (Discord token + category IDs) and manual deals.
+# A Durable Object needs nothing in the dashboard to provision — it deploys with the Worker,
+# so panel settings survive across isolates/worker restarts. "main" is a single global store.
+[[durable_objects.bindings]]
+name = "DEAL_STORE"
+class_name = "DealStore"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["DealStore"]
+
 [vars]
 # Override these with your real values:
 #   - In the Cloudflare dashboard under Settings -> Variables and Secrets, or

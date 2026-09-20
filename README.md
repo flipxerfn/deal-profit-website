@@ -70,9 +70,9 @@ A hidden private page (no public links) at `/admin`.
 
 Every `/api/admin/*` endpoint except login verifies the session cookie; mutating endpoints also verify the request origin. No secret value (bot token, admin password) ever appears in an API response, the HTML, or the JavaScript bundle.
 
-### Persistent storage (optional)
+### Persistent storage
 
-Admin settings and manual deals are stored server-side. When a **KV namespace** binding named `DEAL_STORE` is added (Cloudflare dashboard → Settings → Bindings → KV namespace), data persists across restarts and every Worker isolate. Without it the Worker falls back to in-memory storage, which is fine for local dev and testing but is reset whenever the Worker restarts.
+Admin settings and manual deals are stored server-side in a **Durable Object** (`DEAL_STORE`), bound in `wrangler.toml` and deployed automatically with the Worker — no dashboard setup needed. It survives Worker restarts and is shared across all isolates, so the admin panel's config and manual deals persist reliably. Without the binding (local dev/tests) the Worker falls back to in-memory storage, which is fine but resets on restart.
 
 ## Customization
 

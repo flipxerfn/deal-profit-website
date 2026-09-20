@@ -8,7 +8,7 @@
 //  - GET/POST /api/admin/deals and PUT/DELETE /api/admin/deals/:id admin: manual deal CRUD
 // Everything else delegates to the static assets (SPA).
 // Secrets (DISCORD_BOT_TOKEN, ADMIN_PASSWORD) are write-only: they are stored server-side
-// (Worker env or the DEAL_STORE KV namespace) and never returned to the browser.
+// (Worker env or the DEAL_STORE Durable Object) and never returned to the browser.
 
 import { parseDealMessage } from './parseDeals.js';
 import {
@@ -52,9 +52,11 @@ const feedState = {
 };
 
 // ---- admin-managed storage ---------------------------------------------------
-// Uses the DEAL_STORE KV namespace when bound (Cloudflare dashboard -> Bindings),
-// otherwise falls back to an in-memory Map so the site works in local dev and
-// before the binding is created. KV values are strings.
+// Uses the DEAL_STORE Durable Object when bound (defined in wrangler.toml, deploys
+// automatically with the Worker), so admin settings + manual deals persist across
+// isolates/restarts. Falls back to an in-memory Map when unbound (local dev/tests).
+// Values are strings. For KV-style bindings (mock KV in tests) the object's get/put
+// methods are used directly.
 
 const memStore = (() => {
   const m = new Map();
@@ -74,7 +76,37 @@ const getStore = (env) =>
     ? env.DEAL_STORE
     : memStore;
 
+const isDurableObject = (binding) =>
+  binding && typeof binding.idFromName === 'function' && typeof binding.get === 'function';
+
+const doGetValue = async (binding, key) => {
+  const id = binding.idFromName('main');
+  const stub = binding.get(id);
+  const res = await stub.fetch(`https://store.internal/get?key=${encodeURIComponent(key)}`);
+  if (!res.ok) return null;
+  const data = await res.json().catch(() => null);
+  return data && typeof data.value === 'string' ? data.value : null;
+};
+
+const doPutValue = async (binding, key, value) => {
+  const id = binding.idFromName('main');
+  const stub = binding.get(id);
+  const res = await stub.fetch('https://store.internal/put', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key, value: String(value) }),
+  });
+  return res.ok;
+};
+
 const kvGet = async (env, key) => {
+  if (isDurableObject(env.DEAL_STORE)) {
+    try {
+      return await doGetValue(env.DEAL_STORE, key);
+    } catch {
+      return null;
+    }
+  }
   try {
     const value = await getStore(env).get(key);
     return typeof value === 'string' ? value : null;
@@ -84,6 +116,13 @@ const kvGet = async (env, key) => {
 };
 
 const kvPut = async (env, key, value) => {
+  if (isDurableObject(env.DEAL_STORE)) {
+    try {
+      return await doPutValue(env.DEAL_STORE, key, value);
+    } catch {
+      return false;
+    }
+  }
   try {
     await getStore(env).put(key, String(value));
     return true;
@@ -605,12 +644,16 @@ async function handleConfig(request, env) {
 
   if (request.method === 'GET') {
     const cfg = await loadConfig(env);
+    const effectiveToken = cfg.token || env.DISCORD_BOT_TOKEN || '';
+    const effectiveCategories = cfg.categories.length
+      ? cfg.categories
+      : listIds(env.DISCORD_CATEGORY_IDS);
     return json({
       ok: true,
       config: {
-        tokenSet: Boolean(cfg.token),
+        tokenSet: Boolean(effectiveToken),
         tokenSource: cfg.token ? 'panel' : env.DISCORD_BOT_TOKEN ? 'env' : 'none',
-        categories: cfg.categories,
+        categories: effectiveCategories,
         updatedAt: cfg.updatedAt,
       },
     });
@@ -721,6 +764,8 @@ async function handleAdmin(request, env) {
 }
 
 // ---- entrypoint ---------------------------------------------------------------
+
+export { DealStore } from './store.js';
 
 export default {
   async fetch(request, env) {

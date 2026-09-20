@@ -135,7 +135,7 @@ const AdminSettings = () => {
       )}
       <p className="text-xs text-zinc-600">
         Token and category values you save here override the environment variables. They are
-        stored server-side only (Worker KV when bound) and never sent back to the browser.
+        stored server-side only (persistent Worker storage) and never sent back to the browser.
       </p>
     </div>
   );
