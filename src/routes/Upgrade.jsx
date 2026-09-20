@@ -10,8 +10,6 @@ import {
   FaArrowRight,
   FaCheck,
   FaCrown,
-  FaShieldAlt,
-  FaGem,
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { Button, Badge } from '../components/ui';
@@ -88,11 +86,12 @@ const PREMIUM_FEATURES = [
 ];
 
 const BenefitCard = ({ icon: Icon, title, text }) => (
-  <motion.div className="card card-hover p-6">
-    <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand transition-colors group-hover:bg-brand/15">
+  <motion.div className="card card-hover p-6 relative overflow-hidden">
+    <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
+    <div className="relative mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand group-hover:bg-brand/20 group-hover:shadow-[0_0_20px_rgba(244,63,94,0.3)] transition-all duration-300">
       <Icon className="h-4 w-4" />
     </div>
-    <h3 className="text-sm font-bold uppercase tracking-wider text-white">{title}</h3>
+    <h3 className="relative text-sm font-bold uppercase tracking-wider text-white">{title}</h3>
     <p className="mt-2 text-sm leading-relaxed text-zinc-400">{text}</p>
   </motion.div>
 );
@@ -101,13 +100,17 @@ const Upgrade = () => {
   const prefersReduced = useReducedMotion();
 
   return (
-    <section className="pb-4" aria-labelledby="upgrade-title">
+    <section className="pb-4 relative" aria-labelledby="upgrade-title">
+      {/* Background glow */}
+      <div className="absolute inset-0 radial-glow-hero pointer-events-none" aria-hidden="true" />
+      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[500px] bg-gradient-to-t from-brand/5 via-transparent to-transparent pointer-events-none" aria-hidden="true" />
+      
       {/* Hero */}
       <motion.div
         {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
         className="mx-auto max-w-[760px] text-center"
       >
-        <Badge variant="glow" className="mb-4">
+        <Badge variant="glow" className="mb-4 shadow-[0_0_16px_rgba(139,92,246,0.4)]">
           Deal Profit Premium
         </Badge>
         <h1 id="upgrade-title" className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl md:text-[44px]">
@@ -123,7 +126,7 @@ const Upgrade = () => {
 
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-          className="mt-8 flex flex-wrap items-center justify-center gap-3"
+          className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4"
         >
           <a
             href={WHOP_URL}
@@ -178,27 +181,33 @@ const Upgrade = () => {
         {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
         className="mx-auto mt-14 grid max-w-[760px] gap-5 sm:grid-cols-2 md:mt-16"
       >
-        <div className="card p-6 sm:p-8">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Free</h3>
-          <ul className="mt-5 space-y-3">
+        <div className="card p-6 sm:p-8 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/50 to-transparent" aria-hidden="true" />
+          <h3 className="relative text-xs font-bold uppercase tracking-wider text-zinc-400">Free</h3>
+          <ul className="relative mt-5 space-y-3">
             {FREE_FEATURES.map((feature) => (
-              <li key={feature} className="flex items-start gap-2.5 text-sm text-zinc-300">
-                <FaCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-zinc-500" />
+              <li key={feature} className="relative flex items-start gap-2.5 text-sm text-zinc-300">
+                <span className="relative mt-0.5 h-3.5 w-3.5 shrink-0 rounded bg-zinc-800 text-zinc-500 flex items-center justify-center">
+                  <FaCheck className="h-3.5 w-3.5" />
+                </span>
                 {feature}
               </li>
             ))}
           </ul>
         </div>
 
-        <motion.div className="relative card border-brand/30 p-6 sm:p-8">
-          <div className="absolute -top-3 left-6 rounded-full bg-brand px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
+        <motion.div className="relative card border-brand/30 p-6 sm:p-8 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-glow/5" aria-hidden="true" />
+          <div className="absolute -top-3 left-6 rounded-full bg-brand px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-[0_0_20px_rgba(244,63,94,0.4)]">
             Premium
           </div>
-          <div className="mt-1 text-xs font-bold uppercase tracking-wider text-brand">Premium</div>
-          <ul className="mt-5 space-y-3">
+          <div className="relative mt-1 text-xs font-bold uppercase tracking-wider text-brand">Premium</div>
+          <ul className="relative mt-5 space-y-3">
             {PREMIUM_FEATURES.map((feature) => (
-              <li key={feature} className="flex items-start gap-2.5 text-sm text-zinc-200">
-                <FaCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand" />
+              <li key={feature} className="relative flex items-start gap-2.5 text-sm text-zinc-200">
+                <span className="relative mt-0.5 h-3.5 w-3.5 shrink-0 rounded bg-brand/20 text-brand flex items-center justify-center shadow-[0_0_8px_rgba(244,63,94,0.3)]">
+                  <FaCheck className="h-3.5 w-3.5" />
+                </span>
                 {feature}
               </li>
             ))}
@@ -219,7 +228,7 @@ const Upgrade = () => {
         </p>
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-          className="mt-8 flex flex-wrap items-center justify-center gap-3"
+          className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4"
         >
           <a
             href={WHOP_URL}

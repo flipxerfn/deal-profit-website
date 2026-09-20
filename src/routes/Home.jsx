@@ -22,16 +22,20 @@ const Home = () => {
   return (
     <>
       {/* Hero Section */}
-      <section className="pb-12 md:pb-16" aria-labelledby="hero-title">
-        <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
+      <section className="pb-12 md:pb-16 relative" aria-labelledby="hero-title">
+        {/* Hero background glow */}
+        <div className="absolute inset-0 radial-glow-hero pointer-events-none" aria-hidden="true" />
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[600px] bg-gradient-to-t from-brand/5 via-transparent to-transparent pointer-events-none" aria-hidden="true" />
+        
+        <div className="relative grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
           <div>
             <motion.div
               {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
               className="mb-5 inline-flex flex-wrap items-center gap-2"
             >
               {['Price Errors', 'Penny Deals', 'Glitch Finds'].map((tag) => (
-                <Badge key={tag} variant="brand" className="gap-1.5">
-                  <span className="h-1 w-1 rounded-full bg-brand" />
+                <Badge key={tag} variant="brand" className="gap-1.5 shadow-[0_0_12px_rgba(244,63,94,0.3)]">
+                  <span className="h-1 w-1 rounded-full bg-brand animate-pulse" />
                   {tag}
                 </Badge>
               ))}
@@ -82,7 +86,7 @@ const Home = () => {
             >
               {TRUST_ITEMS.map((item, i) => (
                 <div key={item.label} className="flex items-center gap-2">
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand shadow-[0_0_12px_rgba(244,63,94,0.2)]">
                     <item.icon className="h-4 w-4" />
                   </span>
                   <div>
@@ -98,7 +102,7 @@ const Home = () => {
             {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
             className="relative"
           >
-            <div className="rounded-xl border border-white/10 bg-charcoal p-3">
+            <div className="rounded-xl border border-white/10 bg-charcoal p-3 shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_40px_rgba(244,63,94,0.1)]">
               <div className="relative aspect-[16/9] overflow-hidden rounded-lg bg-charcoal-2">
                 <img
                   src={rtpcImg}
@@ -106,7 +110,7 @@ const Home = () => {
                   className="h-full w-full object-cover object-top"
                 />
                 <div className="absolute left-3 top-3 flex items-center gap-2">
-                  <Badge variant="brand">Price error</Badge>
+                  <Badge variant="brand" className="shadow-[0_0_12px_rgba(244,63,94,0.4)]">Price error</Badge>
                   <Badge variant="outline" className="bg-black/60 text-zinc-200 border-black/30">Tech</Badge>
                 </div>
               </div>
@@ -124,11 +128,14 @@ const Home = () => {
             
             {/* Floating badge */}
             <motion.div
-              {...getMotionProps(prefersReduced, { ...motionVariants.fadeInUp, animate: { opacity: 1, y: 0, rotate: [-2, 2, -2, 0] } })}
+              {...getMotionProps(prefersReduced, { 
+                ...motionVariants.fadeInUp, 
+                animate: { opacity: 1, y: 0, rotate: [-2, 2, -2, 0] } 
+              })}
               className="absolute -bottom-4 -right-4"
             >
-              <div className="inline-flex items-center gap-2 rounded-xl bg-brand/20 border border-brand/30 px-4 py-3 text-white shadow-[0_0_30px_rgba(244,63,94,0.2)]">
-                <FaBolt className="h-5 w-5 text-brand" />
+              <div className="inline-flex items-center gap-2 rounded-xl bg-brand/20 border border-brand/30 px-4 py-3 text-white shadow-[0_0_40px_rgba(244,63,94,0.35),0_8px_30px_rgba(0,0,0,0.4)]">
+                <FaBolt className="h-5 w-5 text-brand animate-pulse" />
                 <div className="text-left">
                   <p className="text-xs font-semibold uppercase tracking-wider text-brand-2">Live Deal</p>
                   <p className="text-sm font-extrabold">93% OFF</p>
@@ -140,10 +147,11 @@ const Home = () => {
       </section>
 
       {/* What We Hunt Section */}
-      <section className="pb-12 md:pb-16" aria-labelledby="hunt-title">
+      <section className="pb-12 md:pb-16 relative" aria-labelledby="hunt-title">
+        <div className="absolute inset-0 bg-gradient-to-b from-brand/5 via-transparent to-transparent pointer-events-none" aria-hidden="true" />
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          className="relative grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
           {WHAT_WE_HUNT.map((item, i) => {
             const Icon = HUNT_ICONS[i];
@@ -151,12 +159,13 @@ const Home = () => {
               <motion.div
                 key={item.title}
                 {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
-                className="card card-hover p-5"
+                className="card card-hover p-5 relative overflow-hidden"
               >
-                <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 text-brand">
+                <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
+                <div className="relative mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 text-brand group-hover:bg-brand/20 transition-colors duration-300 shadow-[0_0_16px_rgba(244,63,94,0.2)]">
                   <Icon className="h-4 w-4" />
                 </div>
-                <h3 className="text-sm font-bold text-white">{item.title}</h3>
+                <h3 className="relative text-sm font-bold text-white">{item.title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{item.text}</p>
               </motion.div>
             );
@@ -165,15 +174,14 @@ const Home = () => {
       </section>
 
       {/* Latest Finds Section */}
-      <section className="pb-4" aria-labelledby="finds-title">
+      <section className="pb-4 relative" aria-labelledby="finds-title">
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-brand/20 to-transparent pointer-events-none" aria-hidden="true" />
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
           className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"
         >
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-brand">
-              Live finds
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-brand">Live finds</p>
             <h2 id="finds-title" className="mt-1 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
               Latest finds
             </h2>
@@ -203,7 +211,8 @@ const Home = () => {
       </section>
 
       {/* Social Proof / Reviews Preview */}
-      <section className="pb-12 md:pb-16" aria-labelledby="social-title">
+      <section className="pb-12 md:pb-16 relative" aria-labelledby="social-title">
+        <div className="absolute inset-0 bg-gradient-to-b from-glow/5 via-transparent to-transparent pointer-events-none" aria-hidden="true" />
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
           className="mb-8 text-center"
@@ -225,12 +234,13 @@ const Home = () => {
             <motion.div
               key={item.label}
               {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
-              className="card p-5 text-center"
+              className="card p-5 text-center relative overflow-hidden"
             >
-              <div className="mx-auto mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand">
+              <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
+              <div className="relative mx-auto mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand hover:bg-brand/20 hover:shadow-[0_0_20px_rgba(244,63,94,0.3)] transition-all duration-300">
                 <item.icon className="h-4 w-4" />
               </div>
-              <h3 className="text-sm font-bold text-white">{item.label}</h3>
+              <h3 className="relative text-sm font-bold text-white">{item.label}</h3>
               <p className="mt-1 text-sm text-zinc-400">{item.desc}</p>
             </motion.div>
           ))}
@@ -238,10 +248,11 @@ const Home = () => {
       </section>
 
       {/* Final CTA */}
-      <section className="mt-12 overflow-hidden rounded-xl border border-brand/20 bg-[radial-gradient(120%_160%_at_20%_0%,rgba(244,63,94,0.18),rgba(139,92,246,0.1)_50%,transparent_80%)] p-8 md:mt-16 md:p-12">
+      <section className="mt-12 overflow-hidden rounded-xl border border-brand/20 bg-[radial-gradient(120%_160%_at_20%_0%,rgba(244,63,94,0.22),rgba(139,92,246,0.12)_50%,transparent_80%)] p-8 md:mt-16 md:p-12 relative">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(244,63,94,0.1),transparent_70%)]" aria-hidden="true" />
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-          className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center"
+          className="relative flex flex-col items-start justify-between gap-6 md:flex-row md:items-center"
         >
           <div>
             <h2 className="max-w-md text-2xl font-extrabold tracking-tight text-white sm:text-3xl">

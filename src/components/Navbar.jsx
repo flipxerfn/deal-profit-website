@@ -34,13 +34,13 @@ const Navbar = () => {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/5 bg-night/85 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-white/5 bg-night/90 backdrop-blur-md">
       <nav className="mx-auto flex h-16 w-full max-w-[1152px] items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-2.5" aria-label="Deal Profit home">
           <img
             src={dealProfitLogo}
             alt=""
-            className="h-8 w-auto drop-shadow-[0_0_12px_rgba(244,63,94,0.35)]"
+            className="h-8 w-auto drop-shadow-[0_0_16px_rgba(244,63,94,0.45)]"
           />
           <span className="text-[15px] font-bold tracking-tight text-white">
             Deal<span className="text-brand">Profit</span>
@@ -82,14 +82,6 @@ const Navbar = () => {
           >
             Start Free Trial
           </a>
-          <a
-            href={TRIAL_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-primary whitespace-nowrap px-3.5 sm:hidden"
-          >
-            Free Trial
-          </a>
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 hover:bg-white/5 md:hidden"
@@ -111,6 +103,14 @@ const Navbar = () => {
             className="border-t border-white/5 bg-night/95 backdrop-blur md:hidden overflow-hidden"
           >
             <div className="mx-auto max-w-[1152px] px-4 py-3 sm:px-6">
+              <a
+                href={TRIAL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary w-full mb-3"
+              >
+                Start Free Trial
+              </a>
               {LINKS.map((link) => (
                 <NavLink
                   key={link.to}
