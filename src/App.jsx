@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './routes/Home';
 import Deals from './routes/Deals';
@@ -8,14 +8,14 @@ import Discord from './routes/Discord';
 function App() {
   return (
     <BrowserRouter>
-      <Layout>
-        <Routes>
+      <Routes>
+        <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/deals" element={<Deals />} />
           <Route path="/trial" element={<Trial />} />
           <Route path="/discord" element={<Discord />} />
-        </Routes>
-      </Layout>
+        </Route>
+      </Routes>
     </BrowserRouter>
   );
 }

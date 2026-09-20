@@ -1,160 +1,164 @@
 import { Link } from 'react-router-dom';
-import { FaFire, FaUtensils } from 'react-icons/fa';
-import deal1Cropped from '../assets/crops/deal1-cropped.jpg';
-import discord1Cropped from '../assets/crops/discord1-cropped.png';
+import { FaArrowRight, FaBolt, FaCoins, FaPercent, FaBell } from 'react-icons/fa';
+import { buttonClass } from '../components/button';
+import DealCard from '../components/DealCard';
+import rtpcImg from '../assets/crops/deal1-cropped.jpg';
+import { HOME_FINDS, WHAT_WE_HUNT } from '../data/deals';
+
+const HUNT_ICONS = [FaBolt, FaCoins, FaPercent, FaBell];
 
 const Home = () => {
   return (
     <>
-      {/* Hero Section */}
-      <section className="pb-12">
-        <div className="grid md:grid-cols-2 md:items-center md:gap-12">
-          {/* Left: Text Content */}
-          <div className="space-y-6">
-            {/* Eyebrow */}
-            <div className="flex items-center space-x-2 text-pink-400 text-sm font-medium">
-              <span aria-hidden="true">•</span> PRICE ERRORS • PENNY DEALS • HIDDEN FINDS
+      <section className="pb-12 md:pb-16">
+        <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
+          <div>
+            <div className="mb-5 inline-flex flex-wrap items-center gap-2">
+              {['Price Errors', 'Penny Deals', 'Glitch Finds'].map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand"
+                >
+                  <span className="h-1 w-1 rounded-full bg-brand" />
+                  {tag}
+                </span>
+              ))}
             </div>
 
-            {/* Headline */}
-            <h1 className="mt-2 mb-4 text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-400 to-pink-500 bg-clip-text text-transparent">
-              Catch the deals before everyone else.
+            <h1 className="text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-[44px] xl:text-5xl">
+              Catch the deals{' '}
+              <span className="bg-gradient-to-r from-brand to-brand-2 bg-clip-text text-transparent">
+                before everyone else.
+              </span>
             </h1>
 
-            {/* Body */}
-            <p className="mb-6 text-base text-gray-300">
-              Find price errors, penny deals, hidden discounts and profitable finds from the Deal Profit community.
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-zinc-400 sm:text-lg">
+              Price errors, penny deals and hidden discounts flagged the second they go live — plus
+              profitable reselling finds from the Deal Profit community. Fast alerts so you are never
+              late to the deal.
             </p>
 
-            {/* Buttons */}
-            <div className="flex flex-wrap gap-4">
-              <Link
-                to="/deals"
-                className="btn-secondary flex-1 md:flex-auto px-5 py-3 text-center text-sm font-medium border border-pink-500 hover:border-pink-400 hover:bg-pink-500/10 transition-all"
-              >
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link to="/deals" className={buttonClass('primary', 'px-6 py-3')}>
                 Explore Deals
+                <FaArrowRight className="text-sm" />
               </Link>
               <a
                 href="https://whop.com/deal-profit/deal-profit-01/"
-                className="btn-primary flex-1 md:flex-auto px-5 py-3 text-center text-sm font-medium hover:bg-pink-500/20 transition-all"
                 target="_blank"
                 rel="noopener noreferrer"
+                className={buttonClass('outline', 'px-6 py-3')}
               >
                 Start Free Trial
               </a>
             </div>
           </div>
 
-          {/* Right: Featured Deal Card */}
-          <div className="mt-6 md:mt-0">
-            <div className="relative group">
-              <div className="w-full aspect-w-4 aspect-h-3 rounded-xl overflow-hidden bg-black/60">
-                <img
-                  src={deal1Cropped}
-                  alt="RTX 5060 Gaming PC for $39.99 - Price Error Deal"
-                  className="w-full h-full object-cover object-[center_top]"
-                />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent pointer-events-none"></div>
-              </div>
-              <div className="space-y-4 mt-4">
-                <div className="flex items-center space-x-2">
-                  <FaFire className="text-pink-400" />
-                  <h3 className="font-semibold text-white text-lg">RTX 5060 Gaming PC</h3>
-                </div>
-                <p className="mb-2 text-sm text-gray-300">
-                  Brand new RTX 5060 gaming PC with RGB lighting
-                </p>
-                <p className="text-2xl font-bold text-pink-400">
-                  $39.99
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Retail: $599.99 • Save 93%
-                </p>
-                <span className="inline-block mt-4 px-3 py-1 text-xs text-pink-400 bg-pink-500/20 rounded hover:bg-pink-500/30 transition-all">
-                  FOUND BY DEAL PROFIT
+          <div className="rounded-xl border border-white/10 bg-charcoal p-3">
+            <div className="relative aspect-[16/9] overflow-hidden rounded-lg bg-charcoal-2">
+              <img
+                src={rtpcImg}
+                alt="RTX 5060 Gaming PC retailer listing for $39.99"
+                className="h-full w-full object-cover object-top"
+              />
+              <div className="absolute left-3 top-3 flex items-center gap-2">
+                <span className="rounded-full bg-brand px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-white">
+                  Price error
                 </span>
+                <span className="rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-200 backdrop-blur">
+                  Tech
+                </span>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+              <div>
+                <p className="text-sm font-bold text-white">RTX 5060 Gaming PC</p>
+                <p className="text-xs text-zinc-500">Retail $599.99</p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-extrabold tracking-tight text-brand">$39.99</p>
+                <p className="text-xs font-semibold text-brand-2">Save 93%</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Latest Finds Section */}
-      <section className="bg-gray-900/50">
-        <h2 className="mb-6 text-2xl font-bold text-center bg-gradient-to-r from-pink-400 to-pink-500 bg-clip-text text-transparent">
-          Latest Finds
-        </h2>
-        <p className="mb-6 text-center text-lg text-gray-300">
-          Exclusive deals shared with our members
-        </p>
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* RTX 5060 Gaming PC */}
-          <div className="relative group">
-            <div className="bg-black/60 backdrop-blur-sm border border-pink-500/10 rounded-xl p-6 hover:-translate-y-1 hover:shadow-2xl transition-all duration-300">
-              <div className="relative">
-                <div className="aspect-w-4 aspect-h-3 w-full rounded-xl overflow-hidden mb-4">
-                  <img
-                    src={deal1Cropped}
-                    alt="RTX 5060 Gaming PC - $39.99"
-                    className="w-full h-full object-cover object-[center_top]"
-                  />
-                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-xl"></div>
+      <section className="pb-12 md:pb-16">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {WHAT_WE_HUNT.map((item, i) => {
+            const Icon = HUNT_ICONS[i];
+            return (
+              <div
+                key={item.title}
+                className="rounded-xl border border-white/10 bg-charcoal/70 p-5"
+              >
+                <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 text-brand">
+                  <Icon className="h-4 w-4" />
                 </div>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <FaFire className="text-pink-400" />
-                    <h3 className="font-semibold text-white text-lg">RTX 5060 Gaming PC</h3>
-                  </div>
-                  <p className="mb-2 text-sm text-gray-300">
-                    Brand new RTX 5060 gaming PC with RGB lighting
-                  </p>
-                  <p className="text-2xl font-bold text-pink-400">
-                    $39.99
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Retail: $599.99 • Save 93%
-                  </p>
-                  <span className="inline-block mt-4 px-3 py-1 text-xs text-pink-400 bg-pink-500/20 rounded hover:bg-pink-500/30 transition-all">
-                    FOUND BY DEAL PROFIT
-                  </span>
-                </div>
+                <h3 className="text-sm font-bold text-white">{item.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{item.text}</p>
               </div>
-            </div>
-          </div>
+            );
+          })}
+        </div>
+      </section>
 
-          {/* Penny Deals */}
-          <div className="relative group">
-            <div className="bg-black/60 backdrop-blur-sm border border-pink-500/10 rounded-xl p-6 hover:-translate-y-1 hover:shadow-2xl transition-all duration-300">
-              <div className="relative">
-                <div className="aspect-w-4 aspect-h-3 w-full rounded-xl overflow-hidden mb-4">
-                  <img
-                    src={discord1Cropped}
-                    alt="Penny deals from Discord community"
-                    className="w-full h-full object-cover object-[center]"
-                  />
-                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-pink-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-xl"></div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <FaUtensils className="text-pink-400" />
-                    <h3 className="font-semibold text-white text-lg">Penny Deals</h3>
-                  </div>
-                  <p className="mb-2 text-sm text-gray-300">
-                    Daily deals under $1 from our community
-                  </p>
-                  <p className="text-2xl font-bold text-pink-400">
-                    As low as $0.01
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Updated hourly • 50+ new deals daily
-                  </p>
-                  <span className="inline-block mt-4 px-3 py-1 text-xs text-pink-400 bg-pink-500/20 rounded hover:bg-pink-500/30 transition-all">
-                    FOUND BY DEAL PROFIT
-                  </span>
-                </div>
-              </div>
-            </div>
+      <section className="pb-4">
+        <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-brand">
+              Live finds
+            </p>
+            <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+              Latest finds
+            </h2>
+          </div>
+          <Link
+            to="/deals"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-400 transition-colors hover:text-brand"
+          >
+            View all deals
+            <FaArrowRight className="text-xs" />
+          </Link>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          {HOME_FINDS.map((deal) => (
+            <DealCard key={deal.id} deal={deal} />
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-12 overflow-hidden rounded-xl border border-brand/20 bg-[radial-gradient(120%_160%_at_20%_0%,rgba(244,63,142,0.16),rgba(139,92,246,0.08)_50%,transparent_80%)] p-8 md:mt-16 md:p-12">
+        <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+          <div>
+            <h2 className="max-w-md text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+              Never miss a deal again.
+            </h2>
+            <p className="mt-2 max-w-lg text-sm leading-relaxed text-zinc-400 sm:text-base">
+              Join the community where price errors, penny deals and profitable finds are posted the
+              moment they go live.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <a
+              href="https://discord.gg/dealprofit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonClass('primary', 'px-6 py-3')}
+            >
+              Join Discord
+              <FaArrowRight className="text-sm" />
+            </a>
+            <a
+              href="https://whop.com/deal-profit/deal-profit-01/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonClass('outline', 'px-6 py-3')}
+            >
+              Start Free Trial
+            </a>
           </div>
         </div>
       </section>

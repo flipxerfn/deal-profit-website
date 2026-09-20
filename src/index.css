@@ -1,90 +1,70 @@
 @import "tailwindcss";
 
-body {
-  margin: 0;
-  background: #000;
-  color: white;
-  font-family: 'Inter', sans-serif;
-  font-size: 18px;
-  overflow-x: hidden;
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-night: #07070a;
+  --color-charcoal: #101014;
+  --color-charcoal-2: #18181f;
+  --color-line: #24242c;
+
+  --color-brand: #f43f8e;
+  --color-brand-2: #ff6bb0;
+  --color-glow: #8b5cf6;
 }
 
-/* Glassmorphism - simplified */
-.glass {
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+@layer base {
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-night);
+    color: #e7e7ec;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background: rgba(244, 63, 142, 0.35);
+    color: #ffffff;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
-/* Navbar glass */
-.navbar-glass {
-  @apply bg-black/80 backdrop-blur-sm border-b border-white/10;
-}
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-night;
+  }
 
-/* Navbar logo */
-.navbar-logo {
-  height: 48px; /* Within 40-50px range */
-  width: auto;
-}
+  .btn-primary {
+    @apply bg-brand text-white shadow-[0_0_20px_rgba(244,63,142,0.28)] hover:bg-brand-2 hover:shadow-[0_0_26px_rgba(244,63,142,0.4)];
+  }
 
-/* Navbar links */
-.navbar-link {
-  @apply px-3 py-2 rounded text-sm font-medium hover:text-pink-400 transition-colors;
-}
+  .btn-outline {
+    @apply border border-white/15 bg-white/[0.03] text-zinc-200 hover:border-brand/50 hover:bg-brand/10 hover:text-brand;
+  }
 
-/* Neon pink glow - simplified */
-.neon-pink {
-  box-shadow: 0 0 5px #ec4899, 0 0 10px #ec4899;
-}
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors;
+  }
 
-/* Simple hover lift */
-.hover-lift {
-  transition: transform 0.2s ease;
-}
-.hover-lift:hover {
-  transform: translateY(-2px);
-}
+  .chip-active {
+    @apply border-brand/60 bg-brand/15 text-brand;
+  }
 
-/* Premium buttons - simplified */
-.btn-premium {
-  @apply px-6 py-3 text-lg font-semibold rounded-lg transition-all hover:shadow-lg;
-  background: linear-gradient(to right, #f472b6, #ec4899);
-  color: white;
-  border: none;
-}
-.btn-premium-outline {
-  @apply px-6 py-3 text-lg font-semibold rounded-lg border border-pink-500 hover:border-pink-400 hover:text-pink-400;
-  background: transparent;
-  color: white;
-}
+  .chip-nowrap {
+    @apply whitespace-nowrap;
+  }
 
-/* Glass cards - simplified */
-.glass-card {
-  @apply bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-lg p-4;
+  .input {
+    @apply w-full rounded-lg border border-white/10 bg-charcoal px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-brand/60 focus:outline-none focus:ring-2 focus:ring-brand/20;
+  }
 }
-.glass-card-lg {
-  @apply bg-black/50 backdrop-blur-sm border border-pink-500/20 rounded-xl p-6;
-}
-
-/* Text gradient for neon pink text */
-.bg-gradient-neon {
-  background: linear-gradient(to right, #f472b6, #ec4899);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Ensure images are responsive and optimized */
-img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* Increase heading sizes */
-h1 { font-size: 2.25rem; } /* 36px */
-h2 { font-size: 1.875rem; } /* 30px */
-h3 { font-size: 1.5rem; } /* 24px */
-
-/* Remove unnecessary complex effects */
-/* Remove hero-glow, floating animations, deal-card styling, etc. */

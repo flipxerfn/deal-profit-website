@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Playwright MCP / QA artifacts
+.playwright-mcp
+.qa
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
