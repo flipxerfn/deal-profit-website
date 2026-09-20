@@ -6,7 +6,7 @@ import deal2Cropped from '../assets/crops/deal2-cropped.png';
 const Deals = () => {
   return (
     <>
-      <section className="max-w-1180 mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <section className="pb-16">
         <header className="mb-8">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-400 to-pink-500 bg-clip-text text-transparent">
             Latest Deals
@@ -30,7 +30,7 @@ const Deals = () => {
               <option value="all">All Categories</option>
               <option value="tech">Tech</option>
               <option value="penny">Penny Deals</option>
-              <option value="home">Home & Garden</option>
+              <option value="other">Other</option>
             </select>
             <select
               className="ml-4 px-4 py-2 bg-black/60 border border-pink-500/20 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
@@ -50,12 +50,17 @@ const Deals = () => {
             <button
               className="px-3 py-1 text-xs bg-pink-500/20 text-pink-400 hover:bg-pink-500/30 rounded"
             >
-              Penny
+              Tech
             </button>
             <button
               className="px-3 py-1 text-xs bg-pink-500/20 text-pink-400 hover:bg-pink-500/30 rounded"
             >
-              Tech
+              Penny Deals
+            </button>
+            <button
+              className="px-3 py-1 text-xs bg-pink-500/20 text-pink-400 hover:bg-pink-500/30 rounded"
+            >
+              Other
             </button>
           </div>
         </div>

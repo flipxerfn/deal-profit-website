@@ -5,15 +5,15 @@ import discord2Cropped from '../assets/crops/discord2-cropped.png';
 
 const Discord = () => {
   return (
-    <section className="max-w-1180 mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <header className="text-center mb-12">
+    <section className="pb-16">
+      <div className="text-center mb-12">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-pink-400 to-pink-500 bg-clip-text text-transparent">
           See the deals before they disappear.
         </h2>
         <p className="mt-4 text-lg text-gray-300">
           Our active Discord community is where deals are posted in real-time. Join now to start saving.
         </p>
-      </header>
+      </div>
 
       {/* Screenshot Grid */}
       <div className="grid gap-8 md:grid-cols-2">

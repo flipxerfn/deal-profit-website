@@ -7,8 +7,8 @@ const Home = () => {
   return (
     <>
       {/* Hero Section */}
-      <section className="max-w-1180 mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 md:items-center md:gap-8">
+      <section className="pb-12">
+        <div className="grid md:grid-cols-2 md:items-center md:gap-12">
           {/* Left: Text Content */}
           <div className="space-y-6">
             {/* Eyebrow */}
@@ -81,7 +81,7 @@ const Home = () => {
       </section>
 
       {/* Latest Finds Section */}
-      <section className="max-w-1180 mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-gray-900/50">
+      <section className="bg-gray-900/50">
         <h2 className="mb-6 text-2xl font-bold text-center bg-gradient-to-r from-pink-400 to-pink-500 bg-clip-text text-transparent">
           Latest Finds
         </h2>

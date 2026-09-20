@@ -7,15 +7,15 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="bg-black/80 backdrop-blur-sm border-b border-pink-500/10 sticky top-0 z-20">
-      <div className="max-w-1180 mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex-shrink-0 flex items-center">
+    <nav className="border-b border-pink-500/10 sticky top-0 z-20 bg-black/50 backdrop-blur-sm">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex h-[68px] items-center justify-between">
+          <div className="flex-shrink-0 flex items-center space-x-3">
             <Link to="/" className="flex items-center space-x-2">
               <img
                 src={dealProfitLogo}
                 alt="Deal Profit Logo"
-                className="h-10 w-auto"
+                className="h-[40px] w-auto"
               />
               <span className="text-xs font-medium text-white">Deal Profit</span>
             </Link>
