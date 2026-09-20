@@ -6,8 +6,10 @@ import { useState } from 'react';
 const LINKS = [
   { to: '/', label: 'Home' },
   { to: '/deals', label: 'Deals' },
+  { to: '/reviews', label: 'Reviews' },
   { to: '/trial', label: 'Trial' },
   { to: '/discord', label: 'Discord' },
+  { to: '/upgrade', label: 'Upgrade' },
 ];
 
 const TRIAL_URL = 'https://whop.com/deal-profit/deal-profit-01/';

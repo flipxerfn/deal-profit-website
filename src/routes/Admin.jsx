@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   FaArrowsRotate,
+  FaComment,
   FaGear,
   FaHashtag,
   FaInbox,
@@ -14,6 +15,7 @@ import {
 import dealProfitLogo from '../assets/deal-profit-logo.png';
 import AdminSettings from './admin/AdminSettings';
 import AdminDeals from './admin/AdminDeals';
+import AdminReviews from './admin/AdminReviews';
 
 const timefmt = (iso) => {
   if (!iso) return 'Never';
@@ -34,7 +36,7 @@ const Card = ({ icon, label, value, sub }) => (
 
 const Admin = () => {
   const [phase, setPhase] = useState('checking'); // checking | login | dashboard
-  const [tab, setTab] = useState('dashboard'); // dashboard | settings | deals
+  const [tab, setTab] = useState('dashboard'); // dashboard | settings | deals | reviews
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -234,6 +236,7 @@ const Admin = () => {
             { id: 'dashboard', label: 'Dashboard', icon: <FaPlug className="text-xs" /> },
             { id: 'settings', label: 'Settings', icon: <FaGear className="text-xs" /> },
             { id: 'deals', label: 'Manual deals', icon: <FaInbox className="text-xs" /> },
+            { id: 'reviews', label: 'Reviews', icon: <FaComment className="text-xs" /> },
           ].map((t) => (
             <button
               key={t.id}
@@ -323,6 +326,7 @@ const Admin = () => {
 
         {tab === 'settings' && <AdminSettings />}
         {tab === 'deals' && <AdminDeals />}
+        {tab === 'reviews' && <AdminReviews />}
 
         <p className="mt-8 text-xs text-zinc-600">
           Sessions expire after 8 hours. The Discord bot token and admin credentials never leave

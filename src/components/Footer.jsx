@@ -17,6 +17,7 @@ const Footer = () => {
           <Link to="/deals" className="hover:text-white transition-colors">Deals</Link>
           <Link to="/trial" className="hover:text-white transition-colors">Trial</Link>
           <Link to="/discord" className="hover:text-white transition-colors">Discord</Link>
+          <Link to="/upgrade" className="hover:text-white transition-colors">Upgrade</Link>
         </nav>
 
         <div className="text-sm text-zinc-500">© 2026 Deal Profit. All rights reserved.</div>

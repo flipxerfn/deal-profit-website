@@ -11,6 +11,15 @@
 // (Worker env or the DEAL_STORE Durable Object) and never returned to the browser.
 
 import { parseDealMessage } from './parseDeals.js';
+import { dedupeDeals } from './dedupe.js';
+import {
+  makeReview,
+  reviewSummary,
+  REVIEW_CATEGORIES,
+  REVIEW_MAX_STORED,
+  toPublicReview,
+  validateReview,
+} from './reviews.js';
 import {
   SESSION_AGE_MS,
   SESSION_COOKIE,
@@ -34,6 +43,8 @@ const LOGIN_RATE_LIMIT = { windowMs: 15 * 60 * 1000, max: 20 };
 
 const CONFIG_KEY = 'admin:config';
 const MANUAL_KEY = 'admin:manual-deals';
+const REVIEWS_KEY = 'admin:reviews';
+const REVIEW_RATE = { windowMs: 10 * 60 * 1000, max: 3 };
 
 const json = (body, status = 200, headers = {}) =>
   new Response(JSON.stringify(body), {
@@ -160,7 +171,8 @@ async function saveConfig(env, { token, categories }) {
     categories: Array.isArray(categories) ? categories : prev.categories,
     updatedAt: new Date().toISOString(),
   };
-  await kvPut(env, CONFIG_KEY, JSON.stringify(cfg));
+  const ok = await kvPut(env, CONFIG_KEY, JSON.stringify(cfg));
+  if (!ok) throw new Error('Failed to persist configuration');
   configCache.value = cfg;
   configCache.at = Date.now();
   return cfg;
@@ -191,6 +203,21 @@ async function listManualDeals(env) {
 
 async function saveManualDeals(env, deals) {
   await kvPut(env, MANUAL_KEY, JSON.stringify(deals));
+}
+
+async function listReviews(env) {
+  const raw = await kvGet(env, REVIEWS_KEY);
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+async function saveReviews(env, reviews) {
+  await kvPut(env, REVIEWS_KEY, JSON.stringify(reviews.slice(0, REVIEW_MAX_STORED)));
 }
 
 const cleanStr = (value, max) => String(value ?? '').trim().slice(0, max);
@@ -374,13 +401,17 @@ async function doSync(env) {
     }
   }
 
-  deals.sort((a, b) => new Date(b.postedAt ?? 0) - new Date(a.postedAt ?? 0));
-  const trimmed = deals.slice(0, MAX_DEALS);
+  const deduped = dedupeDeals(deals);
+  const duplicatesDropped = deals.length - deduped.length;
+
+  deduped.sort((a, b) => new Date(b.postedAt ?? 0) - new Date(a.postedAt ?? 0));
+  const trimmed = deduped.slice(0, MAX_DEALS);
 
   return {
     ok: true,
     configured: true,
     deals: trimmed,
+    duplicatesDropped,
     categoriesConfigured: categories.length,
     categoriesMasked: categories.map(maskId),
     channelsDiscovered: channelIds.length,
@@ -441,14 +472,19 @@ async function handleDeals(env) {
   const serve = (payload, extra = {}) =>
     json({ ...payload }, 200, { 'Cache-Control': EDGE_CACHE, ...extra });
 
-  const merged = (result) => ({
-    ok: true,
-    configured: Boolean(result?.configured) || manual.length > 0,
-    deals: [...manualDeals, ...(result?.deals ?? [])],
-    manual: manual.length,
-    discord: Boolean(result?.configured),
-    feed: result?.configured ? 'live' : 'manual_only',
-  });
+  const merged = (result) => {
+    const raw = [...manualDeals, ...(result?.deals ?? [])];
+    const deduped = dedupeDeals(raw);
+    return {
+      ok: true,
+      configured: Boolean(result?.configured) || manual.length > 0,
+      deals: deduped,
+      manual: manual.length,
+      discord: Boolean(result?.configured),
+      duplicatesDropped: raw.length - deduped.length,
+      feed: result?.configured ? 'live' : 'manual_only',
+    };
+  };
 
   const failOver = async () => {
     const { token } = await resolveDiscord(env);
@@ -533,6 +569,23 @@ function recordFailure(request) {
     entry.count += 1;
   }
   if (loginAttempts.size > 10_000) loginAttempts.clear();
+}
+
+// Public review submissions are limited by IP to prevent spam/abuse.
+const reviewSubmits = new Map();
+
+function reviewRateLimited(request) {
+  const ip = clientIp(request);
+  const now = Date.now();
+  const entry = reviewSubmits.get(ip);
+  if (entry && entry.resetAt > now) {
+    if (entry.count >= REVIEW_RATE.max) return true;
+    entry.count += 1;
+  } else {
+    reviewSubmits.set(ip, { count: 1, resetAt: now + REVIEW_RATE.windowMs });
+  }
+  if (reviewSubmits.size > 10_000) reviewSubmits.clear();
+  return false;
 }
 
 async function handleLogin(request, env) {
@@ -643,6 +696,8 @@ async function handleConfig(request, env) {
   }
 
   if (request.method === 'GET') {
+    configCache.value = null;
+    configCache.at = 0;
     const cfg = await loadConfig(env);
     const effectiveToken = cfg.token || env.DISCORD_BOT_TOKEN || '';
     const effectiveCategories = cfg.categories.length
@@ -670,7 +725,12 @@ async function handleConfig(request, env) {
       // treat as empty body
     }
     const categories = parseCategories(body.categories ?? '');
-    const cfg = await saveConfig(env, { token: body.token, categories });
+    let cfg;
+    try {
+      cfg = await saveConfig(env, { token: body.token, categories });
+    } catch (err) {
+      return json({ ok: false, error: sanitizeError(err) }, 500);
+    }
     feedState.syncedAt = 0;
     feedState.data = null;
     feedState.error = null;
@@ -754,10 +814,132 @@ const adminRoutes = {
   '/api/admin/config': handleConfig,
 };
 
+async function handleReviews(request, env) {
+  if (request.method === 'GET') {
+    const all = await listReviews(env);
+    const approved = all
+      .filter((r) => r.status === 'approved')
+      .sort((a, b) => new Date(b.createdAt ?? 0) - new Date(a.createdAt ?? 0));
+    const summary = reviewSummary(all);
+    return json(
+      {
+        ok: true,
+        reviews: approved.map(toPublicReview),
+        summary: { count: summary.count, average: summary.average },
+        featured: summary.featured,
+      },
+      200,
+      { 'Cache-Control': 'public, max-age=15, s-maxage=15, stale-while-revalidate=30' }
+    );
+  }
+
+  if (request.method === 'POST') {
+    if (!originIsAllowed(request)) {
+      return json({ ok: false, error: 'forbidden' }, 403);
+    }
+    if (reviewRateLimited(request)) {
+      return json({ ok: false, error: 'rate_limited' }, 429);
+    }
+    let body = {};
+    try {
+      body = await request.json();
+    } catch {
+      // fall through to validation
+    }
+    const { value, error } = validateReview(body);
+    if (error) return json({ ok: false, error }, 400);
+    const all = await listReviews(env);
+    const id = `rv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    all.push(makeReview(value, id));
+    await saveReviews(env, all);
+    return json({ ok: true, id }, 201);
+  }
+
+  return json({ ok: false, error: 'method_not_allowed' }, 405);
+}
+
+async function handleReviewsAdmin(request, env, id) {
+  const session = await getSession(request, env);
+  if (!session) {
+    return json({ ok: false, authenticated: false, error: 'unauthorized' }, 401);
+  }
+  const mutation = request.method === 'PATCH' || request.method === 'DELETE';
+  if (mutation && !originIsAllowed(request)) {
+    return json({ ok: false, error: 'forbidden' }, 403);
+  }
+
+  const all = await listReviews(env);
+
+  if (!id && request.method === 'GET') {
+    const sorted = [...all].sort((a, b) => new Date(b.createdAt ?? 0) - new Date(a.createdAt ?? 0));
+    return json({ ok: true, reviews: sorted });
+  }
+
+  if (id) {
+    const index = all.findIndex((r) => r.id === id);
+    if (index === -1) return json({ ok: false, error: 'not_found' }, 404);
+
+    if (request.method === 'PATCH') {
+      let body = {};
+      try {
+        body = await request.json();
+      } catch {
+        // treat as empty patch (status/featured only)
+      }
+      const review = all[index];
+      if (body.status != null) {
+        if (!['pending', 'approved', 'rejected'].includes(body.status)) {
+          return json({ ok: false, error: 'status_invalid' }, 400);
+        }
+        review.status = body.status;
+      }
+      if (body.featured === true) {
+        review.featured = true;
+        review.status = 'approved';
+      } else if (body.featured === false) {
+        review.featured = false;
+      }
+      if (body.name != null) {
+        const name = String(body.name).trim().replace(/\s+/g, ' ').slice(0, 40);
+        if (name.length < 2) return json({ ok: false, error: 'name_short' }, 400);
+        review.name = name;
+      }
+      if (body.text != null) {
+        const text = String(body.text).trim().slice(0, 1000);
+        if (text.length < 3) return json({ ok: false, error: 'text_short' }, 400);
+        review.text = text;
+      }
+      if (body.rating != null) {
+        const rating = Number(body.rating);
+        if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+          return json({ ok: false, error: 'rating_invalid' }, 400);
+        }
+        review.rating = rating;
+      }
+      if (body.category != null) {
+        review.category = REVIEW_CATEGORIES.includes(body.category) ? body.category : null;
+      }
+      review.updatedAt = new Date().toISOString();
+      await saveReviews(env, all);
+      return json({ ok: true, review });
+    }
+
+    if (request.method === 'DELETE') {
+      all.splice(index, 1);
+      await saveReviews(env, all);
+      return json({ ok: true });
+    }
+  }
+
+  return json({ ok: false, error: 'method_not_allowed' }, 405);
+}
+
 async function handleAdmin(request, env) {
   const url = new URL(request.url);
   const dealsMatch = url.pathname.match(/^\/api\/admin\/deals(?:\/([^/]+))?$/);
   if (dealsMatch) return handleDealsAdmin(request, env, dealsMatch[1] ?? null);
+  const reviewsMatch = url.pathname.match(/^\/api\/admin\/reviews(?:\/([^/]+))?$/);
+  if (reviewsMatch) return handleReviewsAdmin(request, env, reviewsMatch[1] ?? null);
   const handler = adminRoutes[url.pathname];
   if (!handler) return json({ ok: false, error: 'not_found' }, 404);
   return handler(request, env);
@@ -772,6 +954,9 @@ export default {
     const url = new URL(request.url);
     if (url.pathname.startsWith('/api/admin')) {
       return handleAdmin(request, env);
+    }
+    if (url.pathname.startsWith('/api/reviews')) {
+      return handleReviews(request, env);
     }
     if (request.method === 'GET' && url.pathname.startsWith('/api/deals')) {
       return handleDeals(env);
