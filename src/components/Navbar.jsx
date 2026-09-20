@@ -1,7 +1,9 @@
 import { Link, NavLink } from 'react-router-dom';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import dealProfitLogo from '../assets/deal-profit-logo.png';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useReducedMotion } from '../lib/motion';
 
 const LINKS = [
   { to: '/', label: 'Home' },
@@ -16,11 +18,20 @@ const TRIAL_URL = 'https://whop.com/deal-profit/deal-profit-01/';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const prefersReduced = useReducedMotion();
+  const activeLinkRef = useRef(null);
+  const indicatorRef = useRef(null);
 
-  const navLinkClass = ({ isActive }) =>
-    `px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-      isActive ? 'text-brand bg-brand/10' : 'text-zinc-300 hover:text-white'
-    }`;
+  useEffect(() => {
+    if (indicatorRef.current && activeLinkRef.current) {
+      const activeLink = activeLinkRef.current.querySelector('[aria-current="page"]') || activeLinkRef.current.querySelector('.nav-link-active');
+      if (activeLink) {
+        indicatorRef.current.style.width = `${activeLink.offsetWidth}px`;
+        indicatorRef.current.style.transform = `translateX(${activeLink.offsetLeft}px)`;
+        indicatorRef.current.style.opacity = 1;
+      }
+    }
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/5 bg-night/85 backdrop-blur">
@@ -29,16 +40,34 @@ const Navbar = () => {
           <img
             src={dealProfitLogo}
             alt=""
-            className="h-9 w-auto drop-shadow-[0_0_12px_rgba(244,63,142,0.35)]"
+            className="h-8 w-auto drop-shadow-[0_0_12px_rgba(244,63,94,0.35)]"
           />
           <span className="text-[15px] font-bold tracking-tight text-white">
             Deal<span className="text-brand">Profit</span>
           </span>
         </Link>
 
-        <div className="hidden items-center gap-1 md:flex">
+        <div ref={activeLinkRef} className="relative hidden items-center gap-0.5 md:flex">
+          <motion.div
+            ref={indicatorRef}
+            className="absolute bottom-0 left-0 h-0.5 bg-brand rounded-full transition-all duration-300 ease-out"
+            style={{ width: 0, transform: 'translateX(0)', opacity: 0 }}
+            animate={{ width: 'auto', opacity: 1 }}
+          />
           {LINKS.map((link) => (
-            <NavLink key={link.to} to={link.to} className={navLinkClass} end={link.to === '/'}>
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.to === '/'}
+              className={({ isActive }) =>
+                `relative z-10 nav-link px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                  isActive
+                    ? 'text-white nav-link-active'
+                    : 'text-zinc-300 hover:text-white'
+                }`
+              }
+              aria-current={link.to === '/' ? 'page' : undefined}
+            >
               {link.label}
             </NavLink>
           ))}
@@ -72,27 +101,35 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {isOpen && (
-        <div className="border-t border-white/5 bg-night/95 backdrop-blur md:hidden">
-          <div className="mx-auto max-w-[1152px] px-4 py-3 sm:px-6">
-            {LINKS.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                end={link.to === '/'}
-                onClick={() => setIsOpen(false)}
-                className={({ isActive }) =>
-                  `block rounded-lg px-4 py-3 text-base font-medium transition-colors ${
-                    isActive ? 'text-brand bg-brand/10' : 'text-zinc-300 hover:text-white'
-                  }`
-                }
-              >
-                {link.label}
-              </NavLink>
-            ))}
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: prefersReduced ? 0 : 0.2, ease: 'easeOut' }}
+            className="border-t border-white/5 bg-night/95 backdrop-blur md:hidden overflow-hidden"
+          >
+            <div className="mx-auto max-w-[1152px] px-4 py-3 sm:px-6">
+              {LINKS.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  end={link.to === '/'}
+                  onClick={() => setIsOpen(false)}
+                  className={({ isActive }) =>
+                    `block rounded-lg px-4 py-3 text-base font-medium transition-colors ${
+                      isActive ? 'text-brand bg-brand/10' : 'text-zinc-300 hover:text-white'
+                    }`
+                  }
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 };

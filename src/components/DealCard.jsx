@@ -1,27 +1,31 @@
 import { FaBolt } from 'react-icons/fa6';
 import { FaArrowRight } from 'react-icons/fa';
-import { buttonClass } from './button';
+import { motion } from 'framer-motion';
+import { Card, CardHover, Badge } from './ui';
+import { useReducedMotion } from '../lib/motion';
 
 const dealOff = (deal) =>
   deal.referencePrice ? Math.round((1 - deal.price / deal.referencePrice) * 100) : null;
 
 const DealCard = ({ deal }) => {
   const off = dealOff(deal);
+  const prefersReduced = useReducedMotion();
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-xl border border-white/10 bg-charcoal transition-all duration-300 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-[0_10px_40px_rgba(0,0,0,0.55),0_0_30px_rgba(244,63,142,0.12)]">
+    <CardHover className="group flex flex-col overflow-hidden">
       <div className="relative aspect-[16/9] overflow-hidden bg-charcoal-2">
         {deal.image ? (
-          <img
+          <motion.img
             src={deal.image}
             alt={deal.imageAlt}
             loading="lazy"
             referrerPolicy="no-referrer"
             style={{ objectPosition: deal.imagePosition ?? 'center' }}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            whileHover={prefersReduced ? {} : { scale: 1.03 }}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(90%_140%_at_18%_0%,rgba(244,63,142,0.22),rgba(139,92,246,0.14)_48%,transparent_78%)]">
+          <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(90%_140%_at_18%_0%,rgba(244,63,94,0.22),rgba(139,92,246,0.14)_48%,transparent_78%)]">
             <div className="flex flex-col items-center gap-2">
               <FaBolt className="h-8 w-8 text-brand-2" />
               <span className="text-xs font-bold uppercase tracking-widest text-zinc-300">
@@ -33,13 +37,11 @@ const DealCard = ({ deal }) => {
 
         <div className="absolute left-3 top-3 flex items-center gap-2">
           {deal.badge && (
-            <span className="rounded-full bg-brand px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-white">
-              {deal.badge}
-            </span>
+            <Badge variant="brand">{deal.badge}</Badge>
           )}
-          <span className="rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-200 backdrop-blur">
+          <Badge variant="outline" className="bg-black/60 text-zinc-200 border-black/30">
             {deal.categoryLabel}
-          </span>
+          </Badge>
         </div>
       </div>
 
@@ -58,7 +60,7 @@ const DealCard = ({ deal }) => {
               </span>
             )}
             {off != null && (
-              <span className="text-[11px] font-bold text-brand-2">{off}% off</span>
+              <Badge variant="glow">{off}% off</Badge>
             )}
           </div>
 
@@ -78,19 +80,19 @@ const DealCard = ({ deal }) => {
               href={deal.cta.href}
               target="_blank"
               rel="noopener noreferrer"
-              className={buttonClass('outline', 'w-full')}
+              className="btn btn-outline w-full"
             >
               {deal.cta.label}
               <FaArrowRight className="text-xs" />
             </a>
           ) : (
-            <span className={`${buttonClass('outline', 'w-full')} cursor-default opacity-60`}>
+            <span className="btn btn-outline w-full cursor-default opacity-60">
               {deal.cta?.label ?? 'No link'}
             </span>
           )}
         </div>
       </div>
-    </article>
+    </CardHover>
   );
 };
 

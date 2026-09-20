@@ -7,7 +7,9 @@ import {
   FaTriangleExclamation,
   FaXmark,
 } from 'react-icons/fa6';
-import { buttonClass } from '../components/button';
+import { motion } from 'framer-motion';
+import { Button, Input, Textarea, Select, Badge, Avatar } from '../components/ui';
+import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 
 const RATING_FILTERS = [
   { id: 'all', label: 'All ratings' },
@@ -27,13 +29,30 @@ const formatDate = (iso) => {
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
-const Stars = ({ rating, size = 'text-base' }) => {
+const Stars = ({ rating, size = 'text-base', interactive = false, onChange, value, onMouseLeave, onMouseEnter }) => {
   const out = [];
   for (let i = 1; i <= 5; i += 1) {
     const full = rating >= i;
     const half = !full && rating >= i - 0.5;
     out.push(
-      half ? (
+      interactive ? (
+        <button
+          key={i}
+          type="button"
+          onMouseEnter={() => onMouseEnter(i)}
+          onMouseLeave={onMouseLeave}
+          onClick={() => onChange(i)}
+          className="rounded p-0.5 transition-transform hover:scale-110"
+          aria-label={`${i} star${i > 1 ? 's' : ''}`}
+          aria-pressed={value === i}
+        >
+          {i <= (value || rating) ? (
+            <FaStar className="text-xl text-brand" />
+          ) : (
+            <FaRegStar className="text-xl text-zinc-600" />
+          )}
+        </button>
+      ) : half ? (
         <FaStarHalfStroke key={i} className={`${size} text-brand`} aria-hidden="true" />
       ) : (
         <FaStar key={i} className={`${size} ${full ? 'text-brand' : 'text-zinc-700'}`} aria-hidden="true" />
@@ -58,6 +77,7 @@ const Reviews = () => {
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState(null);
   const [formMsg, setFormMsg] = useState(null);
+  const prefersReduced = useReducedMotion();
 
   const load = useCallback(async () => {
     try {
@@ -77,7 +97,6 @@ const Reviews = () => {
   }, []);
 
   useEffect(() => {
-    // oxlint-disable-next-line react/set-state-in-effect -- async load
     load();
   }, [load]);
 
@@ -132,42 +151,56 @@ const Reviews = () => {
   const summary = state.summary ?? { count: 0, average: null };
 
   return (
-    <section className="pb-4">
-      <header className="mb-8">
+    <section className="pb-4" aria-labelledby="reviews-title">
+      <motion.header
+        {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        className="mb-8"
+      >
         <p className="text-xs font-semibold uppercase tracking-wider text-brand">Reviews</p>
-        <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+        <h1 id="reviews-title" className="mt-1 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
           What the Deal Profit community says
         </h1>
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-zinc-400">
           Real feedback from people hunting price errors, penny finds and glitch deals with Deal
           Profit. Every review is vetted before it goes live.
         </p>
-      </header>
+      </motion.header>
 
       {state.summary && state.summary.count > 0 && (
-        <div className="mb-8 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl border border-white/10 bg-charcoal p-6">
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
+          className="mb-8 grid gap-4 sm:grid-cols-2"
+        >
+          <motion.div
+            {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
+            className="card p-6"
+          >
             <div className="flex items-center gap-4">
-              <p className="text-4xl font-extrabold tracking-tight text-white">
-                {summary.average ?? '—'}
-                <span className="text-base font-semibold text-zinc-500"> / 5</span>
-              </p>
-              <div>
-                <Stars rating={summary.average ?? 0} />
+              <div className="flex-1">
+                <p className="text-4xl font-extrabold tracking-tight text-white">
+                  {summary.average ?? '—'}
+                  <span className="text-base font-semibold text-zinc-500"> / 5</span>
+                </p>
                 <p className="mt-1 text-xs text-zinc-500">
                   {summary.count} approved {summary.count === 1 ? 'review' : 'reviews'}
                 </p>
               </div>
+              <div className="text-right">
+                <Stars rating={summary.average ?? 0} size="text-3xl" />
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col justify-center rounded-xl border border-white/10 bg-charcoal p-6">
+          </motion.div>
+          <motion.div
+            {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
+            className="card p-6"
+          >
             {state.featured ? (
               <>
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand-2">
                   Featured review
                 </p>
                 <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-zinc-300">
-                  “{state.featured.text}”
+                  "{state.featured.text}"
                 </p>
                 <p className="mt-2 text-xs font-semibold text-white">{state.featured.name}</p>
               </>
@@ -178,12 +211,15 @@ const Reviews = () => {
                   : 'No approved reviews yet — be the first to leave one.'}
               </p>
             )}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
 
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
-        <select
+      <motion.div
+        {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        className="mb-8 flex flex-wrap items-center justify-between gap-3"
+      >
+        <Select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           className="input w-full sm:w-auto"
@@ -194,14 +230,18 @@ const Reviews = () => {
               {opt.label}
             </option>
           ))}
-        </select>
-        <button onClick={() => setShowForm((v) => !v)} className={buttonClass('primary')}>
+        </Select>
+        <Button variant="primary" size="sm" onClick={() => setShowForm((v) => !v)}>
           {showForm ? 'Close' : 'Leave a review'}
-        </button>
-      </div>
+        </Button>
+      </motion.div>
 
       {showForm && (
-        <form onSubmit={submit} className="mb-8 rounded-xl border border-brand/25 bg-charcoal p-6 shadow-[0_0_30px_rgba(244,63,142,0.08)]">
+        <motion.form
+          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+          onSubmit={submit}
+          className="mb-8 card border-brand/25 shadow-[0_0_30px_rgba(244,63,94,0.08)] p-6"
+        >
           <h2 className="text-sm font-extrabold uppercase tracking-wider text-white">Leave a review</h2>
           <p className="mt-1 text-sm text-zinc-500">
             No email or personal info needed — just your name, a rating and what you think. Your
@@ -210,39 +250,28 @@ const Reviews = () => {
 
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1 block text-xs font-semibold text-zinc-400">Display name</span>
-              <input
+              <Label>Display name</Label>
+              <Input
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 maxLength={40}
                 placeholder="e.g. PennyHunter"
-                className="input w-full"
                 aria-label="Display name"
               />
             </label>
 
             <div className="block">
-              <span className="mb-1 block text-xs font-semibold text-zinc-400">Your rating</span>
+              <Label>Your rating</Label>
               <div className="flex items-center gap-1 py-2.5">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onMouseEnter={() => setHoverRating(n)}
-                    onMouseLeave={() => setHoverRating(0)}
-                    onClick={() => setForm((f) => ({ ...f, rating: n }))}
-                    className="rounded p-0.5 transition-transform hover:scale-110"
-                    aria-label={`${n} star${n > 1 ? 's' : ''}`}
-                    aria-pressed={form.rating === n}
-                  >
-                    {n <= (hoverRating || form.rating) ? (
-                      <FaStar className="text-xl text-brand" />
-                    ) : (
-                      <FaRegStar className="text-xl text-zinc-600" />
-                    )}
-                  </button>
-                ))}
+                <Stars
+                  interactive
+                  rating={form.rating}
+                  value={hoverRating || form.rating}
+                  onChange={(n) => setForm((f) => ({ ...f, rating: n }))}
+                  onMouseEnter={setHoverRating}
+                  onMouseLeave={() => setHoverRating(0)}
+                />
                 <span className="ml-2 text-sm text-zinc-400">
                   {form.rating ? `${form.rating} / 5` : 'Tap to rate'}
                 </span>
@@ -251,20 +280,20 @@ const Reviews = () => {
           </div>
 
           <label className="mt-4 block">
-            <span className="mb-1 block text-xs font-semibold text-zinc-400">Your review</span>
-            <textarea
+            <Label>Your review</Label>
+            <Textarea
               value={form.text}
               onChange={(e) => setForm((f) => ({ ...f, text: e.target.value }))}
               maxLength={1000}
               rows={4}
               placeholder="Share your experience hunting deals with Deal Profit…"
-              className="input w-full resize-y"
               aria-label="Review text"
             />
           </label>
 
           {(formError || formMsg) && (
-            <p
+            <motion.p
+              {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
               className={`mt-4 flex items-center gap-2 rounded-lg border p-3 text-sm ${
                 formError
                   ? 'border-red-400/25 bg-red-400/10 text-red-300'
@@ -273,36 +302,50 @@ const Reviews = () => {
             >
               <FaTriangleExclamation className="h-3.5 w-3.5 shrink-0" />
               {formError || formMsg}
-            </p>
+            </motion.p>
           )}
 
           <div className="mt-5 flex justify-end">
-            <button type="submit" disabled={busy} className="btn btn-primary disabled:opacity-60">
+            <Button type="submit" size="md" disabled={busy}>
               {busy ? 'Submitting…' : 'Submit review'}
-            </button>
+            </Button>
           </div>
-        </form>
+        </motion.form>
       )}
 
       {state.loading ? (
-        <div className="grid gap-5 sm:grid-cols-2" aria-busy="true">
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
+          className="grid gap-5 sm:grid-cols-2"
+          aria-busy="true"
+        >
           {[0, 1].map((i) => (
-            <div key={i} className="animate-pulse rounded-xl border border-white/10 bg-charcoal p-6">
+            <motion.div
+              key={i}
+              {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
+              className="animate-pulse card p-6"
+            >
               <div className="h-4 w-1/3 rounded bg-charcoal-2" />
               <div className="mt-3 h-3 w-full rounded bg-charcoal-2" />
               <div className="mt-2 h-3 w-2/3 rounded bg-charcoal-2" />
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       ) : state.error ? (
-        <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-6 text-center">
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+          className="card border-amber-400/20 bg-amber-400/5 p-6 text-center"
+        >
           <p className="text-sm text-amber-100">{state.error}</p>
-          <button onClick={() => load()} className={buttonClass('outline', 'mt-4')}>
+          <Button variant="outline" size="sm" className="mt-4" onClick={load}>
             Retry
-          </button>
-        </div>
+          </Button>
+        </motion.div>
       ) : state.reviews.length === 0 || filtered.length === 0 ? (
-        <div className="rounded-xl border border-white/10 bg-charcoal p-10 text-center">
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+          className="card p-10 text-center"
+        >
           <FaQuoteLeft className="mx-auto h-6 w-6 text-brand/40" />
           <p className="mt-3 text-base font-semibold text-white">
             {state.reviews.length === 0 ? 'No reviews yet.' : 'No reviews match this rating.'}
@@ -313,28 +356,30 @@ const Reviews = () => {
               : 'Try another rating filter.'}
           </p>
           {filter !== 'all' && (
-            <button onClick={() => setFilter('all')} className={`${buttonClass('outline', 'mt-5')}`}>
+            <Button variant="outline" size="sm" className="mt-5" onClick={() => setFilter('all')}>
               <FaXmark className="text-sm" />
               Show all reviews
-            </button>
+            </Button>
           )}
-        </div>
+        </motion.div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2">
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
+          className="grid gap-5 sm:grid-cols-2"
+        >
           {filtered.map((review) => (
-            <article
+            <motion.article
               key={review.id}
-              className={`flex flex-col rounded-xl border bg-charcoal p-6 transition-all duration-200 hover:-translate-y-0.5 ${
+              {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
+              className={`card p-6 transition-all duration-200 hover:-translate-y-0.5 ${
                 review.featured
-                  ? 'border-brand/40 shadow-[0_0_30px_rgba(244,63,142,0.12)]'
-                  : 'border-white/10 hover:border-brand/25'
+                  ? 'border-brand/40 shadow-[0_0_30px_rgba(244,63,94,0.12)]'
+                  : 'hover:border-brand/25'
               }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/15 font-bold text-brand-2 ring-1 ring-brand/25">
-                    {(review.name || '?').charAt(0).toUpperCase()}
-                  </div>
+                  <Avatar size="sm" children={(review.name || '?').charAt(0).toUpperCase()} />
                   <div>
                     <p className="text-sm font-bold text-white">{review.name}</p>
                     <p className="text-xs text-zinc-500">{formatDate(review.createdAt)}</p>
@@ -344,22 +389,27 @@ const Reviews = () => {
               </div>
 
               {review.featured && (
-                <span className="mt-4 w-fit rounded-full border border-brand/40 bg-brand/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-2">
+                <Badge variant="brand" className="mt-4 w-fit">
                   Featured
-                </span>
+                </Badge>
               )}
 
               <p className="mt-3 flex-1 text-sm leading-relaxed text-zinc-300">{review.text}</p>
 
               <div className="mt-4 flex items-center justify-between">
-                <span className="rounded-full bg-black/40 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-300">
+                <Badge
+                  variant={review.category === 'deals' ? 'brand' : review.category === 'alerts' ? 'glow' : 'zinc'}
+                  className="text-[10px]"
+                >
                   {CATEGORY_LABEL(review.category) ?? 'Community'}
-                </span>
-                <span className="text-xs text-zinc-600">Verified review</span>
+                </Badge>
+                <Badge variant="outline" className="text-[10px] text-zinc-600">
+                  Verified review
+                </Badge>
               </div>
-            </article>
+            </motion.article>
           ))}
-        </div>
+        </motion.div>
       )}
     </section>
   );

@@ -5,9 +5,11 @@ import {
   FaTriangleExclamation,
   FaXmark,
 } from 'react-icons/fa6';
+import { motion } from 'framer-motion';
 import DealCard from '../components/DealCard';
-import { buttonClass } from '../components/button';
+import { Button, Input, Select, Badge } from '../components/ui';
 import { CATEGORIES, DEALS as DEMO_DEALS } from '../data/deals';
+import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 
 const SORT_OPTIONS = [
   { id: 'newest', label: 'Sort: Newest' },
@@ -63,6 +65,7 @@ const Deals = () => {
     notice: null,
   });
   const [refreshing, setRefreshing] = useState(false);
+  const prefersReduced = useReducedMotion();
 
   const loadFeed = useCallback(async ({ background = false } = {}) => {
     if (background) setRefreshing(true);
@@ -108,7 +111,6 @@ const Deals = () => {
   }, []);
 
   useEffect(() => {
-    // oxlint-disable-next-line react/set-state-in-effect
     loadFeed();
     const timer = setInterval(() => loadFeed({ background: true }), REFRESH_INTERVAL_MS);
     return () => clearInterval(timer);
@@ -146,21 +148,22 @@ const Deals = () => {
   const pill = statusPill[feed.source];
 
   return (
-    <section className="pb-4">
-      <header className="mb-8">
+    <section className="pb-4" aria-labelledby="deals-title">
+      <motion.header
+        {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        className="mb-8"
+      >
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-brand">Deal feed</p>
             {feed.state === DealStates.ready && pill && (
-              <span
-                className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider ${pill.cls}`}
-              >
+              <Badge variant="outline" className={pill.cls}>
                 {pill.label}
-              </span>
+              </Badge>
             )}
           </div>
         </div>
-        <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+        <h1 id="deals-title" className="mt-1 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
           Latest deals
         </h1>
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-zinc-400">
@@ -168,10 +171,13 @@ const Deals = () => {
             ? 'Pulled straight from the Deal Profit Discord — price errors, penny deals and profitable listings, filtered and sorted your way.'
             : 'Real finds from the Deal Profit community — price errors, penny deals and profitable listings, filtered and sorted your way.'}
         </p>
-      </header>
+      </motion.header>
 
       {feed.notice && (
-        <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-400/20 bg-amber-400/5 p-4">
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+          className="mb-6 flex items-start gap-3 rounded-xl border border-amber-400/20 bg-amber-400/5 p-4"
+        >
           <FaTriangleExclamation className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
           <div className="flex-1">
             <p className="text-sm text-amber-100">{feed.notice}</p>
@@ -182,22 +188,34 @@ const Deals = () => {
               <FaArrowsRotate /> Retry now
             </button>
           </div>
-        </div>
+        </motion.div>
       )}
 
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+      <motion.div
+        {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center"
+      >
         <div className="relative flex-1">
           <FaMagnifyingGlass className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-          <input
+          <Input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search deals..."
-            className="input pl-10"
+            className="pl-10"
             aria-label="Search deals"
           />
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
+              aria-label="Clear search"
+            >
+              <FaXmark className="h-4 w-4" />
+            </button>
+          )}
         </div>
-        <select
+        <Select
           value={sort}
           onChange={(e) => setSort(e.target.value)}
           className="input w-full sm:w-auto"
@@ -208,40 +226,47 @@ const Deals = () => {
               {opt.label}
             </option>
           ))}
-        </select>
-        <button
+        </Select>
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => loadFeed({ background: true })}
           disabled={refreshing}
-          className={buttonClass('dark', 'sm:w-auto')}
           aria-label="Refresh deals"
         >
-          <FaArrowsRotate className={`text-xs ${refreshing ? 'animate-spin' : ''}`} />
+          <FaArrowsRotate className={`text-xs ${refreshing && !prefersReduced ? 'animate-spin' : ''}`} />
           Refresh
-        </button>
-      </div>
+        </Button>
+      </motion.div>
 
       {category && (
-        <div className="mb-8 flex flex-wrap gap-2">
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+          className="mb-8 flex flex-wrap gap-2"
+        >
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setCategory(cat.id)}
-              className={`chip chip-nowrap ${
-                category === cat.id ? 'chip-active' : 'hover:text-white'
-              }`}
+              className={`chip chip-nowrap ${category === cat.id ? 'chip-active' : 'hover:text-white'}`}
               aria-pressed={category === cat.id}
             >
               {cat.label}
             </button>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {feed.state === DealStates.loading ? (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
+          className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+          aria-busy="true"
+        >
           {[0, 1, 2].map((i) => (
-            <div
+            <motion.div
               key={i}
+              {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
               className="animate-pulse overflow-hidden rounded-xl border border-white/10 bg-charcoal"
             >
               <div className="aspect-[16/9] bg-charcoal-2" />
@@ -251,49 +276,58 @@ const Deals = () => {
                 <div className="h-3 w-2/3 rounded bg-charcoal-2" />
                 <div className="h-9 w-full rounded bg-charcoal-2" />
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       ) : feed.deals.length === 0 ? (
-        <div className="rounded-xl border border-white/10 bg-charcoal p-10 text-center">
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+          className="rounded-xl border border-white/10 bg-charcoal p-10 text-center"
+        >
           <p className="text-base font-semibold text-white">No deal posts yet.</p>
           <p className="mt-1 text-sm text-zinc-400">
-            Deals will appear here the moment they’re posted in the Discord.
+            Deals will appear here the moment they're posted in the Discord.
           </p>
-          <button
-            onClick={() => loadFeed()}
-            className={buttonClass('outline', 'mt-5')}
-          >
+          <Button variant="outline" size="sm" className="mt-5" onClick={() => loadFeed()}>
             <FaArrowsRotate className="text-sm" />
             Refresh feed
-          </button>
-        </div>
+          </Button>
+        </motion.div>
       ) : filtered.length > 0 ? (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
+          className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+        >
           {filtered.map((deal) => (
-            <DealCard key={deal.id} deal={deal} />
+            <motion.div key={deal.id} {...getMotionProps(prefersReduced, motionVariants.staggerItem)}>
+              <DealCard deal={deal} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       ) : (
-        <div className="rounded-xl border border-white/10 bg-charcoal p-10 text-center">
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+          className="rounded-xl border border-white/10 bg-charcoal p-10 text-center"
+        >
           <p className="text-base font-semibold text-white">
-            No deals match{query ? ` “${query}”` : ' these filters'}.
+            No deals match{query ? ` "${query}"` : ' these filters'}.
           </p>
           <p className="mt-1 text-sm text-zinc-400">
-            Try a different search or {category !== 'all' ? `switch from "${activeLabel}" ` : ''}
-            to All.
+            Try a different search or {category !== 'all' ? `switch from "${activeLabel}" ` : ''}to All.
           </p>
-          <button
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-5"
             onClick={() => {
               setQuery('');
               setCategory('all');
             }}
-            className={buttonClass('outline', 'mt-5')}
           >
             <FaXmark className="text-sm" />
             Reset filters
-          </button>
-        </div>
+          </Button>
+        </motion.div>
       )}
     </section>
   );

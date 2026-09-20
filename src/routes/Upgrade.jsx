@@ -10,8 +10,12 @@ import {
   FaArrowRight,
   FaCheck,
   FaCrown,
+  FaShieldAlt,
+  FaGem,
 } from 'react-icons/fa';
-import { buttonClass } from '../components/button';
+import { motion } from 'framer-motion';
+import { Button, Badge } from '../components/ui';
+import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 
 const WHOP_URL = 'https://whop.com/deal-profit/deal-profit-01/';
 
@@ -84,25 +88,31 @@ const PREMIUM_FEATURES = [
 ];
 
 const BenefitCard = ({ icon: Icon, title, text }) => (
-  <div className="group rounded-xl border border-white/10 bg-charcoal/70 p-6 transition-colors hover:border-brand/30 hover:bg-charcoal">
+  <motion.div className="card card-hover p-6">
     <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand transition-colors group-hover:bg-brand/15">
       <Icon className="h-4 w-4" />
     </div>
     <h3 className="text-sm font-bold uppercase tracking-wider text-white">{title}</h3>
     <p className="mt-2 text-sm leading-relaxed text-zinc-400">{text}</p>
-  </div>
+  </motion.div>
 );
 
 const Upgrade = () => {
+  const prefersReduced = useReducedMotion();
+
   return (
-    <section className="pb-4">
-      <div className="mx-auto max-w-[760px] text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">
+    <section className="pb-4" aria-labelledby="upgrade-title">
+      {/* Hero */}
+      <motion.div
+        {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        className="mx-auto max-w-[760px] text-center"
+      >
+        <Badge variant="glow" className="mb-4">
           Deal Profit Premium
-        </p>
-        <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl md:text-[44px]">
+        </Badge>
+        <h1 id="upgrade-title" className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl md:text-[44px]">
           Get more than the free feed.{' '}
-          <span className="bg-gradient-to-r from-brand to-brand-2 bg-clip-text text-transparent">
+          <span className="text-gradient-brand">
             Upgrade for faster alerts and more deals.
           </span>
         </h1>
@@ -111,12 +121,15 @@ const Upgrade = () => {
           access to premium features designed to help you catch deals before they disappear.
         </p>
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+          className="mt-8 flex flex-wrap items-center justify-center gap-3"
+        >
           <a
             href={WHOP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className={buttonClass('primary', 'px-8 py-3.5 text-base')}
+            className={Button({ variant: 'primary', size: 'lg' })}
           >
             Upgrade to Premium
             <FaArrowRight className="text-sm" />
@@ -125,25 +138,31 @@ const Upgrade = () => {
             href={WHOP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className={buttonClass('outline', 'px-8 py-3.5 text-base')}
+            className={Button({ variant: 'outline', size: 'lg' })}
           >
             Start Free Trial
           </a>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Benefits grid */}
-      <div className="mx-auto mt-14 grid max-w-[1000px] gap-4 sm:grid-cols-2 lg:grid-cols-3 md:mt-16">
+      <motion.div
+        {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
+        className="mx-auto mt-14 grid max-w-[1000px] gap-4 sm:grid-cols-2 lg:grid-cols-3 md:mt-16"
+      >
         {BENEFITS.map((benefit) => (
           <BenefitCard key={benefit.title} {...benefit} />
         ))}
-      </div>
+      </motion.div>
 
       {/* Why Upgrade section */}
-      <div className="mx-auto mt-16 max-w-[760px] text-center md:mt-20">
+      <motion.div
+        {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        className="mx-auto mt-16 max-w-[760px] text-center md:mt-20"
+      >
         <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
           Free gives you access to deals.{' '}
-          <span className="bg-gradient-to-r from-brand to-brand-2 bg-clip-text text-transparent">
+          <span className="text-gradient-brand">
             Premium gives you more ways to catch them.
           </span>
         </h2>
@@ -152,11 +171,14 @@ const Upgrade = () => {
           notifications, more deal opportunities, premium Discord access, and additional alerts for
           price errors, penny deals, and more chances to catch deals before they disappear.
         </p>
-      </div>
+      </motion.div>
 
       {/* Free vs Premium comparison */}
-      <div className="mx-auto mt-14 grid max-w-[760px] gap-5 sm:grid-cols-2 md:mt-16">
-        <div className="rounded-xl border border-white/10 bg-charcoal/70 p-6 sm:p-8">
+      <motion.div
+        {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        className="mx-auto mt-14 grid max-w-[760px] gap-5 sm:grid-cols-2 md:mt-16"
+      >
+        <div className="card p-6 sm:p-8">
           <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Free</h3>
           <ul className="mt-5 space-y-3">
             {FREE_FEATURES.map((feature) => (
@@ -168,11 +190,11 @@ const Upgrade = () => {
           </ul>
         </div>
 
-        <div className="relative rounded-xl border border-brand/30 bg-charcoal p-6 sm:p-8">
+        <motion.div className="relative card border-brand/30 p-6 sm:p-8">
           <div className="absolute -top-3 left-6 rounded-full bg-brand px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
             Premium
           </div>
-          <h3 className="mt-1 text-xs font-bold uppercase tracking-wider text-brand">Premium</h3>
+          <div className="mt-1 text-xs font-bold uppercase tracking-wider text-brand">Premium</div>
           <ul className="mt-5 space-y-3">
             {PREMIUM_FEATURES.map((feature) => (
               <li key={feature} className="flex items-start gap-2.5 text-sm text-zinc-200">
@@ -181,23 +203,29 @@ const Upgrade = () => {
               </li>
             ))}
           </ul>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Bottom CTA */}
-      <div className="mx-auto mt-14 max-w-[760px] text-center md:mt-20">
+      <motion.div
+        {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        className="mx-auto mt-14 max-w-[760px] text-center md:mt-20"
+      >
         <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
           Ready to catch more deals?
         </h2>
         <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-zinc-400">
           Start with a free trial or upgrade directly to premium. Cancel anytime.
         </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+          className="mt-8 flex flex-wrap items-center justify-center gap-3"
+        >
           <a
             href={WHOP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className={buttonClass('primary', 'px-8 py-3.5 text-base')}
+            className={Button({ variant: 'primary', size: 'lg' })}
           >
             Upgrade to Premium
             <FaArrowRight className="text-sm" />
@@ -206,12 +234,12 @@ const Upgrade = () => {
             href={WHOP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className={buttonClass('outline', 'px-8 py-3.5 text-base')}
+            className={Button({ variant: 'outline', size: 'lg' })}
           >
             Start Free Trial
           </a>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </section>
   );
 };
