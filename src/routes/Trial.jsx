@@ -57,7 +57,7 @@ const Trial = () => {
 
         <div className="mt-8">
           <a
-            href="https://whop.com/deals-profit/deal-profit-price-errors-deals"
+            href="https://whop.com/deal-profit/deal-profit-01/"
             target="_blank"
             rel="noopener noreferrer"
             className={buttonClass('primary', 'w-full px-8 py-3.5 text-base sm:w-auto')}

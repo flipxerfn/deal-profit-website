@@ -44,7 +44,7 @@ const Home = () => {
                 <FaArrowRight className="text-sm" />
               </Link>
               <a
-                href="https://whop.com/deals-profit/deal-profit-price-errors-deals"
+                href="https://whop.com/deal-profit/deal-profit-01/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={buttonClass('outline', 'px-6 py-3')}
@@ -152,7 +152,7 @@ const Home = () => {
               <FaArrowRight className="text-sm" />
             </a>
             <a
-              href="https://whop.com/deals-profit/deal-profit-price-errors-deals"
+              href="https://whop.com/deal-profit/deal-profit-01/"
               target="_blank"
               rel="noopener noreferrer"
               className={buttonClass('outline', 'px-6 py-3')}

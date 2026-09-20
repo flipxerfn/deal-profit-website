@@ -13,7 +13,7 @@ import {
 } from 'react-icons/fa';
 import { buttonClass } from '../components/button';
 
-const WHOP_URL = 'https://whop.com/deals-profit/deal-profit-price-errors-deals';
+const WHOP_URL = 'https://whop.com/deal-profit/deal-profit-01/';
 
 const BENEFITS = [
   {
