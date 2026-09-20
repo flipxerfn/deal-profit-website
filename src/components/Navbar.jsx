@@ -12,7 +12,7 @@ const LINKS = [
   { to: '/upgrade', label: 'Upgrade' },
 ];
 
-const TRIAL_URL = 'https://whop.com/deal-profit/deal-profit-01/';
+const TRIAL_URL = 'https://whop.com/deals-profit/deal-profit-price-errors-deals';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
