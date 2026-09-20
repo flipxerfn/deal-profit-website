@@ -1,0 +1,19 @@
+# Local-only development secrets for `npx wrangler dev`.
+# Copy this file to `.dev.vars` and fill in real values — `.dev.vars` is gitignored.
+# The SAME values must be set in the Cloudflare dashboard (Settings -> Variables and Secrets),
+# where DISCORD_BOT_TOKEN / ADMIN_PASSWORD / ADMIN_USERNAME should be stored as secrets.
+
+# Discord bot token. Create one at https://discord.com/developers/applications, add it to your
+# server, and give it permission to read channels + message history in the deal categories.
+DISCORD_BOT_TOKEN=
+
+# Comma-separated category IDs. Text channels inside these categories are discovered
+# automatically and become the deal feed source.
+# Get a category ID by right-clicking the category -> Copy Channel ID (Developer Mode on).
+DISCORD_CATEGORY_IDS=
+
+# Admin login. Username defaults to `goosievv` when not set.
+ADMIN_USERNAME=goosievv
+# The admin password you choose. It stays server-side: HttpOnly session cookie, never sent
+# back to the client, never committed to git.
+ADMIN_PASSWORD=

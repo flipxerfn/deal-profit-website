@@ -1,3 +1,4 @@
+import { FaBolt } from 'react-icons/fa6';
 import { FaArrowRight } from 'react-icons/fa';
 import { buttonClass } from './button';
 
@@ -15,13 +16,18 @@ const DealCard = ({ deal }) => {
             src={deal.image}
             alt={deal.imageAlt}
             loading="lazy"
-            className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
+            referrerPolicy="no-referrer"
+            style={{ objectPosition: deal.imagePosition ?? 'center' }}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(90%_140%_at_18%_0%,rgba(244,63,142,0.22),rgba(139,92,246,0.14)_48%,transparent_78%)]">
-            <span className="text-5xl font-extrabold tracking-tight text-white sm:text-6xl">
-              $0.01
-            </span>
+            <div className="flex flex-col items-center gap-2">
+              <FaBolt className="h-8 w-8 text-brand-2" />
+              <span className="text-xs font-bold uppercase tracking-widest text-zinc-300">
+                {deal.categoryLabel}
+              </span>
+            </div>
           </div>
         )}
 
@@ -58,8 +64,8 @@ const DealCard = ({ deal }) => {
 
           {deal.meta && (
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500">
-              {deal.meta.map((item) => (
-                <span key={item} className="inline-flex items-center gap-1.5">
+              {deal.meta.map((item, i) => (
+                <span key={`${i}-${item}`} className="inline-flex items-center gap-1.5">
                   <span className="h-1 w-1 rounded-full bg-brand/70" />
                   {item}
                 </span>
@@ -67,15 +73,21 @@ const DealCard = ({ deal }) => {
             </div>
           )}
 
-          <a
-            href={deal.cta.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonClass('outline', 'w-full')}
-          >
-            {deal.cta.label}
-            <FaArrowRight className="text-xs" />
-          </a>
+          {deal.cta?.href ? (
+            <a
+              href={deal.cta.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonClass('outline', 'w-full')}
+            >
+              {deal.cta.label}
+              <FaArrowRight className="text-xs" />
+            </a>
+          ) : (
+            <span className={`${buttonClass('outline', 'w-full')} cursor-default opacity-60`}>
+              {deal.cta?.label ?? 'No link'}
+            </span>
+          )}
         </div>
       </div>
     </article>

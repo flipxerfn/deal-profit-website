@@ -22,6 +22,7 @@ export const DEALS = [
     meta: ['Live now', 'Save 93%', 'Found by Deal Profit'],
     image: rtpcImg,
     imageAlt: 'RTX 5060 Gaming PC retailer listing at $39.99',
+    imagePosition: 'center top',
     cta: { label: 'View Deal', href: 'https://whop.com/deal-profit/deal-profit-01/' },
   },
   {
@@ -51,6 +52,7 @@ export const DEALS = [
     meta: ['Save 90%', 'Found by Deal Profit'],
     image: headphonesImg,
     imageAlt: 'Wireless Headphones retailer listing at $12.99',
+    imagePosition: 'center top',
     cta: { label: 'View Deal', href: 'https://whop.com/deal-profit/deal-profit-01/' },
   },
 ];

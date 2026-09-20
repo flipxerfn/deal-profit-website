@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Wrangler local development secrets + build artifacts
+.dev.vars
+.wrangler
+
 # Playwright MCP / QA artifacts
 .playwright-mcp
 .qa
