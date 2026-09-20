@@ -15,6 +15,9 @@ run_worker_first = [ "/api/*" ]
 #   - In the Cloudflare dashboard under Settings -> Variables and Secrets, or
 #   - Locally in .dev.vars (gitignored), or
 #   - Via `npx wrangler secret put <NAME>` / `npx wrangler deploy --var <NAME>:<value>`.
-# DISCORD_BOT_TOKEN, ADMIN_USERNAME and ADMIN_PASSWORD are credentials: keep them out of
-# wrangler.toml and set them as secrets in the dashboard / .dev.vars.
+# DISCORD_BOT_TOKEN and admin credentials: a Secret bound with the same name in the dashboard
+# takes precedence over these plain [vars] defaults, so production works out of the box here
+# but is hard to brute-force once you add the Secrets. Keep category IDs non-secret.
 DISCORD_CATEGORY_IDS = ""
+ADMIN_USERNAME = "goosievv"
+ADMIN_PASSWORD = "Orio23!!2012"
