@@ -13,13 +13,15 @@ run_worker_first = [ "/api/*" ]
 # Persistent store for admin-managed config (Discord token + category IDs) and manual deals.
 # A Durable Object needs nothing in the dashboard to provision — it deploys with the Worker,
 # so panel settings survive across isolates/worker restarts. "main" is a single global store.
+# Uses the declarative `exports` form (not the legacy `migrations` array) so the deploy
+# reconciles against whatever namespace state already exists instead of re-creating it.
 [[durable_objects.bindings]]
 name = "DEAL_STORE"
 class_name = "DealStore"
 
-[[migrations]]
-tag = "v1"
-new_classes = ["DealStore"]
+[exports.DealStore]
+type = "durable-object"
+storage = "sqlite"
 
 [vars]
 # Override these with your real values:
