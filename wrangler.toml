@@ -1,6 +1,6 @@
 name = "deal-profit-website"
-# Kept on a date supported by the pinned wrangler runtime (4.80.x bundles workerd up to 2026-04-08).
-# This pin exists so local dev runs on Node 20; the Worker only uses long-stable APIs.
+# compatibility_date is independent of the wrangler version; 2026-03-15 only uses long-stable APIs.
+# Workers Builds uses the wrangler pinned in package.json (currently 4.135.0).
 compatibility_date = "2026-03-15"
 main = "./worker/index.js"
 
