@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  FaCircleCheck,
   FaQuoteLeft,
   FaRegStar,
   FaStar,
@@ -8,7 +9,7 @@ import {
   FaXmark,
 } from 'react-icons/fa6';
 import { motion } from 'framer-motion';
-import { Button, Input, Textarea, Select, Badge, Avatar } from '../components/ui';
+import { Button, Input, Textarea, Select, Badge, Avatar, Label } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 
 const RATING_FILTERS = [
@@ -235,6 +236,17 @@ const Reviews = () => {
           {showForm ? 'Close' : 'Leave a review'}
         </Button>
       </motion.div>
+
+      {formMsg && !showForm && (
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+          role="status"
+          className="mb-8 flex items-center gap-2 rounded-lg border border-emerald-400/25 bg-emerald-400/10 p-3 text-sm text-emerald-300"
+        >
+          <FaCircleCheck className="h-4 w-4 shrink-0" />
+          {formMsg}
+        </motion.div>
+      )}
 
       {showForm && (
         <motion.form
