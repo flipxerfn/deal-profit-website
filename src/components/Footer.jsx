@@ -24,7 +24,7 @@ const Footer = () => {
         <div className="flex flex-col items-end gap-2 text-sm text-zinc-500 md:ml-auto">
           <p>© 2026 Deal Profit. All rights reserved.</p>
           <a
-            href="https://whop.com/deal-profit/deal-profit-01/"
+            href="https://whop.com/deal-profit-6dcc/price-error-66"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs font-medium text-brand hover:text-brand-2 transition-colors"

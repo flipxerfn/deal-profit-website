@@ -24,10 +24,10 @@ async function checkRoute(page, route, viewport) {
   // Check for key visual elements
   const title = await page.title();
   const hasNewWhop = await page.evaluate(() => 
-    document.body.innerHTML.includes('whop.com/deal-profit/deal-profit-01/')
+    document.body.innerHTML.includes('whop.com/deal-profit-6dcc/price-error-66')
   );
   const hasOldWhop = await page.evaluate(() => 
-    document.body.innerHTML.includes('whop.com/deals-profit/deal-profit-price-errors-deals')
+    document.body.innerHTML.includes('whop.com/deals-profit/deal-profit-price-errors-deals') || document.body.innerHTML.includes('whop.com/deal-profit/deal-profit-01/')
   );
   const hasHero = await page.$('h1') !== null;
   const hasButtons = await page.$('a.btn, button.btn') !== null;

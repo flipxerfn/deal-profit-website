@@ -23,7 +23,7 @@ export const DEALS = [
     image: rtpcImg,
     imageAlt: 'RTX 5060 Gaming PC retailer listing at $39.99',
     imagePosition: 'center top',
-    cta: { label: 'View Deal', href: 'https://whop.com/deal-profit/deal-profit-01/' },
+    cta: { label: 'View Deal', href: 'https://whop.com/deal-profit-6dcc/price-error-66' },
   },
   {
     id: 'penny-deals',
@@ -53,7 +53,7 @@ export const DEALS = [
     image: headphonesImg,
     imageAlt: 'Wireless Headphones retailer listing at $12.99',
     imagePosition: 'center top',
-    cta: { label: 'View Deal', href: 'https://whop.com/deal-profit/deal-profit-01/' },
+    cta: { label: 'View Deal', href: 'https://whop.com/deal-profit-6dcc/price-error-66' },
   },
 ];
 

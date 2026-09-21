@@ -70,7 +70,7 @@ const Home = () => {
                 <FaArrowRight className="text-sm" />
               </Link>
               <a
-                href="https://whop.com/deal-profit/deal-profit-01/"
+                href="https://whop.com/deal-profit-6dcc/price-error-66"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={buttonClass({ variant: 'outline', size: 'lg' })}
@@ -277,7 +277,7 @@ const Home = () => {
               <FaArrowRight className="text-sm" />
             </a>
             <a
-              href="https://whop.com/deal-profit/deal-profit-01/"
+              href="https://whop.com/deal-profit-6dcc/price-error-66"
               target="_blank"
               rel="noopener noreferrer"
               className={buttonClass({ variant: 'outline', size: 'lg' })}
