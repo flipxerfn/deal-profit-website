@@ -44,7 +44,7 @@ const Home = () => {
             <motion.h1
               id="hero-title"
               {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-              className="text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-[44px] xl:text-5xl"
+              className="text-4xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-[44px] xl:text-5xl"
             >
               Catch the deals{' '}
               <span className="text-gradient-brand">
@@ -159,7 +159,7 @@ const Home = () => {
               <motion.div
                 key={item.title}
                 {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
-                className="card card-hover p-5 relative overflow-hidden"
+                className="card card-hover p-5 relative overflow-hidden group"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
                 <div className="relative mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 text-brand group-hover:bg-brand/20 transition-colors duration-300 shadow-[0_0_16px_rgba(244,63,94,0.2)]">

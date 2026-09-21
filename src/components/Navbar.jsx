@@ -23,14 +23,20 @@ const Navbar = () => {
   const indicatorRef = useRef(null);
 
   useEffect(() => {
-    if (indicatorRef.current && activeLinkRef.current) {
+    const update = () => {
+      if (!indicatorRef.current || !activeLinkRef.current) return;
       const activeLink = activeLinkRef.current.querySelector('[aria-current="page"]') || activeLinkRef.current.querySelector('.nav-link-active');
-      if (activeLink) {
-        indicatorRef.current.style.width = `${activeLink.offsetWidth}px`;
-        indicatorRef.current.style.transform = `translateX(${activeLink.offsetLeft}px)`;
-        indicatorRef.current.style.opacity = 1;
+      if (!activeLink || activeLink.offsetWidth === 0) {
+        indicatorRef.current.style.opacity = 0;
+        return;
       }
-    }
+      indicatorRef.current.style.width = `${activeLink.offsetWidth}px`;
+      indicatorRef.current.style.transform = `translateX(${activeLink.offsetLeft}px)`;
+      indicatorRef.current.style.opacity = 1;
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
   }, []);
 
   return (
@@ -47,7 +53,7 @@ const Navbar = () => {
           </span>
         </Link>
 
-        <div ref={activeLinkRef} className="relative hidden items-center gap-0.5 md:flex">
+        <div ref={activeLinkRef} className="relative hidden items-center gap-0.5 lg:flex">
           <motion.div
             ref={indicatorRef}
             className="absolute bottom-0 left-0 h-0.5 bg-brand rounded-full transition-all duration-300 ease-out"
@@ -84,7 +90,7 @@ const Navbar = () => {
           </a>
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 hover:bg-white/5 md:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 hover:bg-white/5 lg:hidden"
             aria-label={isOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={isOpen}
           >
@@ -100,7 +106,7 @@ const Navbar = () => {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: prefersReduced ? 0 : 0.2, ease: 'easeOut' }}
-            className="border-t border-white/5 bg-night/95 backdrop-blur md:hidden overflow-hidden"
+            className="border-t border-white/5 bg-night/95 backdrop-blur lg:hidden overflow-hidden"
           >
             <div className="mx-auto max-w-[1152px] px-4 py-3 sm:px-6">
               <a
