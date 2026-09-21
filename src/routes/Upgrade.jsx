@@ -12,7 +12,7 @@ import {
   FaCrown,
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import { Button, Badge } from '../components/ui';
+import { buttonClass, Badge } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 
 const WHOP_URL = 'https://whop.com/deal-profit/deal-profit-01/';
@@ -100,7 +100,7 @@ const Upgrade = () => {
   const prefersReduced = useReducedMotion();
 
   return (
-    <section className="pb-4 relative" aria-labelledby="upgrade-title">
+    <section className="pt-12 pb-12 relative" aria-labelledby="upgrade-title">
       {/* Background glow */}
       <div className="absolute inset-0 radial-glow-hero pointer-events-none" aria-hidden="true" />
       <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[500px] bg-gradient-to-t from-brand/5 via-transparent to-transparent pointer-events-none" aria-hidden="true" />
@@ -132,7 +132,7 @@ const Upgrade = () => {
             href={WHOP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className={Button({ variant: 'primary', size: 'lg' })}
+            className={buttonClass({ variant: 'primary', size: 'lg' })}
           >
             Upgrade to Premium
             <FaArrowRight className="text-sm" />
@@ -141,7 +141,7 @@ const Upgrade = () => {
             href={WHOP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className={Button({ variant: 'outline', size: 'lg' })}
+            className={buttonClass({ variant: 'outline', size: 'lg' })}
           >
             Start Free Trial
           </a>
@@ -234,7 +234,7 @@ const Upgrade = () => {
             href={WHOP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className={Button({ variant: 'primary', size: 'lg' })}
+            className={buttonClass({ variant: 'primary', size: 'lg' })}
           >
             Upgrade to Premium
             <FaArrowRight className="text-sm" />
@@ -243,7 +243,7 @@ const Upgrade = () => {
             href={WHOP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className={Button({ variant: 'outline', size: 'lg' })}
+            className={buttonClass({ variant: 'outline', size: 'lg' })}
           >
             Start Free Trial
           </a>

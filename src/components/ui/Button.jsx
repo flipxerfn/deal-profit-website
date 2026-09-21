@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 
-const base = 'inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-night disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]';
+const base = 'inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-night disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] whitespace-nowrap';
 
 const variants = {
   primary: 'bg-brand text-white shadow-[0_0_20px_rgba(244,63,94,0.28)] hover:bg-brand-2 hover:shadow-[0_0_26px_rgba(244,63,94,0.4)]',

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { FaArrowRight, FaBolt, FaCoins, FaPercent, FaBell, FaShieldAlt, FaUsers, FaStar } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import { Card, Badge, Button } from '../components/ui';
+import { Card, Badge, buttonClass } from '../components/ui';
 import DealCard from '../components/DealCard';
 import rtpcImg from '../assets/crops/deal1-cropped.jpg';
 import { HOME_FINDS, WHAT_WE_HUNT } from '../data/deals';
@@ -65,7 +65,7 @@ const Home = () => {
               {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
               className="mt-8 flex flex-wrap gap-3"
             >
-              <Link to="/deals" className={Button({ variant: 'primary', size: 'lg' })}>
+              <Link to="/deals" className={buttonClass({ variant: 'primary', size: 'lg' })}>
                 Explore Deals
                 <FaArrowRight className="text-sm" />
               </Link>
@@ -73,7 +73,7 @@ const Home = () => {
                 href="https://whop.com/deal-profit/deal-profit-01/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={Button({ variant: 'outline', size: 'lg' })}
+                className={buttonClass({ variant: 'outline', size: 'lg' })}
               >
                 Start Free Trial
               </a>
@@ -271,7 +271,7 @@ const Home = () => {
               href="https://discord.gg/dealprofit"
               target="_blank"
               rel="noopener noreferrer"
-              className={Button({ variant: 'primary', size: 'lg' })}
+              className={buttonClass({ variant: 'primary', size: 'lg' })}
             >
               Join Discord
               <FaArrowRight className="text-sm" />
@@ -280,7 +280,7 @@ const Home = () => {
               href="https://whop.com/deal-profit/deal-profit-01/"
               target="_blank"
               rel="noopener noreferrer"
-              className={Button({ variant: 'outline', size: 'lg' })}
+              className={buttonClass({ variant: 'outline', size: 'lg' })}
             >
               Start Free Trial
             </a>

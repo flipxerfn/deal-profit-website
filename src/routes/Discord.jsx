@@ -1,6 +1,6 @@
 import { FaDiscord, FaBolt, FaLock, FaUsers, FaArrowRight, FaCircle, FaShieldAlt, FaGlobe, FaComments } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import { Button, Badge } from '../components/ui';
+import { buttonClass, Badge } from '../components/ui';
 import discord1Cropped from '../assets/crops/discord1-cropped.png';
 import discord2Cropped from '../assets/crops/discord2-cropped.png';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
@@ -146,7 +146,7 @@ const Discord = () => {
           href="https://discord.gg/dealprofit"
           target="_blank"
           rel="noopener noreferrer"
-          className={Button({ variant: 'primary', size: 'lg' })}
+          className={buttonClass({ variant: 'primary', size: 'lg' })}
         >
           <FaCircle className="h-2 w-2 animate-pulse" />
           Join the Deal Profit Discord

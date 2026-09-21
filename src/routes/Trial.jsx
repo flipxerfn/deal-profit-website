@@ -1,6 +1,6 @@
 import { FaBolt, FaCoins, FaBell, FaArrowRight, FaCheck, FaShieldAlt, FaUsers, FaStar } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import { Button, Badge } from '../components/ui';
+import { buttonClass, Badge } from '../components/ui';
 import dealProfitLogo from '../assets/deal-profit-logo.png';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 
@@ -79,7 +79,7 @@ const Trial = () => {
             href="https://whop.com/deal-profit/deal-profit-01/"
             target="_blank"
             rel="noopener noreferrer"
-            className={Button({ variant: 'primary', size: 'xl' })}
+            className={buttonClass({ variant: 'primary', size: 'xl' })}
           >
             Start Free Trial
             <FaArrowRight className="text-sm" />
