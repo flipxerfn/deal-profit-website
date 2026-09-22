@@ -14,8 +14,17 @@ export function Avatar({ className = '', src, alt, children, size = 'md', ...pro
       {src ? (
         <img src={src} alt={alt} className={clsx('h-full w-full object-cover', sizes[size])} />
       ) : (
-        <div className={clsx('flex h-full w-full items-center justify-center rounded-full bg-brand/15 font-bold text-brand-2 ring-1 ring-brand/25', sizes[size])}>
-          {children}
+        <div
+          className={clsx(
+            'relative flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-brand/30 via-charcoal-3 to-glow/30 font-bold text-white ring-2 ring-brand/40 shadow-[0_0_16px_rgba(244,63,94,0.25)]',
+            sizes[size]
+          )}
+        >
+          <span
+            className="absolute inset-0 rounded-full bg-gradient-to-br from-brand/30 to-glow/30 opacity-50 blur-sm"
+            aria-hidden="true"
+          />
+          <span className="relative">{children}</span>
         </div>
       )}
     </div>
