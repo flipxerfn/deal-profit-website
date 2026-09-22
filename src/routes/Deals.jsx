@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FaArrowsRotate,
   FaMagnifyingGlass,
   FaTriangleExclamation,
   FaXmark,
+  FaBolt,
 } from 'react-icons/fa6';
 import { motion } from 'framer-motion';
 import DealCard from '../components/DealCard';
-import { Button, Input, Select, Badge } from '../components/ui';
+import { Button, Input, Select, Badge, SkeletonCard } from '../components/ui';
 import { CATEGORIES, DEALS as DEMO_DEALS } from '../data/deals';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 
@@ -65,7 +66,27 @@ const Deals = () => {
     notice: null,
   });
   const [refreshing, setRefreshing] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState(null);
+  const searchRef = useRef(null);
   const prefersReduced = useReducedMotion();
+
+  // Keyboard shortcuts: "/" focuses the search box (unless the user is typing
+  // somewhere else), "Escape" clears the query while search is focused.
+  useEffect(() => {
+    const onKey = (e) => {
+      const tag = document.activeElement?.tagName;
+      const typing =
+        tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement?.isContentEditable;
+      if (e.key === '/' && !typing) {
+        e.preventDefault();
+        searchRef.current?.focus();
+      } else if (e.key === 'Escape' && document.activeElement === searchRef.current) {
+        setQuery('');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const loadFeed = useCallback(async ({ background = false } = {}) => {
     if (background) setRefreshing(true);
@@ -107,6 +128,7 @@ const Deals = () => {
       });
     } finally {
       setRefreshing(false);
+      setLastRefreshed(new Date().toISOString());
     }
   }, []);
 
@@ -146,6 +168,13 @@ const Deals = () => {
 
   const activeLabel = CATEGORIES.find((c) => c.id === category)?.label;
   const pill = statusPill[feed.source];
+
+  // Per-category counts for the filter chips.
+  const counts = useMemo(() => {
+    const map = { all: feed.deals.length };
+    for (const deal of feed.deals) map[deal.category] = (map[deal.category] ?? 0) + 1;
+    return map;
+  }, [feed.deals]);
 
   return (
     <section className="pb-4" aria-labelledby="deals-title">
@@ -198,14 +227,16 @@ const Deals = () => {
         <div className="relative flex-1">
           <FaMagnifyingGlass className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
           <Input
+            ref={searchRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search deals..."
-            className="pl-10"
+            className="pl-10 pr-12"
             aria-label="Search deals"
+            title="Press / to search"
           />
-          {query && (
+          {query ? (
             <button
               onClick={() => setQuery('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
@@ -213,6 +244,10 @@ const Deals = () => {
             >
               <FaXmark className="h-4 w-4" />
             </button>
+          ) : (
+            <span className="kbd pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
+              /
+            </span>
           )}
         </div>
         <Select
@@ -239,21 +274,63 @@ const Deals = () => {
         </Button>
       </motion.div>
 
+      {feed.deals.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
+          <p aria-live="polite">
+            Showing{' '}
+            <span className="font-semibold text-zinc-300">{filtered.length}</span> of{' '}
+            <span className="font-semibold text-zinc-300">{feed.deals.length}</span> deals
+            {category !== 'all' && <> in <span className="font-semibold text-zinc-300">{activeLabel}</span></>}
+            {query.trim() && <> matching <span className="font-semibold text-zinc-300">"{query.trim()}"</span></>}
+          </p>
+          {lastRefreshed && feed.state === DealStates.ready && (
+            <>
+              <span className="h-1 w-1 rounded-full bg-brand/60" aria-hidden="true" />
+              <p>
+                Updated {timeAgo(lastRefreshed)} · auto-refreshes every 2 min
+              </p>
+            </>
+          )}
+        </div>
+      )}
+
       {category && (
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
           className="mb-8 flex flex-wrap gap-2"
         >
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setCategory(cat.id)}
-              className={`chip chip-nowrap ${category === cat.id ? 'chip-active' : 'hover:text-white'}`}
-              aria-pressed={category === cat.id}
-            >
-              {cat.label}
-            </button>
-          ))}
+          {CATEGORIES.map((cat) => {
+            const isActive = category === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setCategory(cat.id)}
+                className={`chip chip-nowrap relative ${isActive ? 'text-brand' : 'hover:text-white'}`}
+                aria-pressed={isActive}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="deal-cat-pill"
+                    className="absolute inset-0 rounded-full border border-brand/60 bg-brand/15"
+                    transition={{ duration: prefersReduced ? 0 : 0.25, ease: 'easeOut' }}
+                    aria-hidden="true"
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-1.5">
+                  {cat.label}
+                  {counts[cat.id] != null && (
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
+                        isActive ? 'bg-brand/25 text-brand-2' : 'bg-white/5 text-zinc-400'
+                      }`}
+                    >
+                      {counts[cat.id]}
+                    </span>
+                  )}
+                </span>
+              </button>
+            );
+          })}
         </motion.div>
       )}
 
@@ -264,18 +341,8 @@ const Deals = () => {
           aria-busy="true"
         >
           {[0, 1, 2].map((i) => (
-            <motion.div
-              key={i}
-              {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
-              className="animate-pulse overflow-hidden rounded-xl border border-white/10 bg-charcoal"
-            >
-              <div className="aspect-[16/9] bg-charcoal-2" />
-              <div className="space-y-3 p-5">
-                <div className="h-4 w-3/4 rounded bg-charcoal-2" />
-                <div className="h-3 w-full rounded bg-charcoal-2" />
-                <div className="h-3 w-2/3 rounded bg-charcoal-2" />
-                <div className="h-9 w-full rounded bg-charcoal-2" />
-              </div>
+            <motion.div key={i} {...getMotionProps(prefersReduced, motionVariants.staggerItem)}>
+              <SkeletonCard />
             </motion.div>
           ))}
         </motion.div>
@@ -284,9 +351,11 @@ const Deals = () => {
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
           className="rounded-xl border border-white/10 bg-charcoal p-10 text-center"
         >
-          <p className="text-base font-semibold text-white">No deal posts yet.</p>
-          <p className="mt-1 text-sm text-zinc-400">
-            Deals will appear here the moment they're posted in the Discord.
+          <FaBolt className="mx-auto h-8 w-8 text-brand/50" aria-hidden="true" />
+          <p className="mt-3 text-base font-semibold text-white">No deal posts yet.</p>
+          <p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-zinc-400">
+            Deals will appear here the moment they're posted in the Discord. We refresh the feed
+            automatically every two minutes.
           </p>
           <Button variant="outline" size="sm" className="mt-5" onClick={() => loadFeed()}>
             <FaArrowsRotate className="text-sm" />
@@ -309,11 +378,13 @@ const Deals = () => {
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
           className="rounded-xl border border-white/10 bg-charcoal p-10 text-center"
         >
-          <p className="text-base font-semibold text-white">
+          <FaMagnifyingGlass className="mx-auto h-8 w-8 text-brand/40" aria-hidden="true" />
+          <p className="mt-3 text-base font-semibold text-white">
             No deals match{query ? ` "${query}"` : ' these filters'}.
           </p>
-          <p className="mt-1 text-sm text-zinc-400">
-            Try a different search or {category !== 'all' ? `switch from "${activeLabel}" ` : ''}to All.
+          <p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-zinc-400">
+            Try a different search or {category !== 'all' ? `switch from "${activeLabel}" ` : ''}to
+            All.
           </p>
           <Button
             variant="outline"
