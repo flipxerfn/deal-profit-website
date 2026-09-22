@@ -198,7 +198,7 @@ const AdminReviews = () => {
           </p>
         )}
         {reviews?.map((review) => (
-          <div key={review.id} className="rounded-xl border border-white/10 bg-charcoal p-5">
+          <div key={review.id} className="card p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

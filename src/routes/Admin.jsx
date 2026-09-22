@@ -24,13 +24,17 @@ const timefmt = (iso) => {
 };
 
 const Card = ({ icon, label, value, sub }) => (
-  <div className="rounded-xl border border-white/10 bg-charcoal p-5">
-    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+  <div className="card relative overflow-hidden p-5">
+    <div
+      className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100"
+      aria-hidden="true"
+    />
+    <div className="relative flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
       {icon}
       {label}
     </div>
-    <div className="mt-2 text-2xl font-extrabold tracking-tight text-white">{value}</div>
-    {sub && <div className="mt-1 text-xs text-zinc-500">{sub}</div>}
+    <div className="relative mt-2 text-2xl font-extrabold tracking-tight text-white">{value}</div>
+    {sub && <div className="relative mt-1 text-xs text-zinc-500">{sub}</div>}
   </div>
 );
 
@@ -135,16 +139,25 @@ const Admin = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(90%_140%_at_50%_0%,rgba(244,63,142,0.1),rgba(139,92,246,0.08)_48%,transparent_78%)] px-4">
         <div className="w-full max-w-md">
-          <div className="rounded-2xl border border-white/10 bg-charcoal p-8 shadow-[0_30px_80px_rgba(0,0,0,0.5)]">
-            <div className="mb-6 flex items-center gap-3">
-              <img src={dealProfitLogo} alt="" className="h-8 w-auto" />
+          <div className="glass-strong relative overflow-hidden rounded-2xl p-8 shadow-[0_30px_80px_rgba(0,0,0,0.5)]">
+            <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
+            <div
+              className="absolute inset-0 bg-[radial-gradient(90%_120%_at_20%_0%,rgba(244,63,94,0.1),transparent_70%)]"
+              aria-hidden="true"
+            />
+            <div className="relative mb-6 flex items-center gap-3">
+              <img
+                src={dealProfitLogo}
+                alt=""
+                className="h-8 w-auto drop-shadow-[0_0_16px_rgba(244,63,94,0.45)]"
+              />
               <div>
                 <p className="text-sm font-extrabold tracking-tight text-white">Deal Profit</p>
                 <p className="text-xs text-zinc-500">Private admin access</p>
               </div>
             </div>
 
-            <form onSubmit={onSubmit} className="space-y-4">
+            <form onSubmit={onSubmit} className="relative space-y-4">
               <div>
                 <label htmlFor="admin-username" className="mb-1 block text-xs font-semibold text-zinc-400">
                   Username
@@ -231,7 +244,7 @@ const Admin = () => {
       </header>
 
       <main className="mx-auto max-w-[1152px] px-4 py-8 sm:px-6">
-        <nav className="mb-8 flex flex-wrap gap-2">
+        <nav className="mb-8 flex flex-wrap gap-1 rounded-xl border border-white/10 bg-charcoal p-1">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: <FaPlug className="text-xs" /> },
             { id: 'settings', label: 'Settings', icon: <FaGear className="text-xs" /> },
@@ -242,7 +255,7 @@ const Admin = () => {
               key={t.id}
               onClick={() => setTab(t.id)}
               className={`btn px-4 py-2 text-xs ${
-                tab === t.id ? 'btn-primary' : 'btn-outline'
+                tab === t.id ? 'btn-primary' : 'btn-ghost'
               }`}
             >
               {t.icon}
@@ -266,12 +279,15 @@ const Admin = () => {
               </button>
             </div>
 
-            <div className="relative mb-6 flex items-center gap-2 rounded-xl border border-white/10 bg-charcoal p-4">
+            <div className="glass relative mb-6 flex items-center gap-2 rounded-xl p-4">
               <FaPlug className="text-sm text-brand" />
               <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
                 Discord
               </span>
-              <span className={`ml-auto rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider ${connPill}`}>
+              <span
+                className={`ml-auto inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider ${connPill}`}
+              >
+                {connected && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />}
                 {connText}
               </span>
             </div>

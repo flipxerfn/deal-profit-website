@@ -142,7 +142,7 @@ const AdminDeals = () => {
       )}
 
       {showForm && (
-        <form onSubmit={onSubmit} className="rounded-xl border border-white/10 bg-charcoal p-6">
+        <form onSubmit={onSubmit} className="card p-6">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-extrabold text-zinc-200">
               {editing ? 'Edit deal' : 'New deal'}
@@ -198,7 +198,7 @@ const AdminDeals = () => {
           </p>
         )}
         {deals?.map((deal) => (
-          <div key={deal.id} className="flex items-center gap-4 rounded-xl border border-white/10 bg-charcoal p-4">
+          <div key={deal.id} className="card flex items-center gap-4 p-4">
             {deal.image ? (
               <img
                 src={deal.image}
