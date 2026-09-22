@@ -46,8 +46,8 @@ const DealCard = ({ deal }) => {
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-5">
-        <h3 className="text-base font-bold text-white">{deal.title}</h3>
-        <p className="text-sm leading-relaxed text-zinc-400">{deal.description}</p>
+        <h3 className="line-clamp-2 text-base font-bold text-white">{deal.title}</h3>
+        <p className="line-clamp-2 text-sm leading-relaxed text-zinc-400">{deal.description}</p>
 
         <div className="mt-auto space-y-3">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
