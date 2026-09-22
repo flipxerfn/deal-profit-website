@@ -1,5 +1,5 @@
-import rtpcImg from '../assets/crops/deal1-hero.jpg';
-import headphonesImg from '../assets/crops/deal2-cropped.png';
+import rtpcImg from '../assets/crops/deal1-hero.webp';
+import headphonesImg from '../assets/crops/deal2-card.webp';
 
 export const CATEGORIES = [
   { id: 'all', label: 'All' },

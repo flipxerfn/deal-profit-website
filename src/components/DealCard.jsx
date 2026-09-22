@@ -19,6 +19,7 @@ const DealCard = ({ deal }) => {
             src={deal.image}
             alt={deal.imageAlt}
             loading="lazy"
+            decoding="async"
             referrerPolicy="no-referrer"
             style={{ objectPosition: deal.imagePosition ?? 'center' }}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"

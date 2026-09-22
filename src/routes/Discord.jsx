@@ -1,8 +1,8 @@
 import { FaDiscord, FaBolt, FaLock, FaUsers, FaGlobe, FaShieldAlt, FaComments } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { buttonClass, StatCard, Avatar, CTASection } from '../components/ui';
-import discord1Cropped from '../assets/crops/discord1-cropped.png';
-import discord2Cropped from '../assets/crops/discord2-cropped.png';
+import discord1Cropped from '../assets/crops/discord1-cropped.webp';
+import discord2Cropped from '../assets/crops/discord2-cropped.webp';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 
 const BENEFITS = [

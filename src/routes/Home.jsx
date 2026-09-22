@@ -22,7 +22,7 @@ import {
   Avatar,
 } from '../components/ui';
 import DealCard from '../components/DealCard';
-import rtpcImg from '../assets/crops/deal1-hero.jpg';
+import rtpcImg from '../assets/crops/deal1-hero.webp';
 import { HOME_FINDS, WHAT_WE_HUNT, HOW_IT_WORKS, COMMUNITY_STATS, DEALS } from '../data/deals';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 
