@@ -1,8 +1,22 @@
-import { Outlet } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
 const Layout = () => {
+  const { pathname } = useLocation();
+
+  // Reset scroll position on every route change (react-router keeps the
+  // old scroll offset otherwise, which feels broken on a multi-page site).
+  // Temporarily disable the global smooth-scroll so this is an instant jump.
+  useEffect(() => {
+    const html = document.documentElement;
+    const prev = html.style.scrollBehavior;
+    html.style.scrollBehavior = 'auto';
+    window.scrollTo(0, 0);
+    html.style.scrollBehavior = prev;
+  }, [pathname]);
+
   return (
     <div className="relative flex min-h-screen flex-col bg-night font-sans text-zinc-200 antialiased">
       <div

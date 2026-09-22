@@ -1,5 +1,5 @@
-import { Link, NavLink } from 'react-router-dom';
-import { FaBars, FaTimes } from 'react-icons/fa';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { FaBars, FaTimes, FaCrown } from 'react-icons/fa';
 import dealProfitLogo from '../assets/deal-profit-logo.png';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,6 +19,7 @@ const TRIAL_URL = 'https://whop.com/deal-profit-6dcc/price-error-66';
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const prefersReduced = useReducedMotion();
+  const { pathname } = useLocation();
   const activeLinkRef = useRef(null);
   const indicatorRef = useRef(null);
 
@@ -37,10 +38,10 @@ const Navbar = () => {
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
-  }, []);
+  }, [pathname]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/5 bg-night/90 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-white/5 bg-night/60 backdrop-blur-xl">
       <nav className="mx-auto flex h-16 w-full max-w-[1152px] items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-2.5" aria-label="Deal Profit home">
           <img
@@ -56,7 +57,7 @@ const Navbar = () => {
         <div ref={activeLinkRef} className="relative hidden items-center gap-0.5 lg:flex">
           <motion.div
             ref={indicatorRef}
-            className="absolute bottom-0 left-0 h-0.5 bg-brand rounded-full transition-all duration-300 ease-out"
+            className="absolute bottom-0 left-0 h-0.5 rounded-full bg-gradient-to-r from-brand to-glow shadow-[0_0_12px_rgba(244,63,94,0.6)] transition-all duration-300 ease-out"
             style={{ width: 0, transform: 'translateX(0)', opacity: 0 }}
             animate={{ width: 'auto', opacity: 1 }}
           />
@@ -86,7 +87,8 @@ const Navbar = () => {
             rel="noopener noreferrer"
             className="btn btn-primary hidden whitespace-nowrap sm:inline-flex"
           >
-            Start Free Trial
+            <FaCrown className="text-xs" />
+            Get Premium
           </a>
           <button
             onClick={() => setIsOpen(!isOpen)}
@@ -98,6 +100,8 @@ const Navbar = () => {
           </button>
         </div>
       </nav>
+
+      <div className="hairline-gradient h-px opacity-40" aria-hidden="true" />
 
       <AnimatePresence>
         {isOpen && (
@@ -115,7 +119,8 @@ const Navbar = () => {
                 rel="noopener noreferrer"
                 className="btn btn-primary w-full mb-3"
               >
-                Start Free Trial
+                <FaCrown className="text-xs" />
+                Get Premium
               </a>
               {LINKS.map((link) => (
                 <NavLink
