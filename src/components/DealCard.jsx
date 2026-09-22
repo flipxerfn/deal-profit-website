@@ -68,7 +68,14 @@ const DealCard = ({ deal }) => {
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500">
               {deal.meta.map((item, i) => (
                 <span key={`${i}-${item}`} className="inline-flex items-center gap-1.5">
-                  <span className="h-1 w-1 rounded-full bg-brand/70" />
+                  {item === 'Live now' ? (
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
+                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand" />
+                    </span>
+                  ) : (
+                    <span className="h-1 w-1 rounded-full bg-brand/70" />
+                  )}
                   {item}
                 </span>
               ))}

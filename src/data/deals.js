@@ -59,6 +59,31 @@ export const DEALS = [
 
 export const HOME_FINDS = DEALS.filter((d) => d.id === 'rtx-5060-gaming-pc' || d.id === 'penny-deals');
 
+export const HOW_IT_WORKS = [
+  {
+    step: '01',
+    title: 'Join the community',
+    text: 'Hop into the Deal Profit Discord and grab the free trial to unlock member-only channels.',
+  },
+  {
+    step: '02',
+    title: 'Get real-time alerts',
+    text: 'Price errors, penny finds and glitches are posted the second they go live — in your feed and Discord.',
+  },
+  {
+    step: '03',
+    title: 'Catch the deal first',
+    text: 'Check the listing fast, lock in the price and resell or keep the savings — before everyone else.',
+  },
+];
+
+export const COMMUNITY_STATS = [
+  { value: '10K+', label: 'Deal hunters', icon: 'users' },
+  { value: '50+', label: 'Deals posted daily', icon: 'bolt' },
+  { value: '93%', label: 'Average savings', icon: 'percent' },
+  { value: '24/7', label: 'Live alerts', icon: 'bell' },
+];
+
 export const WHAT_WE_HUNT = [
   {
     title: 'Price Errors',
