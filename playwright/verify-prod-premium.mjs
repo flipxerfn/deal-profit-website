@@ -57,7 +57,7 @@ if (!deployed) {
     hero: document.body.textContent.replace(/\s+/g, ' ').includes('Catch the deals'),
     getPremium: document.body.textContent.includes('Get Premium'),
     disclaimer: document.body.textContent.includes('Deals are not guaranteed'),
-    whop: [...document.querySelectorAll('a[href*="whop.com/deal-profit-6dcc/price-error-66"]')].length,
+    whop: [...document.querySelectorAll('a[href*="whop.com/deal-profit-6dcc?a=phillipkuz9"]')].length,
     overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
   }));
   await page.screenshot({ path: new URL('./.qa/prod-home.png', import.meta.url).pathname, fullPage: true });

@@ -16,7 +16,7 @@ desktop/tablet/mobile and deployed to production.
 
 - **Display font**: Space Grotesk for headings; Inter remains the body font.
 - **Premium pricing**: $25.00/month with a free-trial message ("Start free — $25/mo after",
-  "Cancel anytime"). All purchase CTAs continue to link to `https://whop.com/deal-profit-6dcc/price-error-66`.
+  "Cancel anytime"). All purchase CTAs continue to link to `https://whop.com/deal-profit-6dcc?a=phillipkuz9`.
 - No new heavyweight dependency sets (no Radix/shadcn package install); the existing shadcn-style ui
   kit is extended instead.
 

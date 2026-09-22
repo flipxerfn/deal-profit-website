@@ -24,7 +24,7 @@ async function checkRoute(page, route, viewport) {
   // Check for key visual elements
   const title = await page.title();
   const hasNewWhop = await page.evaluate(() => 
-    document.body.innerHTML.includes('whop.com/deal-profit-6dcc/price-error-66')
+    document.body.innerHTML.includes('whop.com/deal-profit-6dcc?a=phillipkuz9')
   );
   const hasOldWhop = await page.evaluate(() => 
     document.body.innerHTML.includes('whop.com/deals-profit/deal-profit-price-errors-deals') || document.body.innerHTML.includes('whop.com/deal-profit/deal-profit-01/')

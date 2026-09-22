@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { FaDiscord } from 'react-icons/fa';
 import dealProfitLogo from '../assets/deal-profit-logo.png';
 
-const WHOP_URL = 'https://whop.com/deal-profit-6dcc/price-error-66';
+const WHOP_URL = 'https://whop.com/deal-profit-6dcc?a=phillipkuz9';
 
 const Footer = () => {
   return (

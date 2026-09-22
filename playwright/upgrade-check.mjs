@@ -16,7 +16,7 @@ out.viewport = await page.evaluate(() => ({
   trialCopy: document.body.textContent.includes('Start free — pay $25/month after your trial'),
   faqCount: document.querySelectorAll('[aria-expanded]').length,
   overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-  whopLinks: [...document.querySelectorAll('a[href*="whop.com/deal-profit-6dcc/price-error-66"]')].length,
+  whopLinks: [...document.querySelectorAll('a[href*="whop.com/deal-profit-6dcc?a=phillipkuz9"]')].length,
   wrapIssue: [...document.querySelectorAll('a.btn')].some((b) => {
     const lh = parseFloat(getComputedStyle(b).lineHeight) || 16;
     const r = b.getBoundingClientRect();

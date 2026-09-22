@@ -32,7 +32,7 @@ async function captureRoute(page, route, viewport) {
   // Get title and check for key elements
   const title = await page.title();
   const hasWhopNew = await page.evaluate(() => 
-    document.body.innerHTML.includes('whop.com/deal-profit-6dcc/price-error-66')
+    document.body.innerHTML.includes('whop.com/deal-profit-6dcc?a=phillipkuz9')
   );
   const hasWhopOld = await page.evaluate(() => 
     document.body.innerHTML.includes('whop.com/deals-profit/deal-profit-price-errors-deals') || document.body.innerHTML.includes('whop.com/deal-profit/deal-profit-01/')

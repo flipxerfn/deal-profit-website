@@ -21,7 +21,7 @@ import {
 } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 
-const WHOP_URL = 'https://whop.com/deal-profit-6dcc/price-error-66';
+const WHOP_URL = 'https://whop.com/deal-profit-6dcc?a=phillipkuz9';
 const PRICE = '$25';
 
 const BENEFITS = [

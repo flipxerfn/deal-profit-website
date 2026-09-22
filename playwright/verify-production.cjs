@@ -34,7 +34,7 @@ test('verify production serves new build', async () => {
   
   // 6. Search loaded page for new Whop URL
   const pageContent = page.content();
-  const hasNewWhop = pageContent.includes('whop.com/deal-profit-6dcc/price-error-66');
+  const hasNewWhop = pageContent.includes('whop.com/deal-profit-6dcc?a=phillipkuz9');
   const hasOldWhop = pageContent.includes('whop.com/deals-profit/deal-profit-price-errors-deals') || pageContent.includes('whop.com/deal-profit/deal-profit-01/');
   const hasReviews = page.locator('text=Reviews').count() > 0;
   const hasUpgrade = page.locator('text=Upgrade').count() > 0;

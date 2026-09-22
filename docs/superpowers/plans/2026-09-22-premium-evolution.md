@@ -14,7 +14,7 @@
 
 - Display font: **Space Grotesk** (headings) + Inter (body). Load both via Google Fonts.
 - Premium pricing copy is **$25.00/month**, always paired with free-trial messaging ("Start free — pay $25/mo after", "Cancel anytime").
-- All purchase CTAs keep `https://whop.com/deal-profit-6dcc/price-error-66` (TRIAL_URL in codebases is already this).
+- All purchase CTAs keep `https://whop.com/deal-profit-6dcc?a=phillipkuz9` (TRIAL_URL in codebases is already this).
 - Discord invite keeps `https://discord.gg/dealprofit`.
 - No new npm dependencies. No Radix/shadcn package installs. Use the existing ui kit.
 - Worker tests must stay 45/45 passing. `npm run build` and `npm run lint` must pass.

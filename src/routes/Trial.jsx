@@ -84,7 +84,7 @@ const Trial = () => {
 
         <motion.div {...getMotionProps(prefersReduced, motionVariants.fadeInUp)} className="mt-8">
           <a
-            href="https://whop.com/deal-profit-6dcc/price-error-66"
+            href="https://whop.com/deal-profit-6dcc?a=phillipkuz9"
             target="_blank"
             rel="noopener noreferrer"
             className={buttonClass({ variant: 'primary', size: 'xl' })}
@@ -175,7 +175,7 @@ const Trial = () => {
         actions={
           <>
             <a
-              href="https://whop.com/deal-profit-6dcc/price-error-66"
+              href="https://whop.com/deal-profit-6dcc?a=phillipkuz9"
               target="_blank"
               rel="noopener noreferrer"
               className={buttonClass({ variant: 'primary', size: 'lg' })}

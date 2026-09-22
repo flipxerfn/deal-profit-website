@@ -14,7 +14,7 @@ const LINKS = [
   { to: '/upgrade', label: 'Upgrade' },
 ];
 
-const TRIAL_URL = 'https://whop.com/deal-profit-6dcc/price-error-66';
+const TRIAL_URL = 'https://whop.com/deal-profit-6dcc?a=phillipkuz9';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);

@@ -1,7 +1,7 @@
 // Verify live Whop link swap: new URL present, old URLs absent, no page errors.
 import { chromium } from 'playwright';
 
-const NEW_URL = 'https://whop.com/deal-profit-6dcc/price-error-66';
+const NEW_URL = 'https://whop.com/deal-profit-6dcc?a=phillipkuz9';
 const OLD_1 = 'whop.com/deal-profit/deal-profit-01';
 const OLD_2 = 'whop.com/deals-profit/deal-profit-price-errors-deals';
 
