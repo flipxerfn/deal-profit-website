@@ -7,9 +7,10 @@ import {
   FaStarHalfStroke,
   FaTriangleExclamation,
   FaXmark,
+  FaShieldHalved,
 } from 'react-icons/fa6';
 import { motion } from 'framer-motion';
-import { Button, Input, Textarea, Select, Badge, Avatar, Label } from '../components/ui';
+import { Button, Input, Textarea, Select, Badge, Avatar, Label, RatingBars } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 
 const RATING_FILTERS = [
@@ -107,6 +108,17 @@ const Reviews = () => {
     return state.reviews.filter((r) => r.rating === rating);
   }, [state.reviews, filter]);
 
+  // 5→1 star distribution for the summary card.
+  const distribution = useMemo(() => {
+    const buckets = [5, 4, 3, 2, 1].map((stars) => ({ stars, count: 0 }));
+    for (const review of state.reviews) {
+      const bucket = buckets.find((b) => b.stars === review.rating);
+      if (bucket) bucket.count += 1;
+    }
+    const total = buckets.reduce((sum, b) => sum + b.count, 0);
+    return buckets.map((b) => ({ ...b, pct: total ? Math.round((b.count / total) * 100) : 0 }));
+  }, [state.reviews]);
+
   const submit = async (e) => {
     e.preventDefault();
     setFormError(null);
@@ -187,14 +199,18 @@ const Reviews = () => {
                 </p>
               </div>
               <div className="text-right">
-                <Stars rating={summary.average ?? 0} size="text-3xl" />
+                <Stars rating={summary.average ?? 0} size="text-2xl" />
               </div>
+            </div>
+            <div className="mt-5 border-t border-white/5 pt-4">
+              <RatingBars distribution={distribution} />
             </div>
           </motion.div>
           <motion.div
             {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
-            className="card p-6"
+            className="card relative overflow-hidden p-6"
           >
+            <FaQuoteLeft className="absolute right-4 top-4 h-6 w-6 text-brand/10" aria-hidden="true" />
             {state.featured ? (
               <>
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand-2">
@@ -203,7 +219,20 @@ const Reviews = () => {
                 <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-zinc-300">
                   "{state.featured.text}"
                 </p>
-                <p className="mt-2 text-xs font-semibold text-white">{state.featured.name}</p>
+                <div className="mt-4 flex items-center gap-3">
+                  <Avatar size="sm">
+                    <span className="text-xs font-bold">
+                      {(state.featured.name || 'D').charAt(0).toUpperCase()}
+                    </span>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold text-white">{state.featured.name}</p>
+                    <p className="flex items-center gap-1 text-[11px] text-zinc-500">
+                      <FaShieldHalved className="text-[9px] text-brand-2" />
+                      Verified member
+                    </p>
+                  </div>
+                </div>
               </>
             ) : (
               <p className="text-sm text-zinc-500">
@@ -391,7 +420,11 @@ const Reviews = () => {
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <Avatar size="sm" children={(review.name || '?').charAt(0).toUpperCase()} />
+                  <Avatar size="sm">
+                    <span className="text-xs font-bold">
+                      {(review.name || '?').charAt(0).toUpperCase()}
+                    </span>
+                  </Avatar>
                   <div>
                     <p className="text-sm font-bold text-white">{review.name}</p>
                     <p className="text-xs text-zinc-500">{formatDate(review.createdAt)}</p>
@@ -415,7 +448,8 @@ const Reviews = () => {
                 >
                   {CATEGORY_LABEL(review.category) ?? 'Community'}
                 </Badge>
-                <Badge variant="outline" className="text-[10px] text-zinc-600">
+                <Badge variant="outline" className="gap-1 text-[10px] text-zinc-400">
+                  <FaShieldHalved className="text-[9px] text-brand-2" aria-hidden="true" />
                   Verified review
                 </Badge>
               </div>
