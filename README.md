@@ -4,18 +4,28 @@ A dark, scannable website for Deal Profit — a price error, penny deal and glit
 
 ## Pages
 
-- `/` — Home: hero, what we hunt, latest finds, community CTA
-- `/deals` — Live deal feed (Discord-backed) with search, category chips and sorting
-- `/trial` — Membership / free trial page
-- `/discord` — Community page with Discord screenshots
+- `/` — Home: animated hero with live ticker, how it works, what we hunt, latest finds, live review preview, community stats
+- `/deals` — Live deal feed (Discord-backed) with keyboard search (`/`, `Esc`), category chips with counts, sorting and refresh feedback
+- `/reviews` — Community reviews with rating distribution, featured review and a submit form (approval flow in the Worker)
+- `/upgrade` — Premium page: $25/mo pricing card (free trial messaging), benefits, free-vs-premium comparison and FAQ
+- `/trial` — Membership / free trial page with what's-included checklist
+- `/discord` — Community page with Discord screenshots, stats and a blurple join CTA
 
 ## Tech Stack
 
 - **Frontend**: React 19 + Vite
 - **Styling**: Tailwind CSS v4 (CSS-first config in `src/index.css`)
+- **Fonts**: Space Grotesk (display), Inter (body) — loaded in `index.html`
 - **Icons**: React Icons
 - **Routing**: React Router v7
+- **Animation**: Framer Motion (respects `prefers-reduced-motion` via `src/lib/motion.js`)
 - **Deployment**: Cloudflare Workers (static assets + Worker API)
+
+## Design system
+
+- `src/components/ui/` — shared kit: `SectionHeader`, `FeatureCard`, `StatCard`, `CTASection`, `Accordion` (FAQ), `RatingBars`, `Badge`, `Card`, `Avatar`, form controls, `SkeletonCard`. No external UI dependency — extend the kit rather than adding a library.
+- `src/index.css` — `@theme` design tokens (`brand`, `glow`, `charcoal`, `night`, fonts) plus layered utilities: `.glass`, `.glass-strong`, `.card`, `.btn`, `.chip`, `.badge`, `.kbd`, `.noise`, `.text-gradient-brand`, `.text-shadow-glow`, `.hairline-gradient`.
+- Assets are WebP (screenshots/cards) with the logo downscaled in place; `/admin` is lazy-loaded so public pages ship a leaner bundle.
 
 ## Development
 
@@ -31,11 +41,12 @@ npm run build && npx wrangler dev   # full stack: SPA + /api/deals
 
 ## Structure
 
-- `src/routes/` — page components (Home, Deals, Trial, Discord)
+- `src/routes/` — page components (Home, Deals, Reviews, Trial, Discord, Upgrade, Admin + `admin/` tabs)
 - `src/components/` — shared UI (Navbar, Footer, Layout, DealCard)
+- `src/components/ui/` — shared design-system kit (cards, headers, badges, form controls, etc.)
 - `src/data/deals.js` — deal data, separate from presentation
 - `src/index.css` — Tailwind v4 entry: design tokens (`@theme`) plus layered components
-- `worker/` — Cloudflare Worker: `index.js` (routing, Discord feed + admin API), `auth.js` (session signing/cookies), `parseDeals.js` (message → deal parser)
+- `worker/` — Cloudflare Worker: `index.js` (routing, Discord feed + admin API), `auth.js` (session signing/cookies), `parseDeals.js` (message → deal parser), `reviews.js` (review shape + validation)
 - `public/` — static assets (favicon, etc.)
 
 ## Live Discord Deal Feed
@@ -80,6 +91,8 @@ Admin settings and manual deals are stored server-side in a **Durable Object** (
 2. Add/edit fallback deals in `src/data/deals.js`
 3. Adjust brand tokens (colors, shadows) in the `@theme` block of `src/index.css`
 4. Update the Whop and Discord invite links wherever you see them
+5. Premium pricing copy ("Start free — pay $25/month after", "Cancel anytime") lives on `/upgrade` and `/trial`; the switchable fonts are in `index.html`
+6. Extend the design system by adding components to `src/components/ui/` and exporting from its `index.js`
 
 ## Deployment
 
