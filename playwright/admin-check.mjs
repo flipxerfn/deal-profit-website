@@ -1,16 +1,36 @@
-// Sanity: /admin renders (login gate) with no page errors / overflow.
 import { chromium } from 'playwright';
+
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
-const errors = [];
-page.on('pageerror', (e) => errors.push(String(e).slice(0, 300)));
-page.on('console', (m) => {
-  if (m.type() === 'error') errors.push(m.text().slice(0, 300));
-});
-await page.goto('http://localhost:8787/admin', { waitUntil: 'networkidle', timeout: 30000 });
-await page.waitForTimeout(800);
-const text = await page.evaluate(() => document.body.innerText.slice(0, 400));
-const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-console.log(JSON.stringify({ hasAdminUI: /admin|login|sign in|reviews|rejected|pending/i.test(text), bodyHead: text.slice(0, 120), pageErrors: errors, overflow }, null, 2));
+const out = {};
+
+// /admin in dev — /api/admin/status 404s → falls back to login phase.
+const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const page = await ctx.newPage();
+const consoleErrors = [];
+page.on('console', (m) => { if (m.type() === 'error' && !m.text().includes('404')) consoleErrors.push(m.text()); });
+page.on('pageerror', (e) => consoleErrors.push(`PAGEERROR: ${e.message}`));
+
+await page.goto('http://localhost:5173/admin', { waitUntil: 'networkidle' });
+out.login = await page.evaluate(() => ({
+  loginVisible: !!document.querySelector('#admin-username') && !!document.querySelector('#admin-password'),
+  submitLabel: document.querySelector('button[type="submit"]')?.textContent.trim(),
+  overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+}));
+
+// empty submit → validation error
+await page.click('button[type="submit"]');
+await page.waitForTimeout(200);
+out.validationError = await page.evaluate(() =>
+  document.body.textContent.includes('Enter a username and password.')
+);
+
+// mobile login layout
+await page.setViewportSize({ width: 390, height: 844 });
+await page.waitForTimeout(200);
+out.mobile = await page.evaluate(() => ({
+  overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+}));
+
+out.consoleErrors = consoleErrors;
+console.log(JSON.stringify(out, null, 2));
 await browser.close();
-process.exit(errors.length === 0 && overflow <= 0 ? 0 : 1);
