@@ -1,4 +1,4 @@
-import rtpcImg from '../assets/crops/deal1-cropped.jpg';
+import rtpcImg from '../assets/crops/deal1-hero.jpg';
 import headphonesImg from '../assets/crops/deal2-cropped.png';
 
 export const CATEGORIES = [

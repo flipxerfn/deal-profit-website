@@ -3,7 +3,7 @@ import { FaArrowRight, FaBolt, FaCoins, FaPercent, FaBell, FaShieldAlt, FaUsers,
 import { motion } from 'framer-motion';
 import { Card, Badge, buttonClass } from '../components/ui';
 import DealCard from '../components/DealCard';
-import rtpcImg from '../assets/crops/deal1-cropped.jpg';
+import rtpcImg from '../assets/crops/deal1-hero.jpg';
 import { HOME_FINDS, WHAT_WE_HUNT } from '../data/deals';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 
@@ -22,12 +22,12 @@ const Home = () => {
   return (
     <>
       {/* Hero Section */}
-      <section className="pb-12 md:pb-16 relative" aria-labelledby="hero-title">
+      <section className="pt-12 md:pt-16 pb-16 md:pb-20 relative" aria-labelledby="hero-title">
         {/* Hero background glow */}
         <div className="absolute inset-0 radial-glow-hero pointer-events-none" aria-hidden="true" />
         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[600px] bg-gradient-to-t from-brand/5 via-transparent to-transparent pointer-events-none" aria-hidden="true" />
         
-        <div className="relative grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
+        <div className="relative grid items-center gap-10 lg:grid-cols-[1fr_0.9fr] lg:gap-16">
           <div>
             <motion.div
               {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
@@ -63,7 +63,7 @@ const Home = () => {
 
             <motion.div
               {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-              className="mt-8 flex flex-wrap gap-3"
+              className="mt-8 flex flex-wrap gap-4"
             >
               <Link to="/deals" className={buttonClass({ variant: 'primary', size: 'lg' })}>
                 Explore Deals
@@ -102,27 +102,37 @@ const Home = () => {
             {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
             className="relative"
           >
-            <div className="rounded-xl border border-white/10 bg-charcoal p-3 shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_40px_rgba(244,63,94,0.1)]">
+            <div className="rounded-2xl border border-white/10 bg-charcoal p-3 shadow-[0_24px_70px_rgba(0,0,0,0.55),0_0_50px_rgba(244,63,94,0.12)]">
               <div className="relative aspect-[16/9] overflow-hidden rounded-lg bg-charcoal-2">
                 <img
                   src={rtpcImg}
                   alt="RTX 5060 Gaming PC retailer listing for $39.99"
-                  className="h-full w-full object-cover object-top"
+                  className="h-full w-full object-cover object-center brightness-[0.96]"
                 />
-                <div className="absolute left-3 top-3 flex items-center gap-2">
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal/50 via-black/5 to-black/15" aria-hidden="true" />
+                <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
                   <Badge variant="brand" className="shadow-[0_0_12px_rgba(244,63,94,0.4)]">Price error</Badge>
-                  <Badge variant="outline" className="bg-black/60 text-zinc-200 border-black/30">Tech</Badge>
+                  <Badge variant="outline" className="bg-black/50 text-zinc-200 border-black/30 backdrop-blur-sm">Tech</Badge>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+              <div className="flex flex-wrap items-end justify-between gap-3 px-3 pt-4 pb-2">
                 <div>
                   <p className="text-sm font-bold text-white">RTX 5060 Gaming PC</p>
-                  <p className="text-xs text-zinc-500">Retail $599.99</p>
+                  <p className="mt-0.5 text-xs text-zinc-500">
+                    <span className="line-through decoration-zinc-600">Retail $599.99</span>
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-extrabold tracking-tight text-brand">$39.99</p>
                   <p className="text-xs font-semibold text-brand-2">Save 93%</p>
                 </div>
+              </div>
+              <div className="mx-2 mb-1 flex items-center justify-between gap-3 border-t border-white/10 pt-3 pb-1 px-1">
+                <p className="text-xs text-zinc-400">
+                  <FaBolt className="mr-1 inline h-3 w-3 text-brand" />
+                  Live now — price just dropped
+                </p>
+                <p className="text-xs font-semibold text-emerald-300">Deal active</p>
               </div>
             </div>
             
