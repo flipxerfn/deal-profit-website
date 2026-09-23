@@ -11,7 +11,7 @@ import {
   FaStar,
 } from 'react-icons/fa';
 import { FaQuoteLeft, FaShieldHalved, FaDiscord, FaCrown } from 'react-icons/fa6';
-import { motion, useInView } from 'framer-motion';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
   Badge,
   buttonClass,
@@ -128,6 +128,44 @@ const LiveTicker = () => (
     </div>
   </div>
 );
+
+const CAUGHT = [
+  { deal: 'Penny CPU', when: '40s ago' },
+  { deal: 'RTX 5060 Gaming PC', when: '2m ago' },
+  { deal: 'Wireless Headphones', when: '6m ago' },
+];
+
+// Rotating FOMO strip under the hero ticker (static first line under reduced motion).
+const CaughtFeed = () => {
+  const prefersReduced = useReducedMotion();
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (prefersReduced) return undefined;
+    const timer = setInterval(() => setIndex((i) => (i + 1) % CAUGHT.length), 4500);
+    return () => clearInterval(timer);
+  }, [prefersReduced]);
+
+  const item = CAUGHT[index];
+  return (
+    <div className="mt-2 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2.5">
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={item.deal}
+          initial={prefersReduced ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={prefersReduced ? undefined : { opacity: 0, y: -8 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          className="flex items-center gap-2 text-xs text-zinc-400"
+        >
+          <FaBolt className="h-3 w-3 shrink-0 text-brand" />
+          <span className="font-semibold text-zinc-300">{item.deal}</span>
+          <span>caught {item.when}</span>
+        </motion.p>
+      </AnimatePresence>
+    </div>
+  );
+};
 
 // Two most relevant approved reviews fetched live (graceful: hidden on failure).
 const ReviewPreview = () => {
@@ -326,6 +364,7 @@ const Home = () => {
                 <p className="text-xs font-semibold text-emerald-300">Deal active</p>
               </div>
               <LiveTicker />
+              <CaughtFeed />
             </div>
 
             {/* Floating badge */}
@@ -428,7 +467,7 @@ const Home = () => {
         >
           {HOME_FINDS.map((deal) => (
             <motion.div key={deal.id} {...getMotionProps(prefersReduced, motionVariants.staggerItem)}>
-              <DealCard deal={deal} />
+              <DealCard deal={deal} spotlight={deal.id === 'penny-cpu'} />
             </motion.div>
           ))}
         </motion.div>
