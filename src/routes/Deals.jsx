@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fa6';
 import { motion } from 'framer-motion';
 import DealCard from '../components/DealCard';
+import SpotlightDeal from '../components/SpotlightDeal';
 import { Button, Input, Select, Badge, SkeletonCard } from '../components/ui';
 import { CATEGORIES, DEALS as DEMO_DEALS } from '../data/deals';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
@@ -176,6 +177,13 @@ const Deals = () => {
     return map;
   }, [feed.deals]);
 
+  const spotlight = DEMO_DEALS.find((d) => d.id === 'penny-cpu');
+  const showSpotlight =
+    spotlight &&
+    !query.trim() &&
+    category === 'all' &&
+    (feed.source !== 'discord' || feed.deals.some((d) => d.id === 'penny-cpu'));
+
   return (
     <section className="pb-4" aria-labelledby="deals-title">
       <motion.header
@@ -219,6 +227,8 @@ const Deals = () => {
           </div>
         </motion.div>
       )}
+
+      {showSpotlight && <SpotlightDeal deal={spotlight} />}
 
       <motion.div
         {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
