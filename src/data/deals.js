@@ -1,5 +1,7 @@
 import rtpcImg from '../assets/crops/deal1-hero.webp';
 import headphonesImg from '../assets/crops/deal2-card.webp';
+import cpuImg from '../assets/crops/cpu-card.webp';
+import cpuSquareImg from '../assets/crops/cpu-square.webp';
 
 export const CATEGORIES = [
   { id: 'all', label: 'All' },
@@ -9,6 +11,23 @@ export const CATEGORIES = [
 ];
 
 export const DEALS = [
+  {
+    id: 'penny-cpu',
+    title: 'Penny CPU',
+    category: 'penny',
+    categoryLabel: 'Penny Deals',
+    badge: 'Penny find',
+    price: 0.01,
+    referencePrice: 299.99,
+    description:
+      'A brand-new desktop CPU caught at a penny — a retailer price error posted the moment it went live. First come, first served.',
+    meta: ['Live now', 'Save 100%', 'Found by Deal Profit'],
+    image: cpuImg,
+    imageSquare: cpuSquareImg,
+    imageAlt: 'Penny CPU deal caught at $0.01',
+    imagePosition: 'center',
+    cta: { label: 'View Deal', href: 'https://whop.com/deal-profit-6dcc?a=phillipkuz9' },
+  },
   {
     id: 'rtx-5060-gaming-pc',
     title: 'RTX 5060 Gaming PC',
@@ -24,20 +43,6 @@ export const DEALS = [
     imageAlt: 'RTX 5060 Gaming PC retailer listing at $39.99',
     imagePosition: 'center top',
     cta: { label: 'View Deal', href: 'https://whop.com/deal-profit-6dcc?a=phillipkuz9' },
-  },
-  {
-    id: 'penny-deals',
-    title: 'Penny Deals',
-    category: 'penny',
-    categoryLabel: 'Penny Deals',
-    badge: 'Penny finds',
-    price: 0.01,
-    displayPrice: 'As low as $0.01',
-    description:
-      'Extreme price drops and penny finds posted the moment they go live in member-only channels.',
-    meta: ['Hourly updates', '50+ finds daily'],
-    image: null,
-    cta: { label: 'View in Community', href: 'https://discord.gg/dealprofit' },
   },
   {
     id: 'wireless-headphones',
@@ -57,7 +62,7 @@ export const DEALS = [
   },
 ];
 
-export const HOME_FINDS = DEALS.filter((d) => d.id === 'rtx-5060-gaming-pc' || d.id === 'penny-deals');
+export const HOME_FINDS = DEALS.filter((d) => d.id === 'penny-cpu' || d.id === 'rtx-5060-gaming-pc');
 
 export const HOW_IT_WORKS = [
   {
