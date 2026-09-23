@@ -94,6 +94,19 @@ for (const route of ROUTES) {
       if (!m.bodyText.toLowerCase().includes(route.expect.toLowerCase())) {
         failures.push(`${label}: expected text "${route.expect}" missing`);
       }
+      if (route.key === 'home') {
+        const first = await page.locator('h3.line-clamp-2').first().textContent();
+        if (!first.includes('Penny CPU')) failures.push('home: first finds card is not Penny CPU');
+        // caught-feed rotates every 4.5s, so match any of its values ("caught 40s ago" first).
+        if (!(await page.getByText(/caught \d+[sm] ago/).first().isVisible().catch(() => false)))
+          failures.push('home: caught-feed missing');
+      }
+      if (route.key === 'deals') {
+        if (!(await page.getByText('Penny find — live now').first().isVisible().catch(() => false)))
+          failures.push('deals: spotlight banner missing');
+        if (!(await page.getByText('$0.01').first().isVisible().catch(() => false)))
+          failures.push('deals: $0.01 price missing');
+      }
       if (consoleErrors.length) failures.push(`${label}: console errors → ${consoleErrors.join(' | ')}`);
     } catch (e) {
       failures.push(`${label}: exception ${e.message.split('\n')[0]}`);
