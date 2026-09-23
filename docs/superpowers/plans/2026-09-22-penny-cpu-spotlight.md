@@ -270,7 +270,7 @@ git add src/components/DealCard.jsx src/index.css && git commit -m "feat: DealCa
 - Consumes: `deal` from Task 1 (uses `deal.imageSquare ?? deal.image`, `deal.title`, `deal.description`, `deal.price`, `deal.referencePrice`, `deal.cta`, `deal.imageAlt`); `buttonClass` from `./ui`; icons `FaBolt` (fa) and `FaDiscord` (fa6).
 - Produces: `<SpotlightDeal deal={deal} />` — a marketing banner; later tasks don't depend on it.
 
-- [ ] **Step 1: Create `src/components/SpotlightDeal.jsx`**
+- [x] **Step 1: Create `src/components/SpotlightDeal.jsx`**
 
 ```jsx
 import { motion } from 'framer-motion';
@@ -369,7 +369,7 @@ export default SpotlightDeal;
 
 (If `grid-pattern` utility doesn't exist, drop that inner div — check `src/index.css` for `.grid-pattern`; it exists from the Home hero. If not found, omit it.)
 
-- [ ] **Step 2: Wire into `Deals.jsx`**
+- [x] **Step 2: Wire into `Deals.jsx`**
 
 Add to imports:
 
@@ -394,7 +394,7 @@ Render between the `feed.notice` block and the search/sort controls row (after t
 {showSpotlight && <SpotlightDeal deal={spotlight} />}
 ```
 
-- [ ] **Step 3: `[RF-3]` + `[RF-2]` verify banner + filter state**
+- [x] **Step 3: `[RF-3]` + `[RF-2]` verify banner + filter state**
 
 ```bash
 node - <<'EOF'
@@ -415,7 +415,7 @@ EOF
 
 Expected: `banner visible on load: true` and `hidden after search: true`.
 
-- [ ] **Step 4: Full QA + commit**
+- [x] **Step 4: Full QA + commit**
 
 ```bash
 node playwright/final-qa-premium.mjs 2>&1 | tail -8   # failures [] passed true
@@ -433,7 +433,7 @@ git add src/components/SpotlightDeal.jsx src/routes/Deals.jsx && git commit -m "
 - Consumes: `DEALS`, `HOME_FINDS` from Task 1; existing `LiveTicker` (rendered inside the hero card); `useReducedMotion`, `motionVariants`, `getMotionProps`; `DealCard` with the new `spotlight` prop.
 - Produces: `<CaughtFeed />` (self-contained), and the finds grid renders `<DealCard deal={deal} spotlight={deal.id === 'penny-cpu'} />`.
 
-- [ ] **Step 1: Add the CaughtFeed component**
+- [x] **Step 1: Add the CaughtFeed component**
 
 After the `LiveTicker` definition (line ~130), add:
 
@@ -483,7 +483,7 @@ Update the framer-motion import on line 14 to include `AnimatePresence`:
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 ```
 
-- [ ] **Step 2: Render it under the hero ticker + spotlight the first finds card**
+- [x] **Step 2: Render it under the hero ticker + spotlight the first finds card**
 
 Inside the hero card, directly after `<LiveTicker />` (line ~328):
 
@@ -502,7 +502,7 @@ In the Latest finds grid map (line ~429), pass the spotlight flag:
 ))}
 ```
 
-- [ ] **Step 3: `[RF-1]` + `[RF-2]` verify**
+- [x] **Step 3: `[RF-1]` + `[RF-2]` verify**
 
 ```bash
 npm run build
@@ -550,7 +550,7 @@ EOF
 
 Expected: `overflowX: 0` under reduced motion (static caught feed, no overflow).
 
-- [ ] **Step 4: Full QA + commit**
+- [x] **Step 4: Full QA + commit**
 
 ```bash
 node playwright/final-qa-premium.mjs 2>&1 | tail -8   # failures [] passed true
@@ -569,7 +569,7 @@ git add src/routes/Home.jsx && git commit -m "feat: hero caught-feed FOMO strip 
 - Consumes: framer-motion (`useScroll`, `motion`) and the lib's `useReducedMotion`; `Navbar`/`Footer` unchanged in signature; react-router `useLocation`.
 - Produces: no new public API — the app-wide chrome behavior (progress bar, fade-in on route change, scrolled navbar).
 
-- [ ] **Step 1: Layout — progress bar + route fade**
+- [x] **Step 1: Layout — progress bar + route fade**
 
 ```jsx
 import { useEffect } from 'react';
@@ -616,7 +616,7 @@ return (
 );
 ```
 
-- [ ] **Step 2: Navbar — scrolled state**
+- [x] **Step 2: Navbar — scrolled state**
 
 Add state + effect (with the other hooks at the top of `Navbar`):
 
@@ -640,7 +640,7 @@ Swap the `header` className (line 44):
 >
 ```
 
-- [ ] **Step 3: `[RF-1]` verify under normal + reduced motion**
+- [x] **Step 3: `[RF-1]` verify under normal + reduced motion**
 
 ```bash
 npm run build
@@ -652,7 +652,7 @@ Screenshot check: progress bar visible at top after scrolling; navbar gains bord
 node playwright/final-qa-premium.mjs 2>&1 | tail -8   # failures [] passed true
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/Layout.jsx src/components/Navbar.jsx && git commit -m "feat: scroll progress bar, route fade-in, scrolled navbar state"
@@ -669,7 +669,7 @@ git add src/components/Layout.jsx src/components/Navbar.jsx && git commit -m "fe
 - Consumes: everything from Tasks 1–5; existing QA harness shape (`routes` array, `failures` array, final `passed`).
 - Produces: an all-pass QA with the spotlight verified at every viewport.
 
-- [ ] **Step 1: Extend QA with CPU-spotlight assertions**
+- [x] **Step 1: Extend QA with CPU-spotlight assertions**
 
 In `playwright/final-qa-premium.mjs`, inside the per-route geometry loop, add route-specific content assertions for `/` and `/deals` (after the existing geometric checks for that route):
 
@@ -690,7 +690,7 @@ if (route.key === 'deals') {
 
 (Place in the same `try` block that collects per-route data, pushing to the shared `failures` array. Confirm variable names against the existing file before editing — the harness uses `route.key`, `failures`, `page`.)
 
-- [ ] **Step 2: Run the full gate suite**
+- [x] **Step 2: Run the full gate suite**
 
 ```bash
 cd /home/phillip/deal-profit-website
@@ -702,7 +702,7 @@ node playwright/final-qa-premium.mjs 2>&1 | tail -8
 
 Expected: build ok; lint 0 errors; worker 45 passed / 0 failed; QA `"failures": []` and `"passed": true`.
 
-- [ ] **Step 3: Commit + push**
+- [x] **Step 3: Commit + push**
 
 ```bash
 git add playwright/final-qa-premium.mjs
@@ -710,7 +710,7 @@ git commit -m "test: QA asserts Penny CPU spotlight on home + deals at every vie
 git push origin main
 ```
 
-- [ ] **Step 4: Verify production**
+- [x] **Step 4: Verify production**
 
 Wait for the Cloudflare Workers Builds deploy (poll like the previous round — the Whop-link marker in `live-whop-check.mjs` flips to all-PASS once the new build is live, usually ≤ 60 s), then:
 
@@ -746,7 +746,7 @@ EOF
 
 Expected: `overflowX: 0` everywhere, `hasPenny: true`, `hasCaught: true` on `/`.
 
-- [ ] **Step 5: Ledger + done**
+- [x] **Step 5: Ledger + done**
 
 Mark each task done in the plan file (`- [x]`) and, following the previous round's convention, append the record to `.superpowers/sdd/2026-09-22-penny-cpu-spotlight/progress.md` (create it with the approved rulings: hero keeps RTX card; CPU leads grid + /deals; hat excluded; "Penny CPU" title used — no chip model supplied).
 
