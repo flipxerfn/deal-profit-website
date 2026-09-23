@@ -43,6 +43,14 @@ for (const route of ROUTES) {
     const label = `${route.path}@${vp.name}`;
     try {
       await page.goto(`${BASE}${route.path}`, { waitUntil: 'networkidle' });
+      // Wait for the route's own content to actually mount (survives loaded-box chunk latency).
+      await page
+        .waitForFunction(
+          (exp) => document.body && document.body.textContent.toLowerCase().includes(exp.toLowerCase()),
+          route.expect,
+          { timeout: 10000 }
+        )
+        .catch(() => {});
       await page.waitForTimeout(400); // let entrance animations settle
 
       const m = await page.evaluate(() => {
@@ -101,6 +109,7 @@ page.on('pageerror', (e) => failures.push(`interaction PAGEERROR: ${e.message}`)
 
 // Deals: `/` focus, rtx filter, Esc clear, chip count, refresh completes
 await page.goto(`${BASE}/deals`, { waitUntil: 'networkidle' });
+await page.locator('input[aria-label="Search deals"]').waitFor({ state: 'visible', timeout: 10000 });
 await page.keyboard.press('/');
 await page.waitForTimeout(120);
 if ((await page.evaluate(() => document.activeElement?.getAttribute('aria-label'))) !== 'Search deals') {
@@ -138,6 +147,7 @@ await page.route('**/api/reviews', (route) =>
   })
 );
 await page.goto(`${BASE}/reviews`, { waitUntil: 'networkidle' });
+await page.locator('button:has-text("Leave a review")').first().waitFor({ state: 'attached', timeout: 10000 }).catch(() => {});
 await page.click('button:has-text("Leave a review")');
 await page.waitForTimeout(200);
 await page.click('button:has-text("Submit review")');
@@ -148,7 +158,7 @@ if (!(await page.evaluate(() => document.body.textContent.includes('Please enter
 
 // Admin: empty submit → validation error
 await page.goto(`${BASE}/admin`, { waitUntil: 'networkidle' });
-await page.waitForTimeout(300); // lazy chunk settle
+await page.waitForFunction(() => document.querySelector('button[type="submit"]'), null, { timeout: 10000 }).catch(() => {}); // lazy chunk settle
 await page.click('button[type="submit"]');
 await page.waitForTimeout(200);
 if (!(await page.evaluate(() => document.body.textContent.includes('Enter a username and password.')))) {
