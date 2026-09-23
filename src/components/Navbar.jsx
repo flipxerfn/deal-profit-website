@@ -18,10 +18,18 @@ const TRIAL_URL = 'https://whop.com/deal-profit-6dcc?a=phillipkuz9';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const prefersReduced = useReducedMotion();
   const { pathname } = useLocation();
   const activeLinkRef = useRef(null);
   const indicatorRef = useRef(null);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     const update = () => {
@@ -41,7 +49,11 @@ const Navbar = () => {
   }, [pathname]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/5 bg-night/60 backdrop-blur-xl">
+    <header
+      className={`sticky top-0 z-50 border-b backdrop-blur-xl transition-colors duration-300 ${
+        scrolled ? 'border-white/10 bg-night/85 shadow-[0_12px_32px_rgba(0,0,0,0.35)]' : 'border-white/5 bg-night/60'
+      }`}
+    >
       <nav className="mx-auto flex h-16 w-full max-w-[1152px] items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-2.5" aria-label="Deal Profit home">
           <img
