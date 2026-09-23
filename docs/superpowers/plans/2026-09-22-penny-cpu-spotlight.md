@@ -758,3 +758,15 @@ Mark each task done in the plan file (`- [x]`) and, following the previous round
 - **Placeholders:** none — every step carries concrete code or a runnable check.
 - **Type consistency:** `penny-cpu` id string is consistent across Tasks 1, 3, 4, 6 (`d.id === 'penny-cpu'`); `spotlight` prop name uniform; `imageSquare` only on the CPU deal.
 - **Review Focus:** RF-1 → Tasks 4/5 step 3; RF-2 → Tasks 2/3; RF-3 → Task 3 step 3; RF-4 → Task 3 `showSpotlight` logic + Task 6 QA; RF-5 → Task 1 step 3 grep gate.
+---
+
+## User Follow-up (image swap, same round)
+
+- [x] **Swap Penny CPU images to the first /discord picture** (`discord1-cropped.webp`) and keep that picture on `/discord`.
+  - User identified the **first screenshot card in `/discord`** as the Penny CPU and asked to switch the CPU's images out for it everywhere ("switch them all out for that") while **keeping that picture on `/discord`**.
+  - `src/data/deals.js`: `penny-cpu` now uses `discord1Cropped` for both `image` and `imageSquare`, replacing `cpu-card.webp`/`cpu-square.webp`. The crop imports for the old CPU crops were removed (no longer referenced).
+  - `/discord` (`src/routes/Discord.jsx`) **untouched** — `discord1-cropped.webp` remains the first ScreenshotCard (RF-5/keep-in-place).
+  - All deal surfaces pick this up automatically: Home finds grid + spotlight-first card (uses `imageSquare || image`), `/deals` grid (uses `image`), and the SpotlightDeal banner (uses `imageSquare || image`).
+  - Assets live: new build `dist/assets/discord1-cropped-DJfceh1u.webp` (52.05 kB) vs old CPU crops removed.
+  - **Gates:** build ✓ (`npm run build`), lint ✓ (0 errors), worker `node --test` ✓, QA `final-qa-premium.mjs` all-pass (`routes 7, viewports 4, geometry 28, screens 28, interactions 5, failures: [], passed: true`), prod verify (`verify-prod-premium.mjs` → `deployed:true, failures:[]`) ✓. RF-5 hat grep gate re-verified CLEAN across `src/ playwright/ docs/superpowers/plans/` (the only hit is the plan doc's RF-5 rule *statement* itself, which is the recorded gate definition — no literal hat filename/asset anywhere).
+  - Committed `56b38f9` → pushed `main` → live on prod mirror (entry `index-jlYK7YM9.js` carries `discord1-cropped`), verified.
