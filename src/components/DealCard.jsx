@@ -7,24 +7,31 @@ import { useReducedMotion } from '../lib/motion';
 const dealOff = (deal) =>
   deal.referencePrice ? Math.round((1 - deal.price / deal.referencePrice) * 100) : null;
 
-const DealCard = ({ deal }) => {
+const DealCard = ({ deal, spotlight = false }) => {
   const off = dealOff(deal);
   const prefersReduced = useReducedMotion();
 
   return (
-    <CardHover className="group flex flex-col overflow-hidden">
+    <CardHover
+      className={`group relative flex flex-col overflow-hidden ${
+        spotlight ? 'ring-1 ring-brand/40 shadow-[0_0_44px_rgba(244,63,94,0.18)]' : ''
+      }`}
+    >
+      {spotlight && <div aria-hidden="true" className="shine-sweep pointer-events-none absolute inset-0 z-20" />}
       <div className="relative aspect-[16/9] overflow-hidden bg-charcoal-2">
         {deal.image ? (
-          <motion.img
-            src={deal.image}
-            alt={deal.imageAlt}
-            loading="lazy"
-            decoding="async"
-            referrerPolicy="no-referrer"
-            style={{ objectPosition: deal.imagePosition ?? 'center' }}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-            whileHover={prefersReduced ? {} : { scale: 1.03 }}
-          />
+          <div className={`h-full w-full ${spotlight ? 'spotlight-settle' : ''}`}>
+            <motion.img
+              src={deal.image}
+              alt={deal.imageAlt}
+              loading="lazy"
+              decoding="async"
+              referrerPolicy="no-referrer"
+              style={{ objectPosition: deal.imagePosition ?? 'center' }}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              whileHover={prefersReduced ? {} : { scale: 1.03 }}
+            />
+          </div>
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(90%_140%_at_18%_0%,rgba(244,63,94,0.22),rgba(139,92,246,0.14)_48%,transparent_78%)]">
             <div className="flex flex-col items-center gap-2">
@@ -44,6 +51,12 @@ const DealCard = ({ deal }) => {
             {deal.categoryLabel}
           </Badge>
         </div>
+
+        {spotlight && off != null && (
+          <div className="absolute right-3 top-3 z-10">
+            <span className="sticker">{off}% OFF</span>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-5">
@@ -52,7 +65,11 @@ const DealCard = ({ deal }) => {
 
         <div className="mt-auto space-y-3">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <span className="text-2xl font-extrabold tracking-tight text-brand">
+            <span
+              className={`font-extrabold tracking-tight text-brand ${
+                spotlight ? 'text-[28px] drop-shadow-[0_0_14px_rgba(244,63,94,0.45)]' : 'text-2xl'
+              }`}
+            >
               {deal.displayPrice || `$${deal.price.toFixed(2)}`}
             </span>
             {deal.referencePrice && (
