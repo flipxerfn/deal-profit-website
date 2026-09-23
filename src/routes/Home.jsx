@@ -466,7 +466,11 @@ const Home = () => {
           className="grid gap-5 sm:grid-cols-2"
         >
           {HOME_FINDS.map((deal) => (
-            <motion.div key={deal.id} {...getMotionProps(prefersReduced, motionVariants.staggerItem)}>
+            <motion.div
+              key={deal.id}
+              className="min-w-0"
+              {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
+            >
               <DealCard deal={deal} spotlight={deal.id === 'penny-cpu'} />
             </motion.div>
           ))}

@@ -378,7 +378,11 @@ const Deals = () => {
           className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
         >
           {filtered.map((deal) => (
-            <motion.div key={deal.id} {...getMotionProps(prefersReduced, motionVariants.staggerItem)}>
+            <motion.div
+              key={deal.id}
+              className="min-w-0"
+              {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
+            >
               <DealCard deal={deal} />
             </motion.div>
           ))}
