@@ -1,7 +1,6 @@
 import rtpcImg from '../assets/crops/deal1-hero.webp';
 import headphonesImg from '../assets/crops/deal2-card.webp';
-import cpuImg from '../assets/crops/cpu-card.webp';
-import cpuSquareImg from '../assets/crops/cpu-square.webp';
+import discord1Cropped from '../assets/crops/discord1-cropped.webp';
 
 export const CATEGORIES = [
   { id: 'all', label: 'All' },
@@ -22,8 +21,8 @@ export const DEALS = [
     description:
       'A brand-new desktop CPU caught at a penny — a retailer price error posted the moment it went live. First come, first served.',
     meta: ['Live now', 'Save 100%', 'Found by Deal Profit'],
-    image: cpuImg,
-    imageSquare: cpuSquareImg,
+    image: discord1Cropped,
+    imageSquare: discord1Cropped,
     imageAlt: 'Penny CPU deal caught at $0.01',
     imagePosition: 'center',
     cta: { label: 'View Deal', href: 'https://whop.com/deal-profit-6dcc?a=phillipkuz9' },
