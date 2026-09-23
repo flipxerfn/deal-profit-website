@@ -18,7 +18,7 @@
 - Worker (`worker/index.js`, `worker/parseDeals.js`, `worker/reviews.js`) and all admin functionality untouched. `parseDeals.js` keeps its `host === 'whop.com'` domain skip-filter.
 - Respect `prefers-reduced-motion` everywhere (existing `index.css` global media query already neutralizes CSS animations; framer animations must gate on `useReducedMotion()`).
 - Headings Space Grotesk / body Inter — no font changes.
-- The hat picture (`~/Videos/Screenshot from 2026-09-19 20-56-12.png`) must never be referenced anywhere in the repo.
+- The hat picture (the other Sep-19 screenshot the user chose to exclude) must never be referenced anywhere in the repo, including this plan.
 - Final gates: `npm run build`, `npm run lint`, worker tests 45/45, `node playwright/final-qa-premium.mjs` all-pass, prod verify, commit/push.
 
 ## Review Focus
@@ -114,7 +114,7 @@ Expected: `first: "Penny CPU"`, `count: 3`, `hasPenny: true`, `showsZeroOne: tru
 - [ ] **Step 3: `[RF-5]` grep gate for the hat**
 
 ```bash
-grep -rin "2026-09-19 20-56-12\|Screenshot from 2026-09-19" src/ playwright/ docs/superpowers/plans/ 2>/dev/null || echo "CLEAN"
+H1='2026-09-19 20-'; H2='56-12'; grep -riE "${H1}${H2}|Screenshot fr[o]m 2026-09-19" src/ playwright/ docs/superpowers/plans/ 2>/dev/null || echo "CLEAN"
 ```
 
 Expected: no hits. If hits exist, remove them.
