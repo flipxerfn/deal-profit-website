@@ -44,7 +44,7 @@ Each line is pinned to a test in the owning task below (marked `[RF]`).
 - Consumes: existing crops `src/assets/crops/cpu-card.webp`, `src/assets/crops/cpu-square.webp` (committed in `2d209f1`).
 - Produces: deal shape `{ id: 'penny-cpu', title, category: 'penny', categoryLabel, badge, price, referencePrice, description, meta, image, imageSquare, imageAlt, imagePosition, cta }` — later tasks read `d.id === 'penny-cpu'`, `deal.image`, and `deal.imageSquare`.
 
-- [ ] **Step 1: Update imports and the DEALS array**
+- [x] **Step 1: Update imports and the DEALS array**
 
 Replace the top two imports with:
 
@@ -86,7 +86,7 @@ Replace `HOME_FINDS` (was `d.id === 'rtx-5060-gaming-pc' || d.id === 'penny-deal
 export const HOME_FINDS = DEALS.filter((d) => d.id === 'penny-cpu' || d.id === 'rtx-5060-gaming-pc');
 ```
 
-- [ ] **Step 2: Verify the deal list renders 3 deals with the CPU first**
+- [x] **Step 2: Verify the deal list renders 3 deals with the CPU first**
 
 With the dev server running (`npm run dev`, port 5173), run this Playwright check:
 
@@ -111,7 +111,7 @@ EOF
 
 Expected: `first: "Penny CPU"`, `count: 3`, `hasPenny: true`, `showsZeroOne: true`. If `first !== 'Penny CPU'` the task fails.
 
-- [ ] **Step 3: `[RF-5]` grep gate for the hat**
+- [x] **Step 3: `[RF-5]` grep gate for the hat**
 
 ```bash
 H1='2026-09-19 20-'; H2='56-12'; grep -riE "${H1}${H2}|Screenshot fr[o]m 2026-09-19" src/ playwright/ docs/superpowers/plans/ 2>/dev/null || echo "CLEAN"
@@ -119,7 +119,7 @@ H1='2026-09-19 20-'; H2='56-12'; grep -riE "${H1}${H2}|Screenshot fr[o]m 2026-09
 
 Expected: no hits. If hits exist, remove them.
 
-- [ ] **Step 4: Build + commit**
+- [x] **Step 4: Build + commit**
 
 ```bash
 cd /home/phillip/deal-profit-website && npm run build && npm run lint 2>&1 | tail -1
@@ -138,7 +138,7 @@ git add src/data/deals.js && git commit -m "feat: add Penny CPU deal (image + fi
 - Consumes: `deal` shape from Task 1; existing `CardHover`, `Badge`, `useReducedMotion`.
 - Produces: `<DealCard deal={deal} spotlight={boolean} />` — used by Task 3 (`/deals` grid) and Task 4 (Home grid). Spotlight is additive; default `false` keeps every other usage identical.
 
-- [ ] **Step 1: Add utilities to `src/index.css`**
+- [x] **Step 1: Add utilities to `src/index.css`**
 
 Append to the `@layer components { ... }` block (end of file):
 
@@ -163,7 +163,7 @@ Append to the `@layer components { ... }` block (end of file):
 
 (The existing global `@media (prefers-reduced-motion: reduce)` block neutralizes both animations automatically.)
 
-- [ ] **Step 2: Add the `spotlight` prop to DealCard**
+- [x] **Step 2: Add the `spotlight` prop to DealCard**
 
 Signature: `const DealCard = ({ deal, spotlight = false }) => {`
 
@@ -218,7 +218,7 @@ Price row (the `text-2xl` span): bump size + glow when spotlight:
 </span>
 ```
 
-- [ ] **Step 3: Verify build + QA regression none**
+- [x] **Step 3: Verify build + QA regression none**
 
 ```bash
 cd /home/phillip/deal-profit-website && npm run build
@@ -227,7 +227,7 @@ node playwright/final-qa-premium.mjs 2>&1 | tail -8
 
 Expected: build clean; QA `"failures": []`, `"passed": true` (spotlight is off by default, so nothing regresses).
 
-- [ ] **Step 4: `[RF-2]` manual 390/1440 screenshot of a spotlight card**
+- [x] **Step 4: `[RF-2]` manual 390/1440 screenshot of a spotlight card**
 
 Temporarily render one card with spotlight on Home (change the first `HOME_FINDS` map entry in `src/routes/Home.jsx` to `<DealCard deal={deal} spotlight />`), then:
 
@@ -251,7 +251,7 @@ EOF
 
 Check `/tmp/opencode/spotlight-1440.png` and `spotlight-390.png`: ring + sticker present, no overlap, `overflowX` 0. (Temporary edit gets reverted in Task 4, which wires it properly.)
 
-- [ ] **Step 5: Revert the temporary Home edit + commit**
+- [x] **Step 5: Revert the temporary Home edit + commit**
 
 ```bash
 git checkout src/routes/Home.jsx
