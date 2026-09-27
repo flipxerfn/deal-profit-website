@@ -26,22 +26,15 @@ const STEPS = [
   {
     number: 1,
     title: 'Link Discord',
-    description: 'Connect your Discord account so we can grant you the premium role',
+    description: 'Connect your account — the role is granted only after purchase',
     icon: FaDiscord,
     complete: false
   },
   {
     number: 2,
-    title: 'Get Trial Access',
-    description: 'Join Discord, create a ticket in #trials to get 7-day free access',
+    title: 'Trial or Subscribe',
+    description: 'Start a free 7-day trial, or skip straight to premium',
     icon: FaCrown,
-    complete: false
-  },
-  {
-    number: 3,
-    title: 'Subscribe',
-    description: 'Upgrade to premium for $25/month - cancel anytime',
-    icon: FaCreditCard,
     complete: false
   }
 ];
@@ -52,8 +45,10 @@ const Payment = () => {
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkingLink, setCheckingLink] = useState(false);
   const [message, setMessage] = useState(null);
   const [discordLinked, setDiscordLinked] = useState(false);
+  const [discordUser, setDiscordUser] = useState(null);
 
   useEffect(() => {
     fetchSubscription();
@@ -94,10 +89,14 @@ const Payment = () => {
         // No Discord identity yet — step 1 stays active
         setSubscription(null);
         setDiscordLinked(false);
+        setDiscordUser(null);
         setStep(1);
       } else {
         setSubscription(data.subscription);
-        if (data.discord) setDiscordLinked(true);
+        if (data.discord) {
+          setDiscordUser(data.discord);
+          setDiscordLinked(true);
+        }
         updateStepsFromSubscription(data.subscription, data.discord);
       }
     } catch (err) {
@@ -107,14 +106,47 @@ const Payment = () => {
     }
   };
 
+  // "Already linked? Check" — verifies an existing link for this browser
+  const handleCheckLink = async () => {
+    setCheckingLink(true);
+    setMessage(null);
+    try {
+      const data = await fetchSubscriptionStatus();
+      if (data.unauthorized) {
+        setSubscription(null);
+        setDiscordLinked(false);
+        setDiscordUser(null);
+        setStep(1);
+        setMessage({ type: 'info', text: 'No link found for this browser — link your Discord below to continue.' });
+      } else {
+        setSubscription(data.subscription);
+        const linked = !!data.discord || !!data.subscription?.discord_id;
+        if (data.discord) setDiscordUser(data.discord);
+        updateStepsFromSubscription(data.subscription, data.discord);
+        if (linked) {
+          setMessage({
+            type: 'success',
+            text: `Already linked${data.discord?.username ? ` as ${data.discord.username}` : ''} — no need to link again.`,
+          });
+        } else {
+          setMessage({ type: 'info', text: 'No link found yet — use the button below to link your Discord.' });
+        }
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'Could not check link status. Please try again.' });
+    } finally {
+      setCheckingLink(false);
+    }
+  };
+
   const updateStepsFromSubscription = (sub, discord) => {
     const linked = !!discord || !!sub?.discord_id;
     const newSteps = [...STEPS];
     newSteps[0].complete = linked;
-    newSteps[1].complete = sub?.status === 'trialing' || sub?.status === 'active';
-    newSteps[2].complete = sub?.status === 'active';
+    // The trial is optional: only a paid subscription completes step 2
+    newSteps[1].complete = sub?.status === 'active';
     const firstIncomplete = newSteps.findIndex((s) => !s.complete);
-    setStep(firstIncomplete === -1 ? 4 : firstIncomplete + 1);
+    setStep(firstIncomplete === -1 ? 3 : firstIncomplete + 1);
     setDiscordLinked(linked);
   };
 
@@ -269,7 +301,8 @@ const Payment = () => {
               </div>
               <h2 className="text-xl font-extrabold text-white">Link Your Discord Account</h2>
               <p className="mt-2 text-zinc-400">
-                We need to verify your Discord identity to grant the <strong className="text-brand">deal-profit</strong> role when you subscribe.
+                We verify your Discord identity so we can grant you the <strong className="text-brand">deal-profit</strong> role
+                after you subscribe or start a trial. <span className="text-zinc-500">Linking alone does not give you the role — only buying does.</span>
               </p>
               <button
                 onClick={handleDiscordLink}
@@ -288,11 +321,36 @@ const Payment = () => {
                   </>
                 )}
               </button>
+              {!discordLinked && (
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={handleCheckLink}
+                    disabled={checkingLink}
+                    className={buttonClass({ variant: 'outline', size: 'lg' })}
+                  >
+                    {checkingLink ? (
+                      <>
+                        <FaSpinner className="animate-spin text-sm" />
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        <FaCheckCircle className="text-sm" />
+                        Already linked? Check status
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
               {discordLinked && (
                 <div className="mt-4 space-y-3">
                   <p className="text-sm text-emerald-300">
                     <FaCheckCircle className="inline mr-1" />
-                    Your Discord is linked.
+                    Your Discord is linked{discordUser?.username ? ` as ${discordUser.username}` : ''}.
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    The deal-profit role will be granted after you start a trial or subscribe.
                   </p>
                   <button
                     type="button"
@@ -308,107 +366,122 @@ const Payment = () => {
           </div>
         )}
 
-        {/* Step 2: Get Trial Access */}
+        {/* Step 2: optional trial OR straight to subscribe */}
         {step === 2 && (
-          <div className="card relative overflow-hidden p-6 sm:p-8">
-            <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
-            <div className="text-center">
-              <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/15 text-brand">
-                <FaCrown className="h-8 w-8" />
-              </div>
-              <h2 className="text-xl font-extrabold text-white">Get Your Free Trial</h2>
-              <p className="mt-2 text-zinc-400 max-w-md mx-auto">
-                Join our Discord server and create a ticket in the <strong>#trials</strong> channel to get 7 days of free premium access.
-              </p>
-              <a
-                href={DISCORD_INVITE}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={buttonClass({ variant: 'primary', size: 'lg' })}
-              >
-                <FaDiscord className="text-sm" />
-                Join Discord & Create Ticket
-              </a>
-              <p className="mt-4 text-sm text-zinc-500">
-                Already have a trial or subscription?{' '}
-                <button
-                  onClick={() => fetchSubscription()}
-                  className="text-brand hover:underline"
-                >
-                  Refresh Status
-                </button>
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Subscribe */}
-        {step === 3 && (
-          <div className="card relative overflow-hidden p-6 sm:p-8">
-            <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
-            <div className="text-center">
-              <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/15 text-brand">
-                <FaCreditCard className="h-8 w-8" />
-              </div>
-              <h2 className="text-xl font-extrabold text-white">Subscribe to Premium</h2>
-              <p className="mt-2 text-zinc-400">
-                <strong className="text-white">{PRICE}/month</strong> — cancel anytime. Includes all premium features.
-              </p>
-              <ul className="mt-6 text-left max-w-xs mx-auto space-y-3 text-sm text-zinc-300">
-                {[
-                  'Faster member-first alerts',
-                  'Price errors & penny finds',
-                  'Premium Discord access',
-                  'Reselling opportunities',
-                  'Cancel anytime'
-                ].map((feature) => (
-                  <li key={feature} className="flex items-center gap-2.5">
-                    <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-brand/20 text-brand shadow-[0_0_8px_rgba(244,63,94,0.3)]">
-                      <FaCheckCircle className="h-3 w-3" />
-                    </span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={handleCreateCheckout}
-                disabled={checkoutLoading || !discordLinked}
-                className={`${buttonClass({ variant: 'primary', size: 'xl' })} mt-8 w-full max-w-xs mx-auto ${!discordLinked ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {checkoutLoading ? (
-                  <>
-                    <FaSpinner className="animate-spin text-sm" />
-                    Redirecting...
-                  </>
-                ) : (
-                  <>
-                    <FaCrown className="text-sm" />
-                    Subscribe for {PRICE}/mo
-                    <FaArrowRight className="text-sm" />
-                  </>
-                )}
-              </button>
-              {!discordLinked && (
-                <p className="mt-4 text-sm text-amber-300">
-                  <FaExclamationTriangle className="inline mr-1" />
-                  Please link your Discord account first (Step 1)
+          <div className="space-y-6">
+            {/* Optional trial */}
+            <div className="card relative overflow-hidden p-6 sm:p-8">
+              <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
+              <div className="text-center">
+                <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/15 text-brand">
+                  <FaCrown className="h-8 w-8" />
+                </div>
+                <span className="mb-3 inline-block rounded-full border border-zinc-700 px-3 py-1 text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  Optional
+                </span>
+                <h2 className="text-xl font-extrabold text-white">Start Your 7-Day Free Trial</h2>
+                <p className="mt-2 text-zinc-400 max-w-md mx-auto">
+                  Join our Discord server and create a ticket in the <strong>#trials</strong> channel to get 7 days of free premium access.
                 </p>
-              )}
-              {subscription?.status === 'active' && (
+                {subscription?.status === 'trialing' && subscription.current_period_end && (
+                  <p className="mt-3 text-sm text-emerald-300">
+                    <FaCheckCircle className="inline mr-1" />
+                    Trial active — ends {formatDate(subscription.current_period_end)}
+                  </p>
+                )}
+                <div className="mt-5 flex flex-col items-center gap-3">
+                  <a
+                    href={DISCORD_INVITE}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={buttonClass({ variant: 'primary', size: 'lg' })}
+                  >
+                    <FaDiscord className="text-sm" />
+                    Join Discord & Create Ticket
+                  </a>
+                  <p className="text-sm text-zinc-500">
+                    Already have a trial or subscription?{' '}
+                    <button
+                      onClick={() => fetchSubscription()}
+                      className="text-brand hover:underline"
+                    >
+                      Refresh Status
+                    </button>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="flex items-center gap-4" aria-hidden="true">
+              <div className="h-px flex-1 bg-zinc-800" />
+              <span className="text-xs font-bold uppercase tracking-widest text-zinc-500">or</span>
+              <div className="h-px flex-1 bg-zinc-800" />
+            </div>
+
+            {/* Subscribe now */}
+            <div className="card relative overflow-hidden p-6 sm:p-8">
+              <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
+              <div className="text-center">
+                <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/15 text-brand">
+                  <FaCreditCard className="h-8 w-8" />
+                </div>
+                <h2 className="text-xl font-extrabold text-white">Skip Trial — Subscribe Now</h2>
+                <p className="mt-2 text-zinc-400">
+                  <strong className="text-white">{PRICE}/month</strong> — cancel anytime. Includes all premium features.
+                </p>
+                <ul className="mt-6 text-left max-w-xs mx-auto space-y-3 text-sm text-zinc-300">
+                  {[
+                    'Faster member-first alerts',
+                    'Price errors & penny finds',
+                    'Premium Discord access',
+                    'Reselling opportunities',
+                    'Cancel anytime'
+                  ].map((feature) => (
+                    <li key={feature} className="flex items-center gap-2.5">
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-brand/20 text-brand shadow-[0_0_8px_rgba(244,63,94,0.3)]">
+                        <FaCheckCircle className="h-3 w-3" />
+                      </span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
                 <button
-                  onClick={handleManageSubscription}
-                  className={`${buttonClass({ variant: 'outline', size: 'lg' })} mt-4 w-full max-w-xs mx-auto`}
+                  onClick={handleCreateCheckout}
+                  disabled={checkoutLoading || !discordLinked}
+                  className={`${buttonClass({ variant: 'primary', size: 'xl' })} mt-8 w-full max-w-xs mx-auto ${!discordLinked ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <FaLock className="text-sm" />
-                  Manage Subscription
+                  {checkoutLoading ? (
+                    <>
+                      <FaSpinner className="animate-spin text-sm" />
+                      Redirecting...
+                    </>
+                  ) : (
+                    <>
+                      <FaCrown className="text-sm" />
+                      Subscribe for {PRICE}/mo
+                      <FaArrowRight className="text-sm" />
+                    </>
+                  )}
                 </button>
-              )}
+                {!discordLinked && (
+                  <p className="mt-4 text-sm text-amber-300">
+                    <FaExclamationTriangle className="inline mr-1" />
+                    Please link your Discord account first (Step 1)
+                  </p>
+                )}
+                {discordLinked && (
+                  <p className="mt-4 text-xs text-zinc-500">
+                    Your deal-profit role is granted in Discord as soon as payment goes through.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         )}
 
         {/* Active Subscription View */}
-        {subscription && (subscription.status === 'active' || subscription.status === 'trialing') && step > 3 && (
+        {subscription && (subscription.status === 'active' || subscription.status === 'trialing') && step > 2 && (
           <div className="card relative overflow-hidden border-emerald-400/30 p-6 sm:p-8">
             <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
             <div className="text-center">
