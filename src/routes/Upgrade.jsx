@@ -11,6 +11,9 @@ import {
   FaCrown,
   FaArrowRight,
   FaDiscord,
+  FaShieldAlt,
+  FaUsers,
+  FaStar,
 } from 'react-icons/fa';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -24,6 +27,7 @@ import {
 } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 import { startCheckout } from '../lib/checkout';
+import PaymentFlow from '../components/PaymentFlow';
 
 const DISCORD_INVITE = 'https://discord.gg/dealprofit';
 const PRICE = '$25';
@@ -103,11 +107,25 @@ const PREMIUM_FEATURES = [
   'More focused notifications',
 ];
 
+// Trial content merged in from the old /trial page
+const TRIAL_INCLUDES = [
+  'Instant access to member deal channels',
+  'Price error and penny deal alerts',
+  'Reselling opportunities from the community',
+  'Cancel anytime during the trial',
+];
+
+const TRUST_ITEMS = [
+  { icon: FaShieldAlt, label: 'Verified Deals', desc: 'Every deal manually reviewed' },
+  { icon: FaUsers, label: 'Active Community', desc: '10,000+ deal hunters' },
+  { icon: FaStar, label: 'High Success Rate', desc: '93% average savings' },
+];
+
 const FAQS = [
   {
     title: 'How does the free trial work?',
     content:
-      'Join our Discord server and create a ticket in the #trials channel. You\'ll get 7 days of free premium access. After the trial, upgrade at /payment for $25/month.',
+      'Start the 7-day free trial from any trial button — you\'ll link your Discord, then check out with Stripe. It\'s free for 7 days; your card is charged $25/month only if you keep the subscription past day 7. Cancel anytime during the trial.',
   },
   {
     title: 'Can I cancel anytime?',
@@ -126,7 +144,7 @@ const FAQS = [
   },
 ];
 
-const PricingCard = ({ onUpgrade, loading }) => (
+const PricingCard = ({ onUpgrade, loading, onTrial, trialLoading }) => (
   <div className="mx-auto mt-12 max-w-md">
     <div className="relative overflow-hidden rounded-2xl border border-brand/30 bg-charcoal p-8 shadow-[0_30px_80px_rgba(0,0,0,0.55),0_0_60px_rgba(244,63,94,0.14)]">
       <div
@@ -166,8 +184,16 @@ const PricingCard = ({ onUpgrade, loading }) => (
           )}
         </button>
         <p className="mt-3 text-xs text-zinc-500">
-          Free trial via Discord → then {PRICE}/mo
+          7-day free trial available → then {PRICE}/mo
         </p>
+        <button
+          type="button"
+          onClick={onTrial}
+          disabled={trialLoading}
+          className="mt-3 w-full rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-zinc-300 transition hover:border-brand/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {trialLoading ? 'Redirecting…' : 'or start the 7-day free trial'}
+        </button>
         <ul className="mt-6 space-y-2 text-left text-sm text-zinc-300">
           {PRICING_HIGHLIGHTS.map((feature) => (
             <li key={feature} className="flex items-center gap-2.5">
@@ -186,14 +212,26 @@ const PricingCard = ({ onUpgrade, loading }) => (
 const Upgrade = () => {
   const prefersReduced = useReducedMotion();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [trialLoading, setTrialLoading] = useState(false);
 
   const handleUpgrade = async () => {
     if (checkoutLoading) return;
     setCheckoutLoading(true);
     const result = await startCheckout();
     if (!result.ok) {
-      // Stripe couldn't start from here — fall back to the full payment flow
-      window.location.href = '/payment';
+      // Couldn't start Stripe checkout from here — let the flow below retry
+      console.error('Checkout failed to start:', result.error);
+      setCheckoutLoading(false);
+    }
+  };
+
+  const handleStartTrial = async () => {
+    if (trialLoading) return;
+    setTrialLoading(true);
+    const result = await startCheckout({ trial: true });
+    if (!result.ok) {
+      console.error('Trial checkout failed to start:', result.error);
+      setTrialLoading(false);
     }
   };
 
@@ -249,13 +287,55 @@ const Upgrade = () => {
             className={buttonClass({ variant: 'outline', size: 'lg' })}
           >
             <FaDiscord className="text-sm" />
-            Join Discord for Free Trial
+            Join Discord
           </a>
         </motion.div>
+        <motion.p
+          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+          className="mt-6 text-sm text-zinc-400"
+        >
+          Start with a <strong className="text-white">7-day free trial</strong> — card required, then{' '}
+          <strong className="text-white">$25/mo</strong> only after day 7 · cancel anytime before then
+          and you pay nothing.
+        </motion.p>
       </motion.div>
 
       {/* Pricing */}
-      <PricingCard onUpgrade={handleUpgrade} loading={checkoutLoading} />
+      <PricingCard onUpgrade={handleUpgrade} loading={checkoutLoading} onTrial={handleStartTrial} trialLoading={trialLoading} />
+
+      {/* Setup flow (moved from /payment) */}
+      <div className="mt-16 md:mt-20">
+        <PaymentFlow />
+      </div>
+
+      {/* What's included in the trial (moved from /trial) */}
+      <div className="mx-auto mt-14 max-w-md md:mt-16">
+        <div className="relative overflow-hidden rounded-xl border border-brand/20 bg-charcoal p-6 sm:p-8">
+          <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
+          <div
+            className="absolute inset-0 bg-[radial-gradient(90%_120%_at_20%_0%,rgba(244,63,94,0.12),transparent_70%)]"
+            aria-hidden="true"
+          />
+          <div className="relative">
+            <p className="text-xs font-semibold uppercase tracking-wider text-brand-2">
+              What's included
+            </p>
+            <h2 className="mt-1 text-xl font-bold tracking-tight text-white">
+              Everything inside the free trial
+            </h2>
+            <ul className="mt-5 space-y-3">
+              {TRIAL_INCLUDES.map((item) => (
+                <li key={item} className="flex items-start gap-3 text-sm text-zinc-300">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-brand/15 text-brand shadow-[0_0_10px_rgba(244,63,94,0.25)]">
+                    <FaCheck className="h-3 w-3" />
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
 
       {/* Benefits grid */}
       <div className="mt-16 md:mt-20">
@@ -338,6 +418,26 @@ const Upgrade = () => {
         </div>
       </motion.div>
 
+      {/* Trust indicators (moved from /trial) */}
+      <motion.div
+        {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
+        className="mx-auto mt-16 grid max-w-[900px] gap-4 sm:grid-cols-3 md:mt-20"
+      >
+        {TRUST_ITEMS.map((item) => (
+          <motion.div
+            key={item.label}
+            {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
+            className="card p-4 text-center"
+          >
+            <div className="mx-auto mb-3 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
+              <item.icon className="h-4 w-4" />
+            </div>
+            <h3 className="text-sm font-bold text-white">{item.label}</h3>
+            <p className="mt-1 text-xs text-zinc-400">{item.desc}</p>
+          </motion.div>
+        ))}
+      </motion.div>
+
       {/* FAQ */}
       <div className="mx-auto mt-16 max-w-2xl md:mt-20">
         <SectionHeader
@@ -352,7 +452,7 @@ const Upgrade = () => {
       {/* Final CTA */}
       <CTASection
         title="Ready to catch more deals?"
-        description="Join Discord for a free trial, then upgrade for $25/mo. Cancel anytime."
+        description="Start the 7-day free trial or go straight to $25/mo. Cancel anytime."
         actions={
           <>
             <button
@@ -365,15 +465,15 @@ const Upgrade = () => {
               Upgrade to Premium
               <FaArrowRight className="text-sm" />
             </button>
-            <a
-              href={DISCORD_INVITE}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={handleStartTrial}
+              disabled={trialLoading}
               className={buttonClass({ variant: 'outline', size: 'lg' })}
             >
-              <FaDiscord className="text-sm" />
-              Join Discord for Free Trial
-            </a>
+              <FaCrown className="text-sm" />
+              {trialLoading ? 'Redirecting…' : 'Start 7-Day Free Trial'}
+            </button>
           </>
         }
       />

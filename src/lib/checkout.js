@@ -1,10 +1,11 @@
-// Shared Stripe checkout launcher used by /upgrade and /payment.
+// Shared Stripe checkout launcher used by the /upgrade page (which absorbed
+// the old /payment and /trial pages).
 //
 // Flow:
 //   1. If the visitor has no Discord identity yet (401), send them to Discord
 //      OAuth first — Discord is the account for this site.
 //   2. If they already have an active/trialing subscription, show the status
-//      page instead of creating another checkout.
+//      instead of creating another checkout.
 //   3. Otherwise create a Stripe Checkout Session and redirect to it.
 
 export async function fetchSubscription() {
@@ -17,7 +18,7 @@ export async function fetchSubscription() {
   return { unauthorized: false, subscription: data.subscription ?? null, discord: data.discord ?? null };
 }
 
-export async function startCheckout() {
+export async function startCheckout({ trial = false } = {}) {
   // Already subscribed? Let the payment page show status instead.
   try {
     const sub = await fetchSubscription();
@@ -27,7 +28,7 @@ export async function startCheckout() {
     }
     const status = sub.subscription?.status;
     if (status === 'active' || status === 'trialing') {
-      window.location.href = '/payment';
+      window.location.href = '/upgrade';
       return { ok: true, redirected: true };
     }
   } catch {
@@ -38,7 +39,7 @@ export async function startCheckout() {
     const res = await fetch('/api/stripe/create-checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({}),
+      body: JSON.stringify({ trial }),
     });
     if (res.ok) {
       const data = await res.json().catch(() => ({}));

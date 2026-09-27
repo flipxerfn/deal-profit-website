@@ -45,8 +45,7 @@ const Footer = () => {
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Membership</p>
             <nav className="mt-4 flex flex-col gap-2.5 text-sm" aria-label="Membership">
-              <Link to="/trial" className="text-zinc-400 transition-colors hover:text-white">Free Trial</Link>
-              <Link to="/upgrade" className="text-zinc-400 transition-colors hover:text-white">Upgrade</Link>
+              <Link to="/upgrade" className="text-zinc-400 transition-colors hover:text-white">Free Trial & Upgrade</Link>
               <a
                 href={DISCORD_URL}
                 target="_blank"

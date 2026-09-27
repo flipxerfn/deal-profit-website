@@ -811,12 +811,108 @@ async function handleDealsAdmin(request, env, id) {
   return json({ ok: false, error: 'method_not_allowed' }, 405);
 }
 
+const TRIAL_PERIOD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+function readTrialDiscordId(body) {
+  const id = String(body?.discord_id ?? '').trim();
+  return /^\d{17,25}$/.test(id) ? id : null;
+}
+
+const TRIAL_ID_HINT =
+  'Enter a Discord user ID (17-25 digits). Enable Developer Mode in Discord (Settings → Advanced), right-click the user → Copy User ID.';
+
+// Admin grants the free 7-day trial after approving a #trials ticket.
+async function handleGrantTrial(request, env) {
+  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
+  const session = await getSession(request, env);
+  if (!session) return json({ ok: false, authenticated: false, error: 'unauthorized' }, 401);
+
+  let body = {};
+  try {
+    body = await request.json();
+  } catch {
+    // fall through to id validation
+  }
+  const discordId = readTrialDiscordId(body);
+  if (!discordId) return json({ ok: false, error: 'invalid_discord_id', message: TRIAL_ID_HINT }, 400);
+
+  const store = await getSubscriptionStore(env);
+  const now = Date.now();
+
+  const existingRes = await store.fetch(
+    'https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(discordId)
+  );
+  const existing = existingRes.ok ? (await existingRes.json())?.subscription ?? null : null;
+  if (
+    existing &&
+    (existing.status === 'active' || existing.status === 'trialing') &&
+    (existing.current_period_end ?? 0) > now
+  ) {
+    return json(
+      { ok: false, error: 'already_has_access', status: existing.status, current_period_end: existing.current_period_end },
+      409
+    );
+  }
+
+  const upsertRes = await store.fetch('https://store.internal/subscriptions/upsert', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      user_id: discordId,
+      discord_id: discordId,
+      status: 'trialing',
+      current_period_end: now + TRIAL_PERIOD_MS,
+    }),
+  });
+  if (!upsertRes.ok) return json({ ok: false, error: 'trial_upsert_failed' }, 500);
+  const { subscription } = await upsertRes.json();
+
+  // Best-effort role grant — the trial record stands even if Discord rejects the call
+  const role = await grantPremiumRole(env, discordId);
+  await postToLogsChannel(
+    env,
+    `🎟️ <@${discordId}> granted a **manual 7-day trial** by admin — first $25 charge <t:${Math.floor((subscription?.current_period_end ?? now + TRIAL_PERIOD_MS) / 1000)}:D>`
+  );
+  return json({ ok: true, subscription, role: { ok: role.ok, error: role.error ?? null } });
+}
+
+// Admin manually revokes access (trial abuse / early cut-off).
+async function handleRevokeTrial(request, env) {
+  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
+  const session = await getSession(request, env);
+  if (!session) return json({ ok: false, authenticated: false, error: 'unauthorized' }, 401);
+
+  let body = {};
+  try {
+    body = await request.json();
+  } catch {
+    // fall through to id validation
+  }
+  const discordId = readTrialDiscordId(body);
+  if (!discordId) return json({ ok: false, error: 'invalid_discord_id', message: TRIAL_ID_HINT }, 400);
+
+  const store = await getSubscriptionStore(env);
+  const revokeRes = await store.fetch('https://store.internal/subscriptions/revoke', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: discordId }),
+  });
+  if (!revokeRes.ok) return json({ ok: false, error: 'revoke_failed' }, 500);
+  const { subscription } = await revokeRes.json();
+  if (!subscription) return json({ ok: false, error: 'not_found' }, 404);
+
+  const role = await revokePremiumRole(env, discordId);
+  return json({ ok: true, subscription, role: { ok: role.ok, error: role.error ?? null } });
+}
+
 const adminRoutes = {
   '/api/admin/login': handleLogin,
   '/api/admin/logout': handleLogout,
   '/api/admin/status': handleStatus,
   '/api/admin/sync': handleSync,
   '/api/admin/config': handleConfig,
+  '/api/admin/grant-trial': handleGrantTrial,
+  '/api/admin/revoke-trial': handleRevokeTrial,
 };
 
 async function handleReviews(request, env) {
@@ -989,7 +1085,9 @@ async function getSubscriptionStore(env) {
   return env.DEAL_STORE.get(id);
 }
 
-async function createCheckoutSession(env, userId, origin) {
+const TRIAL_DAYS = 7;
+
+async function createCheckoutSession(env, userId, origin, { trial = false } = {}) {
   const stripe = getStripe(env);
   const store = await getSubscriptionStore(env);
 
@@ -1036,11 +1134,14 @@ async function createCheckoutSession(env, userId, origin) {
       },
       quantity: 1
     }],
-    success_url: `${origin}/payment?session_id={CHECKOUT_SESSION_ID}&success=true`,
-    cancel_url: `${origin}/payment?canceled=true`,
+    success_url: `${origin}/upgrade?session_id={CHECKOUT_SESSION_ID}&success=true`,
+    cancel_url: `${origin}/upgrade?canceled=true`,
     metadata: { user_id: userId },
     subscription_data: {
-      metadata: { user_id: userId }
+      metadata: { user_id: userId },
+      // Free 7-day trial: card on file, first $25 charge happens automatically
+      // on day 7 unless the subscription is canceled before then
+      ...(trial ? { trial_period_days: TRIAL_DAYS } : {}),
     }
   });
 
@@ -1057,8 +1158,14 @@ async function handleStripeCheckout(request, env) {
   }
 
   const origin = new URL(request.url).origin;
+  let body = {};
   try {
-    const result = await createCheckoutSession(env, user.id, origin);
+    body = await request.json();
+  } catch {
+    // no body — plain subscription
+  }
+  try {
+    const result = await createCheckoutSession(env, user.id, origin, { trial: body?.trial === true });
     return json({ ok: true, ...result });
   } catch (err) {
     return json({ ok: false, error: sanitizeError(err) }, 500);
@@ -1076,6 +1183,65 @@ async function upsertSubscriptionRecord(store, fields) {
     throw new Error(`subscription_upsert_failed: ${detail}`);
   }
   return res.json();
+}
+
+// ---- Discord #logs channel notifications --------------------------------------
+// Every trial start and paid subscription posts a message to the guild's
+// #logs text channel. Best-effort: failures are logged but never block the
+// webhook or admin action that triggered them.
+
+let logsChannelCache = { id: null, at: 0, resolved: false };
+const LOGS_CHANNEL_TTL_MS = 5 * 60 * 1000;
+
+async function postToLogsChannel(env, content) {
+  try {
+    const { token } = await resolveDiscordConfig(env);
+    if (!token) {
+      console.warn('[logs] no bot token — skipping #logs message');
+      return false;
+    }
+    const guildId = await getGuildId(env);
+    if (!guildId) {
+      console.warn('[logs] no guild id — skipping #logs message');
+      return false;
+    }
+    if (!logsChannelCache.resolved || Date.now() - logsChannelCache.at > LOGS_CHANNEL_TTL_MS) {
+      const channels = await discordGet(`/guilds/${guildId}/channels`, token);
+      const logs = Array.isArray(channels)
+        ? channels.find((c) => c.type === 0 && c.name === 'logs')
+        : null;
+      logsChannelCache = { id: logs?.id ?? null, at: Date.now(), resolved: true };
+      if (!logs?.id) console.warn('[logs] #logs channel not found in guild');
+    }
+    const channelId = logsChannelCache.id;
+    if (!channelId) return false;
+
+    const res = await fetch(`${DISCORD_API}/channels/${channelId}/messages`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bot ${token}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'DealProfit-Website/1.0 (https://goosiev.com)',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ content }),
+    });
+    if (!res.ok) console.error('[logs] #logs post failed:', res.status, await res.text().catch(() => ''));
+    return res.ok;
+  } catch (err) {
+    console.error('[logs] #logs post error:', err);
+    return false;
+  }
+}
+
+function logsTrialMessage(userId, periodEndMs) {
+  const when = periodEndMs ? ` — first $25 charge <t:${Math.floor(periodEndMs / 1000)}:D>` : '';
+  return `🎟️ <@${userId}> started a **7-day free trial**${when}`;
+}
+
+function logsPurchaseMessage(userId, periodEndMs) {
+  const when = periodEndMs ? ` — renews <t:${Math.floor(periodEndMs / 1000)}:D>` : '';
+  return `👑 <@${userId}> subscribed to **Deal Profit Premium** — $25/mo${when}`;
 }
 
 // Grant the premium Discord role once the subscription is (or becomes) paid.
@@ -1189,6 +1355,15 @@ async function handleStripeWebhook(request, env) {
           current_period_end: subscriptionPeriodEndMs(sub),
         });
         await maybeGrantPremiumRole(env, store, String(userId), sub.status);
+
+        // #logs channel: trial starts and new paid subscriptions
+        const periodEnd = subscriptionPeriodEndMs(sub);
+        await postToLogsChannel(
+          env,
+          sub.status === 'trialing'
+            ? logsTrialMessage(String(userId), periodEnd)
+            : logsPurchaseMessage(String(userId), periodEnd)
+        );
         break;
       }
       case 'customer.subscription.updated': {
@@ -1363,13 +1538,13 @@ async function handleDiscordAuth(request, env) {
   });
 }
 
-// All callback failures land the user back on /payment with a readable message
+// All callback failures land the user back on /upgrade with a readable message
 // instead of a bare 400 text page.
 function oauthFailureRedirect(request, reason) {
   console.error('[discord-oauth] callback failed:', reason);
   const frontendUrl = new URL(request.url).origin;
   const headers = new Headers({
-    'Location': `${frontendUrl}/payment?linked=failed`,
+    'Location': `${frontendUrl}/upgrade?linked=failed`,
     'Cache-Control': 'no-store',
   });
   headers.append('Set-Cookie', clearOAuthStateCookie(request));
@@ -1437,7 +1612,7 @@ async function handleDiscordCallback(request, env) {
 
   const frontendUrl = new URL(request.url).origin;
   const headers = new Headers({
-    'Location': `${frontendUrl}/payment?linked=true`,
+    'Location': `${frontendUrl}/upgrade?linked=true`,
     'Cache-Control': 'no-store',
   });
   headers.append('Set-Cookie', clearOAuthStateCookie(request));
@@ -1610,14 +1785,15 @@ export default {
           if (!roleResult.ok) {
             console.error(`[scheduled] Failed to revoke role for ${sub.discord_id}:`, roleResult.error);
           }
-          
-          // Update subscription status to expired
-          await store.fetch('https://store.internal/subscriptions/revoke', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: sub.user_id })
-          });
         }
+
+        // Always mark the record expired — even without a linked Discord,
+        // so the status stops reading active/trialing after the period ends
+        await store.fetch('https://store.internal/subscriptions/revoke', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: sub.user_id })
+        });
       }
       
       console.log('[scheduled] Daily role revocation complete');

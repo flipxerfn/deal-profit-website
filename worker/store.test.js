@@ -127,9 +127,23 @@ describe('DealStore subscriptions', () => {
       current_period_end: now - 1000,
       discord_id: 'c',
     });
+    // Trials past their end date must auto-expire too (Stripe trials that
+    // never converted / manual grants whose card failed)
+    await store.upsertSubscription({
+      user_id: 'u4',
+      status: 'trialing',
+      current_period_end: now - 1000,
+      discord_id: 'd',
+    });
+    await store.upsertSubscription({
+      user_id: 'u5',
+      status: 'trialing',
+      current_period_end: now + 86400000, // future trial — keep it
+      discord_id: 'e',
+    });
 
     const expired = await store.getExpiredSubscriptions();
-    expect(expired.map((s) => s.user_id)).toEqual(['u1']);
+    expect(expired.map((s) => s.user_id)).toEqual(['u1', 'u4']);
   });
 
   it('revokes a subscription to expired', async () => {

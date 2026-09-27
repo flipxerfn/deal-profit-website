@@ -193,7 +193,7 @@ export class DealStore {
         const record = JSON.parse(String(value));
         if (
           record?.user_id &&
-          record.status === 'active' &&
+          (record.status === 'active' || record.status === 'trialing') &&
           record.current_period_end &&
           record.current_period_end < now
         ) {

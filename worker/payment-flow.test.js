@@ -100,7 +100,7 @@ async function runOAuthFlow(handler, env) {
     env
   );
   expect(cbRes.status).toBe(302);
-  expect(cbRes.headers.get('Location')).toContain('/payment?linked=true');
+  expect(cbRes.headers.get('Location')).toContain('/upgrade?linked=true');
   const sessionCookie = (cbRes.headers.get('Set-Cookie') || '').match(/dp_session=([^;]+)/);
   expect(sessionCookie).toBeTruthy();
   return `dp_session=${sessionCookie[1]}`;

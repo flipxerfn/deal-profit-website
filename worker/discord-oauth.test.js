@@ -72,7 +72,7 @@ describe('Discord OAuth', () => {
     // passed state validation: proceeded to Discord token exchange (which failed on the fake code)
     expect(fetch).toHaveBeenCalledWith('https://discord.com/api/oauth2/token', expect.anything());
     expect(res.status).toBe(302);
-    expect(res.headers.get('Location')).toContain('/payment?linked=failed');
+    expect(res.headers.get('Location')).toContain('/upgrade?linked=failed');
   });
 
   it('rejects a state that is not in the cookie without calling Discord', async () => {
@@ -84,7 +84,7 @@ describe('Discord OAuth', () => {
     const res = await handler.fetch(req, mockEnv);
     expect(fetch).not.toHaveBeenCalled();
     expect(res.status).toBe(302);
-    expect(res.headers.get('Location')).toContain('/payment?linked=failed');
+    expect(res.headers.get('Location')).toContain('/upgrade?linked=failed');
     expect(extractCookie(res, 'dp_oauth_state')).toContain('Max-Age=0');
   });
 
@@ -95,10 +95,10 @@ describe('Discord OAuth', () => {
     const res = await handler.fetch(req, mockEnv);
     expect(fetch).not.toHaveBeenCalled();
     expect(res.status).toBe(302);
-    expect(res.headers.get('Location')).toContain('/payment?linked=failed');
+    expect(res.headers.get('Location')).toContain('/upgrade?linked=failed');
   });
 
-  it('completes the full callback: session cookie set, state cleared, lands on /payment', async () => {
+  it('completes the full callback: session cookie set, state cleared, lands on /upgrade', async () => {
     const fetchMock = vi.fn(async (url) => {
       if (String(url).includes('/oauth2/token')) {
         return new Response(JSON.stringify({ access_token: 'tok_123', token_type: 'Bearer' }), { headers: { 'Content-Type': 'application/json' } });
@@ -116,7 +116,7 @@ describe('Discord OAuth', () => {
     const res = await handler.fetch(req, mockEnv);
 
     expect(res.status).toBe(302);
-    expect(res.headers.get('Location')).toBe('https://example.com/payment?linked=true');
+    expect(res.headers.get('Location')).toBe('https://example.com/upgrade?linked=true');
 
     const cookies = res.headers.get('Set-Cookie');
     expect(cookies).toContain('dp_session=');

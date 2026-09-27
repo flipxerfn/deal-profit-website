@@ -9,7 +9,6 @@ const LINKS = [
   { to: '/', label: 'Home' },
   { to: '/deals', label: 'Deals' },
   { to: '/reviews', label: 'Reviews' },
-  { to: '/trial', label: 'Trial' },
   { to: '/discord', label: 'Discord' },
   { to: '/upgrade', label: 'Upgrade' },
 ];
@@ -92,7 +91,7 @@ const Navbar = () => {
 
         <div className="flex items-center gap-2">
           <a
-            href="/payment"
+            href="/upgrade"
             className="btn btn-primary hidden whitespace-nowrap sm:inline-flex"
           >
             <FaCrown className="text-xs" />
@@ -122,7 +121,7 @@ const Navbar = () => {
           >
             <div className="mx-auto max-w-[1152px] px-4 py-3 sm:px-6">
               <a
-                href="/payment"
+                href="/upgrade"
                 className="btn btn-primary w-full mb-3"
               >
                 <FaCrown className="text-xs" />
