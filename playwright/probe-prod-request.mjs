@@ -1,0 +1,12 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch();
+const page = await (await browser.newContext()).newPage();
+const failed = [];
+page.on('requestfailed', (r) => failed.push(`${r.method()} ${r.url()} :: ${r.failure()?.errorText}`));
+page.on('response', (r) => { if (r.status() >= 400) failed.push(`HTTP ${r.status()} ${r.url()}`); });
+await page.goto('https://goosiev.com/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+await page.waitForTimeout(3500);
+console.log('FAILED/NON-2xx requests on /:');
+for (const f of [...new Set(failed)]) console.log('  ', f);
+console.log('total:', failed.length);
+await browser.close();

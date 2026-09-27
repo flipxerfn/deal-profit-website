@@ -1071,7 +1071,10 @@ async function upsertSubscriptionRecord(store, fields) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(fields),
   });
-  if (!res.ok) throw new Error('subscription_upsert_failed');
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`subscription_upsert_failed: ${detail}`);
+  }
   return res.json();
 }
 
