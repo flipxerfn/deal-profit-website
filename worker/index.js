@@ -35,7 +35,10 @@ import Stripe from 'stripe';
 
 const DISCORD_API = 'https://discord.com/api/v10';
 const STRIPE_API = 'https://api.stripe.com/v1';
-const PRICE_MONTHLY_CENTS = 2500; // $25.00
+// Test price: Stripe's minimum charge is $0.50 USD (1 cent is rejected with
+// amount_too_small), so this is the lowest amount possible. Swap back to 2500
+// ($25.00) when done testing.
+const PRICE_MONTHLY_CENTS = 50;
 const SUBSCRIPTION_PRICE_ID = 'price_deal_profit_monthly'; // Will be created in Stripe dashboard
 const PREMIUM_ROLE_NAME = 'deal-profit'; // Role name to grant/revoke
 const DISCORD_FETCH_TIMEOUT_MS = 10_000;
