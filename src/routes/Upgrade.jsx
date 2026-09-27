@@ -80,13 +80,6 @@ const BENEFITS = [
   },
 ];
 
-const PRICING_HIGHLIGHTS = [
-  'Faster member-first alerts',
-  'Price errors & penny finds',
-  'Premium Discord access',
-  'Reselling opportunities',
-];
-
 const FREE_FEATURES = [
   'Public deal feed',
   'Selected free deals',
@@ -143,71 +136,6 @@ const FAQS = [
       'No. Retailers can correct pricing errors at any time, and stock is often limited. Deals are posted fast specifically so you can act before that happens.',
   },
 ];
-
-const PricingCard = ({ onUpgrade, loading, onTrial, trialLoading }) => (
-  <div className="mx-auto mt-12 max-w-md">
-    <div className="relative overflow-hidden rounded-2xl border border-brand/30 bg-charcoal p-8 shadow-[0_30px_80px_rgba(0,0,0,0.55),0_0_60px_rgba(244,63,94,0.14)]">
-      <div
-        className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-glow/10"
-        aria-hidden="true"
-      />
-      <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
-      <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-brand px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-[0_0_24px_rgba(244,63,94,0.5)]">
-        Deal Profit Premium
-      </div>
-
-      <div className="relative text-center">
-        <p className="text-5xl font-extrabold tracking-tight text-white">
-          {PRICE}
-          <span className="text-xl font-bold text-zinc-400">/mo</span>
-        </p>
-        <p className="mt-2 text-sm text-zinc-400">
-          Start free — pay {PRICE}/month after your trial. Cancel anytime.
-        </p>
-        <button
-          type="button"
-          onClick={onUpgrade}
-          disabled={loading}
-          className={`${buttonClass({ variant: 'primary', size: 'lg' })} mt-6 w-full`}
-        >
-          {loading ? (
-            <>
-              <FaArrowRight className="animate-spin text-sm" />
-              Redirecting to Stripe...
-            </>
-          ) : (
-            <>
-              <FaCrown className="text-sm" />
-              Upgrade to Premium
-              <FaArrowRight className="text-sm" />
-            </>
-          )}
-        </button>
-        <p className="mt-3 text-xs text-zinc-500">
-          7-day free trial available → then {PRICE}/mo
-        </p>
-        <button
-          type="button"
-          onClick={onTrial}
-          disabled={trialLoading}
-          className="mt-3 w-full rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-zinc-300 transition hover:border-brand/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {trialLoading ? 'Redirecting…' : 'or start the 7-day free trial'}
-        </button>
-        <ul className="mt-6 space-y-2 text-left text-sm text-zinc-300">
-          {PRICING_HIGHLIGHTS.map((feature) => (
-            <li key={feature} className="flex items-center gap-2.5">
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-brand/20 text-brand shadow-[0_0_8px_rgba(244,63,94,0.3)]">
-                <FaCheck className="h-3 w-3" />
-              </span>
-              {feature}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  </div>
-);
 
 const Upgrade = () => {
   const prefersReduced = useReducedMotion();
@@ -300,11 +228,8 @@ const Upgrade = () => {
         </motion.p>
       </motion.div>
 
-      {/* Pricing */}
-      <PricingCard onUpgrade={handleUpgrade} loading={checkoutLoading} onTrial={handleStartTrial} trialLoading={trialLoading} />
-
-      {/* Setup flow (moved from /payment) */}
-      <div className="mt-16 md:mt-20">
+      {/* Setup flow (moved from /payment) — action first, before the marketing */}
+      <div className="mt-12 md:mt-16">
         <PaymentFlow />
       </div>
 
