@@ -45,7 +45,7 @@ const Layout = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: prefersReduced ? 0 : 0.25, ease: 'easeOut' }}
         >
-          <div className="mx-auto w-full max-w-[1152px] px-4 py-8 sm:px-6 md:py-12 lg:px-8">
+          <div className="mx-auto w-full max-w-[1800px] px-4 py-8 sm:px-6 md:py-12 lg:px-8">
             <Outlet />
           </div>
         </motion.div>

@@ -20,13 +20,20 @@ function makeEnv() {
       JSON.stringify({ token: 'bot_test_token', guildId: GUILD_ID, categories: [] }),
     ],
   ]);
+  // Persisted subscription record — the webhook's cancel #logs notice must
+  // only fire on the false → true transition, so the flag has to survive
+  // between deliveries within a test.
+  let record = null;
   const handle = async (url, request) => {
     const u = new URL(url);
     switch (u.pathname) {
       case '/subscriptions/get':
-        return jsonResponse({ ok: true, subscription: null });
-      case '/subscriptions/upsert':
-        return jsonResponse({ ok: true, subscription: { user_id: DISCORD_ID } });
+        return jsonResponse({ ok: true, subscription: record });
+      case '/subscriptions/upsert': {
+        const body = await request.json().catch(() => ({}));
+        record = { ...(record ?? {}), ...body };
+        return jsonResponse({ ok: true, subscription: record });
+      }
       case '/get':
         return jsonResponse({ value: kv.get(u.searchParams.get('key')) ?? null });
       case '/put': {
@@ -66,9 +73,10 @@ function stubDiscordFetch() {
       ]);
     }
     if (u === `https://discord.com/api/v10/guilds/${GUILD_ID}/roles`) {
-      return jsonResponse([{ id: 'role_deal', name: 'deal-profit' }]);
+      return jsonResponse([{ id: 'role_deal', name: 'deals-profit' }]);
     }
-    if (u.includes(`/guilds/${GUILD_ID}/members/`) && u.endsWith(`/roles/${'role_deal'}`)) {
+    // Grant/revoke URLs are keyed by the exact premium role ID constant
+    if (u.includes(`/guilds/${GUILD_ID}/members/`) && u.includes('/roles/')) {
       return jsonResponse({}); // role grant ack
     }
     if (u === `https://discord.com/api/v10/channels/${LOGS_CHANNEL_ID}/messages`) {
@@ -172,7 +180,7 @@ describe('webhook #logs channel notifications', () => {
         return jsonResponse([{ id: 'chan_general', type: 0, name: 'general' }]);
       }
       if (u === `https://discord.com/api/v10/guilds/${GUILD_ID}/roles`) {
-        return jsonResponse([{ id: 'role_deal', name: 'deal-profit' }]);
+        return jsonResponse([{ id: 'role_deal', name: 'deals-profit' }]);
       }
       if (u.includes(`/guilds/${GUILD_ID}/members/`)) return jsonResponse({});
       if (u.endsWith('/messages')) {
@@ -183,5 +191,52 @@ describe('webhook #logs channel notifications', () => {
 
     const res = await deliver(checkoutEvent('trialing'));
     expect(res.status).toBe(200);
+  });
+
+  function subscriptionUpdatedEvent({ cancelAtPeriodEnd, status = 'active' }) {
+    const periodEnd = Math.floor(Date.now() / 1000) + 2592000;
+    return {
+      type: 'customer.subscription.updated',
+      data: {
+        object: {
+          id: 'sub_1',
+          object: 'subscription',
+          status,
+          metadata: { user_id: DISCORD_ID },
+          cancel_at_period_end: cancelAtPeriodEnd,
+          current_period_end: periodEnd,
+          items: { data: [{ current_period_end: periodEnd }] },
+        },
+      },
+    };
+  }
+
+  it('logs a cancellation to #logs when the cancel flag flips on', async () => {
+    let res = await deliver(subscriptionUpdatedEvent({ cancelAtPeriodEnd: true }));
+    expect(res.status).toBe(200);
+    expect(postedMessages).toHaveLength(1);
+    expect(postedMessages[0].body.content).toContain(`<@${DISCORD_ID}>`);
+    expect(postedMessages[0].body.content).toContain('canceled their **subscription**');
+    expect(postedMessages[0].body.content).toContain('access until');
+
+    // The flag is already stored — a repeat update must not double-post
+    res = await deliver(subscriptionUpdatedEvent({ cancelAtPeriodEnd: true }));
+    expect(res.status).toBe(200);
+    expect(postedMessages).toHaveLength(1);
+
+    // Flipping the flag back off logs the resume
+    res = await deliver(subscriptionUpdatedEvent({ cancelAtPeriodEnd: false }));
+    expect(res.status).toBe(200);
+    expect(postedMessages).toHaveLength(2);
+    expect(postedMessages[1].body.content).toContain('resumed their **subscription**');
+  });
+
+  it('calls a canceled trial a trial in the #logs notice', async () => {
+    const res = await deliver(
+      subscriptionUpdatedEvent({ cancelAtPeriodEnd: true, status: 'trialing' })
+    );
+    expect(res.status).toBe(200);
+    expect(postedMessages).toHaveLength(1);
+    expect(postedMessages[0].body.content).toContain('canceled their **trial**');
   });
 });

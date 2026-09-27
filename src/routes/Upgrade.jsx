@@ -175,7 +175,7 @@ const Upgrade = () => {
       {/* Hero */}
       <motion.div
         {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-        className="mx-auto max-w-[760px] text-center"
+        className="mx-auto max-w-[960px] text-center"
       >
         <Badge variant="glow" className="mb-4 shadow-[0_0_16px_rgba(139,92,246,0.4)]">
           Deal Profit Premium
@@ -234,7 +234,7 @@ const Upgrade = () => {
       </div>
 
       {/* What's included in the trial (moved from /trial) */}
-      <div className="mx-auto mt-14 max-w-md md:mt-16">
+      <div className="mx-auto mt-14 max-w-2xl md:mt-16">
         <div className="relative overflow-hidden rounded-xl border border-brand/20 bg-charcoal p-6 sm:p-8">
           <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
           <div
@@ -272,7 +272,7 @@ const Upgrade = () => {
         />
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
-          className="mx-auto grid max-w-[1000px] gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          className="mx-auto grid max-w-[1400px] gap-4 sm:grid-cols-2 lg:grid-cols-3"
         >
           {BENEFITS.map((benefit) => (
             <motion.div key={benefit.title} {...getMotionProps(prefersReduced, motionVariants.staggerItem)}>
@@ -285,7 +285,7 @@ const Upgrade = () => {
       {/* Why Upgrade section */}
       <motion.div
         {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-        className="mx-auto mt-16 max-w-[760px] text-center md:mt-20"
+        className="mx-auto mt-16 max-w-[960px] text-center md:mt-20"
       >
         <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
           Free gives you access to deals.{' '}
@@ -303,7 +303,7 @@ const Upgrade = () => {
       {/* Free vs Premium comparison */}
       <motion.div
         {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-        className="mx-auto mt-14 grid max-w-[760px] gap-5 sm:grid-cols-2 md:mt-16"
+        className="mx-auto mt-14 grid max-w-[1100px] gap-5 sm:grid-cols-2 md:mt-16"
       >
         <div className="card relative overflow-hidden p-6 sm:p-8">
           <div
@@ -346,7 +346,7 @@ const Upgrade = () => {
       {/* Trust indicators (moved from /trial) */}
       <motion.div
         {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
-        className="mx-auto mt-16 grid max-w-[900px] gap-4 sm:grid-cols-3 md:mt-20"
+        className="mx-auto mt-16 grid max-w-[1300px] gap-4 sm:grid-cols-3 md:mt-20"
       >
         {TRUST_ITEMS.map((item) => (
           <motion.div
@@ -364,7 +364,7 @@ const Upgrade = () => {
       </motion.div>
 
       {/* FAQ */}
-      <div className="mx-auto mt-16 max-w-2xl md:mt-20">
+      <div className="mx-auto mt-16 max-w-4xl md:mt-20">
         <SectionHeader
           align="center"
           eyebrow="FAQ"

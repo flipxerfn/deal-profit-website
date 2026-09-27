@@ -7,7 +7,7 @@ const DISCORD_URL = 'https://discord.gg/dealprofit';
 const Footer = () => {
   return (
     <footer className="border-t border-white/10 bg-charcoal/40">
-      <div className="mx-auto max-w-[1152px] px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1800px] px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           {/* Brand */}
           <div>

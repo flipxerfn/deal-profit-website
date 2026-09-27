@@ -12,10 +12,16 @@ export async function fetchSubscription() {
   const res = await fetch('/api/user/subscription', {
     headers: { Accept: 'application/json' },
   });
-  if (res.status === 401) return { unauthorized: true, subscription: null };
-  if (!res.ok) return { unauthorized: false, subscription: null };
+  if (res.status === 401) return { unauthorized: true, subscription: null, premiumRole: null };
+  if (!res.ok) return { unauthorized: false, subscription: null, premiumRole: null };
   const data = await res.json().catch(() => ({}));
-  return { unauthorized: false, subscription: data.subscription ?? null, discord: data.discord ?? null };
+  return {
+    unauthorized: false,
+    subscription: data.subscription ?? null,
+    discord: data.discord ?? null,
+    // Live Discord role check — source of truth for ACCESS (null = unknown)
+    premiumRole: typeof data.premiumRole === 'boolean' ? data.premiumRole : null,
+  };
 }
 
 export async function startCheckout({ trial = false } = {}) {
@@ -27,7 +33,7 @@ export async function startCheckout({ trial = false } = {}) {
       return { ok: true, redirected: true };
     }
     const status = sub.subscription?.status;
-    if (status === 'active' || status === 'trialing') {
+    if (status === 'active' || status === 'trialing' || sub.premiumRole === true) {
       window.location.href = '/upgrade';
       return { ok: true, redirected: true };
     }

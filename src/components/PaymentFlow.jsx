@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import {
   FaDiscord,
   FaCrown,
-  FaLock,
   FaCreditCard,
   FaCheckCircle,
   FaExclamationTriangle,
@@ -47,6 +46,9 @@ const PaymentFlow = () => {
   const [message, setMessage] = useState(null);
   const [discordLinked, setDiscordLinked] = useState(false);
   const [discordUser, setDiscordUser] = useState(null);
+  // Live Discord role check — source of truth for ACCESS (null = unknown)
+  const [premiumRole, setPremiumRole] = useState(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   useEffect(() => {
     fetchSubscription();
@@ -87,16 +89,18 @@ const PaymentFlow = () => {
       if (data.unauthorized) {
         // No Discord identity yet — step 1 stays active
         setSubscription(null);
+        setPremiumRole(null);
         setDiscordLinked(false);
         setDiscordUser(null);
         setStep(1);
       } else {
         setSubscription(data.subscription);
+        setPremiumRole(typeof data.premiumRole === 'boolean' ? data.premiumRole : null);
         if (data.discord) {
           setDiscordUser(data.discord);
           setDiscordLinked(true);
         }
-        updateStepsFromSubscription(data.subscription, data.discord);
+        updateStepsFromSubscription(data.subscription, data.discord, data.premiumRole);
       }
     } catch (err) {
       console.error('Failed to fetch subscription:', err);
@@ -113,15 +117,17 @@ const PaymentFlow = () => {
       const data = await fetchSubscriptionStatus();
       if (data.unauthorized) {
         setSubscription(null);
+        setPremiumRole(null);
         setDiscordLinked(false);
         setDiscordUser(null);
         setStep(1);
         setMessage({ type: 'info', text: 'No link found for this browser — link your Discord below to continue.' });
       } else {
         setSubscription(data.subscription);
+        setPremiumRole(typeof data.premiumRole === 'boolean' ? data.premiumRole : null);
         const linked = !!data.discord || !!data.subscription?.discord_id;
         if (data.discord) setDiscordUser(data.discord);
-        updateStepsFromSubscription(data.subscription, data.discord);
+        updateStepsFromSubscription(data.subscription, data.discord, data.premiumRole);
         if (linked) {
           setMessage({
             type: 'success',
@@ -138,12 +144,14 @@ const PaymentFlow = () => {
     }
   };
 
-  const updateStepsFromSubscription = (sub, discord) => {
+  const updateStepsFromSubscription = (sub, discord, hasRole) => {
     const linked = !!discord || !!sub?.discord_id;
     const newSteps = [...STEPS];
     newSteps[0].complete = linked;
-    // The trial is optional: only a paid subscription completes step 2
-    newSteps[1].complete = sub?.status === 'active';
+    // Step 2 is done once they actually have access: a paid subscription, an
+    // in-progress trial, or the premium role live on their Discord account.
+    newSteps[1].complete =
+      sub?.status === 'active' || sub?.status === 'trialing' || hasRole === true;
     const firstIncomplete = newSteps.findIndex((s) => !s.complete);
     setStep(firstIncomplete === -1 ? 3 : firstIncomplete + 1);
     setDiscordLinked(linked);
@@ -173,9 +181,50 @@ const PaymentFlow = () => {
     }
   };
 
-  const handleManageSubscription = () => {
-    // Redirect to Stripe Customer Portal - would need backend endpoint
-    setMessage({ type: 'info', text: 'Manage subscription via Stripe portal (coming soon)' });
+  // Cancel (cancel-at-period-end) / resume the caller's own subscription.
+  const handleCancelSubscription = async (resume = false) => {
+    if (cancelLoading) return;
+    if (
+      !resume &&
+      !window.confirm(
+        'Cancel your subscription? You keep full access until the end of the current billing period.'
+      )
+    ) {
+      return;
+    }
+    setCancelLoading(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/stripe/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ resume }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        setSubscription((prev) => ({
+          ...(prev ?? {}),
+          user_id: prev?.user_id ?? discordUser?.id,
+          status: data.status,
+          current_period_end: data.current_period_end,
+          cancel_at_period_end: data.cancel_at_period_end,
+        }));
+        setMessage({
+          type: resume ? 'success' : 'info',
+          text: resume
+            ? 'Subscription resumed — it will renew as normal.'
+            : `Subscription canceled — you keep access until ${formatDate(data.current_period_end)}.`,
+        });
+      } else if (data.error === 'no_subscription') {
+        setMessage({ type: 'error', text: 'No subscription found to update on this account.' });
+      } else {
+        setMessage({ type: 'error', text: 'Could not update the subscription. Please try again.' });
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'Could not update the subscription. Please try again.' });
+    } finally {
+      setCancelLoading(false);
+    }
   };
 
   const formatDate = (timestamp) => {
@@ -185,7 +234,12 @@ const PaymentFlow = () => {
     });
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status, hasRole) => {
+    // The Discord role is the source of truth for access — never show a
+    // "not subscribed" badge to someone who actually holds it.
+    if (hasRole && status !== 'trialing') {
+      return { variant: 'brand', text: 'Premium Active' };
+    }
     const badges = {
       active: { variant: 'brand', text: 'Active' },
       trialing: { variant: 'brand', text: 'Trial' },
@@ -197,6 +251,10 @@ const PaymentFlow = () => {
     return badges[status] || { variant: 'outline', text: status };
   };
 
+  const roleActive = premiumRole === true;
+  const subActive = subscription?.status === 'active' || subscription?.status === 'trialing';
+  const isMember = subActive || roleActive;
+
   return (
     <section aria-label="Set up Deal Profit Premium" id="start">
       <SectionHeader
@@ -206,22 +264,26 @@ const PaymentFlow = () => {
         description={`Link your Discord, then start your 7-day free trial or subscribe for ${PRICE}/mo — cancel anytime.`}
       />
 
-      {/* Status badge */}
-      {subscription && (
+      {/* Status badge — role-aware: the live role wins over a stale record */}
+      {(subscription || roleActive) && (
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
           className="mt-6 flex items-center justify-center gap-3"
         >
-          <Badge variant={getStatusBadge(subscription.status).variant}>
-            {getStatusBadge(subscription.status).text}
+          <Badge variant={getStatusBadge(subscription?.status, roleActive).variant}>
+            {getStatusBadge(subscription?.status, roleActive).text}
           </Badge>
-          {subscription.current_period_end && (
-            <span className="text-sm text-zinc-400">
-              {subscription.status === 'active' || subscription.status === 'trialing'
-                ? `Renews ${formatDate(subscription.current_period_end)}`
-                : `Ended ${formatDate(subscription.current_period_end)}`}
-            </span>
-          )}
+          {subscription?.current_period_end &&
+            (subActive ? (
+              <span className="text-sm text-zinc-400">
+                {subscription.cancel_at_period_end ? 'Cancels ' : 'Renews '}
+                {formatDate(subscription.current_period_end)}
+              </span>
+            ) : !roleActive ? (
+              <span className="text-sm text-zinc-400">
+                Ended {formatDate(subscription.current_period_end)}
+              </span>
+            ) : null)}
         </motion.div>
       )}
 
@@ -229,7 +291,7 @@ const PaymentFlow = () => {
       {message && (
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-          className={`mx-auto mt-6 max-w-[800px] rounded-lg p-4 text-sm ${message.type === 'success' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30' : message.type === 'error' ? 'bg-red-500/10 text-red-300 border border-red-500/30' : 'bg-blue-500/10 text-blue-300 border border-blue-500/30'}`}
+          className={`mx-auto mt-6 max-w-[1000px] rounded-lg p-4 text-sm ${message.type === 'success' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30' : message.type === 'error' ? 'bg-red-500/10 text-red-300 border border-red-500/30' : 'bg-blue-500/10 text-blue-300 border border-blue-500/30'}`}
         >
           {message.text}
         </motion.div>
@@ -245,7 +307,7 @@ const PaymentFlow = () => {
           {/* Stepper */}
           <motion.div
             {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-            className="mx-auto mt-12 max-w-[800px]"
+            className="mx-auto mt-12 max-w-[1000px]"
           >
             <div className="relative">
               <div className="absolute left-1/2 top-8 h-1 w-full -translate-x-1/2 bg-zinc-800" aria-hidden="true" />
@@ -284,7 +346,7 @@ const PaymentFlow = () => {
           {/* Step Content */}
           <motion.div
             {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-            className="mx-auto mt-10 max-w-[800px]"
+            className="mx-auto mt-10 max-w-[1000px]"
           >
             {/* Step 1: Link Discord */}
             {step === 1 && (
@@ -296,7 +358,7 @@ const PaymentFlow = () => {
                   </div>
                   <h2 className="text-xl font-extrabold text-white">Link Your Discord Account</h2>
                   <p className="mt-2 text-zinc-400">
-                    We verify your Discord identity so we can grant you the <strong className="text-brand">deal-profit</strong> role
+                    We verify your Discord identity so we can grant you the <strong className="text-brand">deals-profit</strong> role
                     after you subscribe or start a trial. <span className="text-zinc-500">Linking alone does not give you the role — only buying does.</span>
                   </p>
                   <button
@@ -345,7 +407,7 @@ const PaymentFlow = () => {
                         Your Discord is linked{discordUser?.username ? ` as ${discordUser.username}` : ''}.
                       </p>
                       <p className="text-xs text-zinc-500">
-                        The deal-profit role will be granted after you start a trial or subscribe.
+                        The deals-profit role will be granted after you start a trial or subscribe.
                       </p>
                       <button
                         type="button"
@@ -496,7 +558,7 @@ const PaymentFlow = () => {
                     )}
                     {discordLinked && (
                       <p className="mt-4 text-xs text-zinc-500">
-                        Your deal-profit role is granted in Discord as soon as payment goes through.
+                        Your deals-profit role is granted in Discord as soon as payment goes through.
                       </p>
                     )}
                   </div>
@@ -504,8 +566,8 @@ const PaymentFlow = () => {
               </div>
             )}
 
-            {/* Active Subscription View */}
-            {subscription && (subscription.status === 'active' || subscription.status === 'trialing') && step > 2 && (
+            {/* Active view: paid/trial subscription OR the live Discord role */}
+            {isMember && step > 2 && (
               <div className="card relative overflow-hidden border-emerald-400/30 p-6 sm:p-8">
                 <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
                 <div className="text-center">
@@ -513,25 +575,79 @@ const PaymentFlow = () => {
                     <FaCheckCircle className="h-8 w-8" />
                   </div>
                   <h2 className="text-xl font-extrabold text-white">
-                    {subscription.status === 'trialing' ? 'Trial Active' : 'Premium Active'}
+                    {subActive && subscription.status === 'trialing' ? 'Trial Active' : 'Premium Active'}
                   </h2>
                   <p className="mt-2 text-zinc-400">
                     You have access to all premium features.{' '}
-                    {subscription.discord_id && 'The <strong className="text-brand">deal-profit</strong> role has been granted in Discord.'}
+                    {subActive ? (
+                      <>
+                        The <strong className="text-brand">deals-profit</strong> role has been granted in
+                        Discord.
+                      </>
+                    ) : (
+                      <>
+                        Your Discord account has the{' '}
+                        <strong className="text-brand">deals-profit</strong> role.
+                      </>
+                    )}
                   </p>
-                  {subscription.current_period_end && (
+                  {subActive && roleActive === false && (
+                    <p className="mt-2 text-sm text-amber-300">
+                      <FaExclamationTriangle className="mr-1 inline" />
+                      The deals-profit role has not synced to your Discord yet — this usually resolves
+                      within a few seconds of payment.
+                    </p>
+                  )}
+                  {subActive && subscription.current_period_end && (
                     <p className="mt-4 text-sm text-zinc-500">
                       {subscription.status === 'trialing' ? 'Trial ends' : 'Next billing'}:
                       <strong className="text-white ml-2">{formatDate(subscription.current_period_end)}</strong>
                     </p>
                   )}
-                  <button
-                    onClick={handleManageSubscription}
-                    className={`${buttonClass({ variant: 'outline', size: 'lg' })} mt-6 w-full max-w-xs mx-auto`}
-                  >
-                    <FaLock className="text-sm" />
-                    Manage Subscription
-                  </button>
+                  {subActive && subscription.cancel_at_period_end && (
+                    <div className="mx-auto mt-4 max-w-md rounded-lg border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-300">
+                      <FaExclamationTriangle className="mr-1 inline" />
+                      Set to cancel on {formatDate(subscription.current_period_end)} — you will not be
+                      charged again.
+                    </div>
+                  )}
+                  {subActive ? (
+                    subscription.cancel_at_period_end ? (
+                      <button
+                        onClick={() => handleCancelSubscription(true)}
+                        disabled={cancelLoading}
+                        className={`${buttonClass({ variant: 'primary', size: 'lg' })} mt-6 w-full max-w-xs mx-auto`}
+                      >
+                        {cancelLoading ? (
+                          <FaSpinner className="animate-spin text-sm" />
+                        ) : (
+                          <>
+                            <FaCheckCircle className="text-sm" />
+                            Keep My Subscription
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleCancelSubscription(false)}
+                        disabled={cancelLoading}
+                        className={`${buttonClass({ variant: 'outline', size: 'lg' })} mt-6 w-full max-w-xs mx-auto`}
+                      >
+                        {cancelLoading ? (
+                          <FaSpinner className="animate-spin text-sm" />
+                        ) : (
+                          <>
+                            <FaExclamationTriangle className="text-sm" />
+                            Cancel Subscription
+                          </>
+                        )}
+                      </button>
+                    )
+                  ) : (
+                    <p className="mt-5 text-sm text-zinc-500">
+                      Role detected live on your Discord account — there is no billing to manage here.
+                    </p>
+                  )}
                 </div>
               </div>
             )}

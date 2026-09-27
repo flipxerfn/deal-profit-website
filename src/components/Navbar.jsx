@@ -51,7 +51,7 @@ const Navbar = () => {
         scrolled ? 'border-white/10 bg-night/85 shadow-[0_12px_32px_rgba(0,0,0,0.35)]' : 'border-white/5 bg-night/60'
       }`}
     >
-      <nav className="mx-auto flex h-16 w-full max-w-[1152px] items-center justify-between px-4 sm:px-6 lg:px-8">
+      <nav className="mx-auto flex h-16 w-full max-w-[1800px] items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-2.5" aria-label="Deal Profit home">
           <img
             src={dealProfitLogo}
@@ -119,7 +119,7 @@ const Navbar = () => {
             transition={{ duration: prefersReduced ? 0 : 0.2, ease: 'easeOut' }}
             className="border-t border-white/5 bg-night/95 backdrop-blur lg:hidden overflow-hidden"
           >
-            <div className="mx-auto max-w-[1152px] px-4 py-3 sm:px-6">
+            <div className="mx-auto max-w-[1800px] px-4 py-3 sm:px-6">
               <a
                 href="/upgrade"
                 className="btn btn-primary w-full mb-3"

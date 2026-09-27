@@ -40,7 +40,10 @@ const STRIPE_API = 'https://api.stripe.com/v1';
 // ($25.00) when done testing.
 const PRICE_MONTHLY_CENTS = 50;
 const SUBSCRIPTION_PRICE_ID = 'price_deal_profit_monthly'; // Will be created in Stripe dashboard
-const PREMIUM_ROLE_NAME = 'deal-profit'; // Role name to grant/revoke
+// The premium role — keyed by exact ID (name lookups can't be trusted to
+// match: the role is spelled "deals-profit"). ID is authoritative.
+const PREMIUM_ROLE_ID = '1513212681438498857';
+const PREMIUM_ROLE_NAME = 'deals-profit';
 const DISCORD_FETCH_TIMEOUT_MS = 10_000;
 const CACHE_TTL_MS = 60_000;
 const EDGE_CACHE = 'public, max-age=60, s-maxage=60, stale-while-revalidate=120';
@@ -318,6 +321,7 @@ async function discordGet(urlPath, token) {
       const detail = res.status === 429 ? await res.json().catch(() => ({})) : {};
       const err = new Error(`Discord API responded with status ${res.status}`);
       err.code = res.status === 429 ? 'rate_limited' : 'discord_http';
+      err.status = res.status;
       err.retryAfter = detail.retry_after ?? null;
       throw err;
     }
@@ -1137,7 +1141,7 @@ async function createCheckoutSession(env, userId, origin, { trial = false } = {}
       },
       quantity: 1
     }],
-    success_url: `${origin}/upgrade?session_id={CHECKOUT_SESSION_ID}&success=true`,
+    success_url: 'https://discord.gg/dealprofit',
     cancel_url: `${origin}/upgrade?canceled=true`,
     metadata: { user_id: userId },
     subscription_data: {
@@ -1149,6 +1153,71 @@ async function createCheckoutSession(env, userId, origin, { trial = false } = {}
   });
 
   return { sessionId: session.id, url: session.url };
+}
+
+// Cancel (or resume) the caller's own subscription: cancel-at-period-end via
+// Stripe so access lasts until the paid-through date. The #logs notice and the
+// persisted cancel flag come from the subscription.updated webhook, which
+// Stripe fires for portal cancels too — single source of truth.
+async function handleStripeCancel(request, env) {
+  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
+
+  const user = await getDiscordSession(request, env);
+  if (!user) return json({ ok: false, error: 'discord_required' }, 401);
+
+  let body = {};
+  try {
+    body = await request.json();
+  } catch {
+    // no body — default to cancel
+  }
+  const resume = body?.resume === true;
+
+  const store = await getSubscriptionStore(env);
+  const recRes = await store.fetch(
+    'https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(user.id)
+  );
+  const record = recRes.ok ? (await recRes.json()).subscription : null;
+  const customerId = record?.stripe_customer_id ?? null;
+  let subscriptionId = record?.stripe_subscription_id ?? null;
+
+  if (!subscriptionId && !customerId) {
+    return json({ ok: false, error: 'no_subscription' }, 400);
+  }
+
+  try {
+    const stripe = getStripe(env);
+    if (!subscriptionId) {
+      const list = await stripe.subscriptions.list({ customer: customerId, limit: 10 });
+      const live =
+        list.data.find((s) => s.status === 'active' || s.status === 'trialing') ?? list.data[0];
+      if (!live) return json({ ok: false, error: 'subscription_not_found' }, 404);
+      subscriptionId = live.id;
+    }
+
+    const updated = await stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: !resume,
+    });
+
+    // Keep the record's billing fields fresh (the cancel flag itself is
+    // persisted by the webhook so we don't race its #logs notification)
+    await upsertSubscriptionRecord(store, {
+      user_id: record?.user_id ?? user.id,
+      stripe_subscription_id: updated.id,
+      status: updated.status,
+      current_period_end: subscriptionPeriodEndMs(updated),
+    });
+
+    return json({
+      ok: true,
+      status: updated.status,
+      cancel_at_period_end: !!updated.cancel_at_period_end,
+      current_period_end: subscriptionPeriodEndMs(updated),
+    });
+  } catch (err) {
+    console.error('[stripe] cancel/resume failed:', err);
+    return json({ ok: false, error: sanitizeError(err) }, 500);
+  }
 }
 
 async function handleStripeCheckout(request, env) {
@@ -1245,6 +1314,16 @@ function logsTrialMessage(userId, periodEndMs) {
 function logsPurchaseMessage(userId, periodEndMs) {
   const when = periodEndMs ? ` — renews <t:${Math.floor(periodEndMs / 1000)}:D>` : '';
   return `👑 <@${userId}> subscribed to **Deal Profit Premium** — $25/mo${when}`;
+}
+
+function logsCancelMessage(userId, periodEndMs, status) {
+  const kind = status === 'trialing' ? 'trial' : 'subscription';
+  const when = periodEndMs ? ` — access until <t:${Math.floor(periodEndMs / 1000)}:D>` : '';
+  return `🛑 <@${userId}> canceled their **${kind}**${when}`;
+}
+
+function logsResumeMessage(userId) {
+  return `✅ <@${userId}> resumed their **subscription**`;
 }
 
 // Grant the premium Discord role once the subscription is (or becomes) paid.
@@ -1356,6 +1435,7 @@ async function handleStripeWebhook(request, env) {
           discord_id: /^\d{17,25}$/.test(String(userId)) ? String(userId) : null,
           status: sub.status,
           current_period_end: subscriptionPeriodEndMs(sub),
+          cancel_at_period_end: !!sub.cancel_at_period_end,
         });
         await maybeGrantPremiumRole(env, store, String(userId), sub.status);
 
@@ -1374,12 +1454,34 @@ async function handleStripeWebhook(request, env) {
         const userId = await userForSubscription(store, sub);
         if (!userId) break;
 
+        // Read the stored cancel flag first so we only post a #logs notice on
+        // the actual transition (this event also fires for unrelated updates,
+        // and it covers cancels made in the Stripe portal too).
+        let hadCancelFlag = false;
+        try {
+          const rec = await store.fetch(
+            'https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(userId)
+          );
+          if (rec.ok) hadCancelFlag = !!(await rec.json()).subscription?.cancel_at_period_end;
+        } catch {
+          // treat as no prior flag
+        }
+
         await upsertSubscriptionRecord(store, {
           user_id: userId,
           stripe_subscription_id: sub.id,
           status: sub.status,
           current_period_end: subscriptionPeriodEndMs(sub),
+          cancel_at_period_end: !!sub.cancel_at_period_end,
         });
+        if (!!sub.cancel_at_period_end && !hadCancelFlag) {
+          await postToLogsChannel(
+            env,
+            logsCancelMessage(String(userId), subscriptionPeriodEndMs(sub), sub.status)
+          );
+        } else if (!sub.cancel_at_period_end && hadCancelFlag) {
+          await postToLogsChannel(env, logsResumeMessage(String(userId)));
+        }
         if (sub.status === 'active' || sub.status === 'trialing') {
           await maybeGrantPremiumRole(env, store, userId, sub.status);
         } else if (sub.status === 'canceled' || sub.status === 'incomplete_expired') {
@@ -1425,15 +1527,25 @@ async function handleUserSubscription(request, env) {
     return json({ ok: false, error: 'discord_required' }, 401);
   }
 
+  // The Discord role is the source of truth for ACCESS ("do they have it?"),
+  // the Stripe record is the source of truth for billing. Report both so the
+  // UI can't say "not subscribed" to someone who actually holds the role.
+  const premiumRole = await hasPremiumRole(env, user.id);
+  const discord = { id: user.id, username: user.username };
+
   const store = await getSubscriptionStore(env);
   const sub = await store.fetch('https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(user.id));
-  if (!sub.ok) return json({ ok: false, error: 'not_found' }, 404);
+  if (!sub.ok) {
+    // Store hiccup — still answer with identity + role instead of failing
+    return json({ ok: true, subscription: null, discord, premiumRole });
+  }
   const data = await sub.json();
 
   return json({
     ok: true,
     subscription: data.subscription,
-    discord: { id: user.id, username: user.username },
+    discord,
+    premiumRole,
   });
 }
 
@@ -1646,6 +1758,8 @@ async function getGuildId(env) {
 
 async function getRoleId(env, guildId) {
   if (!guildId) return null;
+  // Exact ID — can't be misspelled or confused with a similarly-named role
+  if (PREMIUM_ROLE_ID) return PREMIUM_ROLE_ID;
   const { token } = await resolveDiscordConfig(env);
   if (!token) return null;
   const roles = await discordGet(`/guilds/${guildId}/roles`, token);
@@ -1708,6 +1822,50 @@ async function revokePremiumRole(env, discordId) {
   const roleId = await getRoleId(env, guildId);
   if (!roleId) return { ok: false, error: 'role_not_found' };
   return discordRoleRequest('DELETE', guildId, discordId, roleId, token);
+}
+
+// Does this Discord user currently hold the premium role?
+// Returns true / false, or null when it can't be determined (no bot token,
+// network hiccup) so callers can fall back to the Stripe record instead of
+// guessing. Cached briefly so page loads don't hammer the Discord API.
+const ROLE_CACHE_PREFIX = 'rolecache:';
+const ROLE_CACHE_TTL_MS = 60_000;
+
+async function hasPremiumRole(env, discordId) {
+  const cacheKey = ROLE_CACHE_PREFIX + discordId;
+  try {
+    const raw = await kvGet(env, cacheKey);
+    if (raw) {
+      const cached = JSON.parse(raw);
+      if (cached && typeof cached.at === 'number' && Date.now() - cached.at < ROLE_CACHE_TTL_MS) {
+        return typeof cached.has === 'boolean' ? cached.has : null;
+      }
+    }
+  } catch {
+    // corrupt cache — fall through to a live check
+  }
+
+  let result = null;
+  try {
+    const { token } = await resolveDiscordConfig(env);
+    const guildId = token ? await getGuildId(env) : null;
+    const roleId = guildId ? await getRoleId(env, guildId) : null;
+    if (guildId && roleId) {
+      try {
+        const member = await discordGet(`/guilds/${guildId}/members/${discordId}`, token);
+        result = !!(member && Array.isArray(member.roles) && member.roles.includes(roleId));
+      } catch (err) {
+        // 404 = not in the guild anymore → definitely no role; anything else
+        // (rate limit, network) stays unknown rather than a wrong answer
+        if (err?.status === 404) result = false;
+      }
+    }
+  } catch {
+    result = null;
+  }
+
+  await kvPut(env, cacheKey, JSON.stringify({ has: result, at: Date.now() }));
+  return result;
 }
 
 async function handleAdmin(request, env) {
@@ -1821,6 +1979,9 @@ export default {
     }
     if (url.pathname === '/api/stripe/create-checkout') {
       return handleStripeCheckout(request, env);
+    }
+    if (url.pathname === '/api/stripe/cancel') {
+      return handleStripeCancel(request, env);
     }
     if (url.pathname === '/api/stripe/webhook') {
       return handleStripeWebhook(request, env);

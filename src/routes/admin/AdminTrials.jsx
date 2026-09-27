@@ -66,7 +66,7 @@ const AdminTrials = () => {
       <p className="mt-3 text-sm text-zinc-400">
         Manual overrides for comps, influencers or testing — most trials start through Stripe on the{' '}
         <strong className="text-white">/upgrade</strong> page and need no action here. Grants run 7 days
-        and revoke the <strong className="text-brand">deal-profit</strong> role automatically on expiry.
+        and revoke the <strong className="text-brand">deals-profit</strong> role automatically on expiry.
       </p>
 
       <label className="mt-5 block text-sm font-semibold text-zinc-300" htmlFor="trial-discord-id">
