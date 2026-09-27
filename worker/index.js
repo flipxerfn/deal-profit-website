@@ -1137,6 +1137,132 @@ async function handleUserSubscription(request, env) {
   return json({ ok: true, subscription: data.subscription });
 }
 
+// ---- Discord OAuth2 -----------------------------------------------------------
+
+const OAUTH_STATE_COOKIE = 'dp_oauth_state';
+const OAUTH_STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+function issueOAuthStateCookie(request, state) {
+  const secure = new URL(request.url).protocol === 'https:';
+  return `Set-Cookie: ${OAUTH_STATE_COOKIE}=${state}; Path=/; HttpOnly; Secure=${secure}; SameSite=Lax; Max-Age=${Math.floor(OAUTH_STATE_TTL_MS / 1000)}`;
+}
+
+function readOAuthStateCookie(request) {
+  const cookie = request.headers.get('Cookie');
+  if (!cookie) return null;
+  const match = cookie.match(new RegExp(`(?:^|; )${OAUTH_STATE_COOKIE}=([^;]+)`));
+  return match ? match[1] : null;
+}
+
+function clearOAuthStateCookie(request) {
+  const secure = new URL(request.url).protocol === 'https:';
+  return `Set-Cookie: ${OAUTH_STATE_COOKIE}=; Path=/; HttpOnly; Secure=${secure}; SameSite=Lax; Max-Age=0`;
+}
+
+async function handleDiscordAuth(request, env) {
+  if (!env.DISCORD_CLIENT_ID || !env.DISCORD_REDIRECT_URI) {
+    return json({ ok: false, error: 'discord_oauth_not_configured' }, 500);
+  }
+
+  const state = crypto.randomUUID();
+  const scope = 'identify guilds.members.read';
+  const params = new URLSearchParams({
+    client_id: env.DISCORD_CLIENT_ID,
+    redirect_uri: env.DISCORD_REDIRECT_URI,
+    response_type: 'code',
+    scope,
+    state,
+    prompt: 'consent'
+  });
+
+  const redirectUrl = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
+
+  return new Response(null, {
+    status: 302,
+    headers: {
+      'Location': redirectUrl,
+      'Set-Cookie': issueOAuthStateCookie(request, state)
+    }
+  });
+}
+
+async function handleDiscordCallback(request, env) {
+  const url = new URL(request.url);
+  const code = url.searchParams.get('code');
+  const state = url.searchParams.get('state');
+  const storedState = readOAuthStateCookie(request);
+
+  if (!code || !state || !storedState || state !== storedState) {
+    return new Response('Invalid OAuth state', { status: 400 });
+  }
+
+  // Exchange code for access token
+  const tokenParams = new URLSearchParams({
+    client_id: env.DISCORD_CLIENT_ID,
+    client_secret: env.DISCORD_CLIENT_SECRET,
+    grant_type: 'authorization_code',
+    code,
+    redirect_uri: env.DISCORD_REDIRECT_URI
+  });
+
+  const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: tokenParams.toString()
+  });
+
+  if (!tokenRes.ok) {
+    const err = await tokenRes.text();
+    return new Response(`Token exchange failed: ${err}`, { status: 400 });
+  }
+
+  const tokenData = await tokenRes.json();
+  const accessToken = tokenData.access_token;
+
+  // Get user info
+  const userRes = await fetch('https://discord.com/api/users/@me', {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+
+  if (!userRes.ok) {
+    return new Response('Failed to fetch user info', { status: 400 });
+  }
+
+  const user = await userRes.json();
+  const discordId = user.id;
+
+  // Check if user has an active session
+  const session = await getSession(request, env);
+  if (!session) {
+    // Store discord_id in a temporary cookie for post-login linking
+    const frontendUrl = new URL(request.url).origin;
+    return new Response(null, {
+      status: 302,
+      headers: {
+        'Location': `${frontendUrl}/payment?discord_linked=true&discord_id=${discordId}`,
+        'Set-Cookie': clearOAuthStateCookie(request)
+      }
+    });
+  }
+
+  // Link Discord to user's subscription
+  const store = await getSubscriptionStore(env);
+  await store.fetch('https://store.internal/subscriptions/link-discord', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: session.u, discord_id: discordId })
+  });
+
+  const frontendUrl = new URL(request.url).origin;
+  return new Response(null, {
+    status: 302,
+    headers: {
+      'Location': `${frontendUrl}/payment?linked=true`,
+      'Set-Cookie': clearOAuthStateCookie(request)
+    }
+  });
+}
+
 async function handleAdmin(request, env) {
   const url = new URL(request.url);
   const dealsMatch = url.pathname.match(/^\/api\/admin\/deals(?:\/([^/]+))?$/);
@@ -1172,6 +1298,12 @@ export default {
     }
     if (url.pathname === '/api/user/subscription') {
       return handleUserSubscription(request, env);
+    }
+    if (url.pathname === '/api/discord/auth') {
+      return handleDiscordAuth(request, env);
+    }
+    if (url.pathname === '/api/discord/callback') {
+      return handleDiscordCallback(request, env);
     }
     if (env.ASSETS) return env.ASETS.fetch(request);
     return new Response('Not found', { status: 404 });
