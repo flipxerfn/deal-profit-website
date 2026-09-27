@@ -192,7 +192,7 @@ const PaymentFlow = () => {
       past_due: { variant: 'warning', text: 'Past Due' },
       canceled: { variant: 'outline', text: 'Canceled' },
       expired: { variant: 'outline', text: 'Expired' },
-      pending_discord: { variant: 'outline', text: 'Pending Discord Link' },
+      pending_discord: { variant: 'outline', text: 'Linked — Not Subscribed' },
     };
     return badges[status] || { variant: 'outline', text: status };
   };
