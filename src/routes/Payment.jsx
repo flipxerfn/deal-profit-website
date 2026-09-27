@@ -67,6 +67,10 @@ const Payment = () => {
       setMessage({ type: 'success', text: 'Discord account linked successfully!' });
       window.history.replaceState({}, '', '/payment');
     }
+    if (params.get('linked') === 'failed') {
+      setMessage({ type: 'error', text: "Discord sign-in didn't complete — please try linking again." });
+      window.history.replaceState({}, '', '/payment');
+    }
     if (params.get('discord_linked') === 'true') {
       setDiscordLinked(true);
       setMessage({ type: 'info', text: 'Discord linked! Now log in to complete the connection.' });

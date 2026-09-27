@@ -1262,11 +1262,15 @@ async function handleUserSubscription(request, env) {
 // ---- Discord OAuth2 -----------------------------------------------------------
 
 const OAUTH_STATE_COOKIE = 'dp_oauth_state';
-const OAUTH_STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const OAUTH_STATE_TTL_MS = 30 * 60 * 1000; // 30 minutes (Discord verification can be slow)
+const OAUTH_STATES_MAX = 3; // keep recent states: double-clicks / back+retry must not invalidate
+const OAUTH_COOKIE_SEPARATOR = '|'; // '|' is a legal cookie-octet, ',' is not
 
-function issueOAuthStateCookie(request, state) {
+function issueOAuthStateCookie(request, state, previousValue) {
   const secure = new URL(request.url).protocol === 'https:';
-  return `Set-Cookie: ${OAUTH_STATE_COOKIE}=${state}; Path=/; HttpOnly; Secure=${secure}; SameSite=Lax; Max-Age=${Math.floor(OAUTH_STATE_TTL_MS / 1000)}`;
+  const previous = previousValue ? previousValue.split(OAUTH_COOKIE_SEPARATOR) : [];
+  const states = [...previous, state].slice(-OAUTH_STATES_MAX);
+  return `${OAUTH_STATE_COOKIE}=${states.join(OAUTH_COOKIE_SEPARATOR)}; Path=/; HttpOnly; Secure=${secure}; SameSite=Lax; Max-Age=${Math.floor(OAUTH_STATE_TTL_MS / 1000)}`;
 }
 
 function readOAuthStateCookie(request) {
@@ -1276,9 +1280,15 @@ function readOAuthStateCookie(request) {
   return match ? match[1] : null;
 }
 
+function isValidOAuthState(request, state) {
+  const stored = readOAuthStateCookie(request);
+  if (!stored) return false;
+  return stored.split(OAUTH_COOKIE_SEPARATOR).includes(state);
+}
+
 function clearOAuthStateCookie(request) {
   const secure = new URL(request.url).protocol === 'https:';
-  return `Set-Cookie: ${OAUTH_STATE_COOKIE}=; Path=/; HttpOnly; Secure=${secure}; SameSite=Lax; Max-Age=0`;
+  return `${OAUTH_STATE_COOKIE}=; Path=/; HttpOnly; Secure=${secure}; SameSite=Lax; Max-Age=0`;
 }
 
 // ---- Discord identity session (the site's only "login") ----------------------
@@ -1342,23 +1352,37 @@ async function handleDiscordAuth(request, env) {
 
   const redirectUrl = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
 
+  // no-store: browsers must never replay a cached 302 (stale state = broken flow)
   return new Response(null, {
     status: 302,
     headers: {
       'Location': redirectUrl,
-      'Set-Cookie': issueOAuthStateCookie(request, state)
+      'Cache-Control': 'no-store',
+      'Set-Cookie': issueOAuthStateCookie(request, state, readOAuthStateCookie(request))
     }
   });
+}
+
+// All callback failures land the user back on /payment with a readable message
+// instead of a bare 400 text page.
+function oauthFailureRedirect(request, reason) {
+  console.error('[discord-oauth] callback failed:', reason);
+  const frontendUrl = new URL(request.url).origin;
+  const headers = new Headers({
+    'Location': `${frontendUrl}/payment?linked=failed`,
+    'Cache-Control': 'no-store',
+  });
+  headers.append('Set-Cookie', clearOAuthStateCookie(request));
+  return new Response(null, { status: 302, headers });
 }
 
 async function handleDiscordCallback(request, env) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
-  const storedState = readOAuthStateCookie(request);
 
-  if (!code || !state || !storedState || state !== storedState) {
-    return new Response('Invalid OAuth state', { status: 400 });
+  if (!code || !state || !isValidOAuthState(request, state)) {
+    return oauthFailureRedirect(request, `invalid state (code=${!!code})`);
   }
 
   // Exchange code for access token
@@ -1378,7 +1402,7 @@ async function handleDiscordCallback(request, env) {
 
   if (!tokenRes.ok) {
     const err = await tokenRes.text();
-    return new Response(`Token exchange failed: ${err}`, { status: 400 });
+    return oauthFailureRedirect(request, `token exchange failed: ${err}`);
   }
 
   const tokenData = await tokenRes.json();
@@ -1390,7 +1414,7 @@ async function handleDiscordCallback(request, env) {
   });
 
   if (!userRes.ok) {
-    return new Response('Failed to fetch user info', { status: 400 });
+    return oauthFailureRedirect(request, `user info fetch failed: ${userRes.status}`);
   }
 
   const user = await userRes.json();
@@ -1412,7 +1436,10 @@ async function handleDiscordCallback(request, env) {
   }
 
   const frontendUrl = new URL(request.url).origin;
-  const headers = new Headers({ 'Location': `${frontendUrl}/payment?linked=true` });
+  const headers = new Headers({
+    'Location': `${frontendUrl}/payment?linked=true`,
+    'Cache-Control': 'no-store',
+  });
   headers.append('Set-Cookie', clearOAuthStateCookie(request));
   headers.append('Set-Cookie', sessionCookieHeader(request, token));
   return new Response(null, { status: 302, headers });
