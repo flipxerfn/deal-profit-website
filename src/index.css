@@ -19,6 +19,13 @@
   --color-glow-2: #a855f7;
   --color-glow-3: #c084fc;
 
+  --color-ember: #fb923c;
+  --color-ember-2: #fdba74;
+  --color-ice: #22d3ee;
+  --color-ice-2: #67e8f9;
+  --color-lime: #a3e635;
+  --color-lime-2: #bef264;
+
   --color-muted: #71717a;
   --color-muted-2: #a1a1aa;
 
@@ -142,6 +149,59 @@
 
   .section-container {
     @apply mx-auto w-full max-w-[1800px] px-4 py-8 sm:px-6 md:py-12 lg:px-8;
+  }
+
+  /* Full-bleed wash: spans 100vw, inner content stays capped by .section-container.
+     Tint via an extra class: .tint-brand / .tint-ember / .tint-ice / .tint-glow. */
+  .band-full {
+    @apply relative w-full overflow-hidden;
+  }
+  .band-full::before {
+    content: "";
+    @apply pointer-events-none absolute inset-0;
+    background:
+      radial-gradient(60% 90% at 15% 0%, rgba(244, 63, 94, 0.10), transparent 70%),
+      radial-gradient(50% 80% at 85% 100%, rgba(139, 92, 246, 0.08), transparent 70%);
+  }
+  .tint-ember::before {
+    background:
+      radial-gradient(60% 90% at 15% 0%, rgba(251, 146, 60, 0.12), transparent 70%),
+      radial-gradient(50% 80% at 85% 100%, rgba(244, 63, 94, 0.08), transparent 70%);
+  }
+  .tint-ice::before {
+    background:
+      radial-gradient(60% 90% at 15% 0%, rgba(34, 211, 238, 0.09), transparent 70%),
+      radial-gradient(50% 80% at 85% 100%, rgba(139, 92, 246, 0.08), transparent 70%);
+  }
+  .tint-glow::before {
+    background:
+      radial-gradient(60% 90% at 15% 0%, rgba(139, 92, 246, 0.12), transparent 70%),
+      radial-gradient(50% 80% at 85% 100%, rgba(34, 211, 238, 0.07), transparent 70%);
+  }
+
+  /* Lift-on-hover for cards: transform + shadow only (no layout cost). */
+  .card-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:border-ember/40 hover:shadow-[0_16px_56px_rgba(0,0,0,0.6),0_0_48px_rgba(251,146,60,0.12)];
+  }
+
+  /* Animated gradient sweep for display text. Static under reduced motion. */
+  .text-shine {
+    @apply bg-gradient-to-r from-brand via-ember to-glow bg-clip-text text-transparent;
+    background-size: 200% auto;
+    animation: text-shine 6s linear infinite;
+  }
+  @keyframes text-shine {
+    to {
+      background-position: 200% center;
+    }
+  }
+
+  /* Conic glow ring for primary CTA hover/focus. */
+  .ring-conic {
+    @apply relative;
+  }
+  .ring-conic:hover, .ring-conic:focus-visible {
+    box-shadow: 0 0 0 2px rgba(251, 146, 60, 0.55), 0 0 32px rgba(244, 63, 94, 0.45);
   }
 
   .text-gradient-brand {
