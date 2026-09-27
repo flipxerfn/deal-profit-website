@@ -37,6 +37,7 @@ const DISCORD_API = 'https://discord.com/api/v10';
 const STRIPE_API = 'https://api.stripe.com/v1';
 const PRICE_MONTHLY_CENTS = 2500; // $25.00
 const SUBSCRIPTION_PRICE_ID = 'price_deal_profit_monthly'; // Will be created in Stripe dashboard
+const PREMIUM_ROLE_NAME = 'deal-profit'; // Role name to grant/revoke
 const DISCORD_FETCH_TIMEOUT_MS = 10_000;
 const CACHE_TTL_MS = 60_000;
 const EDGE_CACHE = 'public, max-age=60, s-maxage=60, stale-while-revalidate=120';
@@ -1261,6 +1262,93 @@ async function handleDiscordCallback(request, env) {
       'Set-Cookie': clearOAuthStateCookie(request)
     }
   });
+}
+
+// ---- Discord Role Management --------------------------------------------------
+
+async function resolveDiscordConfig(env) {
+  const { token, categories } = await resolveDiscord(env);
+  return { token, categories };
+}
+
+async function getGuildId(env) {
+  // Try to get from stored config first
+  const cfg = await loadConfig(env);
+  if (cfg.guildId) return cfg.guildId;
+  // Fallback: discover from bot's guilds (assume first guild)
+  const { token } = await resolveDiscordConfig(env);
+  if (!token) return null;
+  const guilds = await discordGet('/users/@me/guilds', token);
+  if (Array.isArray(guilds) && guilds.length > 0) {
+    return guilds[0].id;
+  }
+  return null;
+}
+
+async function getRoleId(env, guildId) {
+  if (!guildId) return null;
+  const { token } = await resolveDiscordConfig(env);
+  if (!token) return null;
+  const roles = await discordGet(`/guilds/${guildId}/roles`, token);
+  if (Array.isArray(roles)) {
+    const role = roles.find(r => r.name === PREMIUM_ROLE_NAME);
+    return role?.id ?? null;
+  }
+  return null;
+}
+
+async function discordRoleRequest(method, guildId, userId, roleId, token, retries = 3) {
+  const url = `${DISCORD_API}/guilds/${guildId}/members/${userId}/roles/${roleId}`;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), DISCORD_FETCH_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bot ${token}`,
+          'User-Agent': 'DealProfit-Website/1.0 (https://goosiev.com)',
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (res.ok || res.status === 404) {
+        return { ok: true, status: res.status };
+      }
+      if (res.status === 429) {
+        const data = await res.json().catch(() => ({}));
+        const retryAfter = (data.retry_after ?? 1) * 1000;
+        await new Promise(r => setTimeout(r, retryAfter));
+        continue;
+      }
+      return { ok: false, status: res.status, error: await res.text() };
+    } catch (err) {
+      clearTimeout(timer);
+      if (attempt === retries - 1) throw err;
+      await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+    }
+  }
+  return { ok: false, error: 'max_retries_exceeded' };
+}
+
+async function grantPremiumRole(env, discordId) {
+  const { token } = await resolveDiscordConfig(env);
+  if (!token) return { ok: false, error: 'no_bot_token' };
+  const guildId = await getGuildId(env);
+  if (!guildId) return { ok: false, error: 'no_guild' };
+  const roleId = await getRoleId(env, guildId);
+  if (!roleId) return { ok: false, error: 'role_not_found' };
+  return discordRoleRequest('PUT', guildId, discordId, roleId, token);
+}
+
+async function revokePremiumRole(env, discordId) {
+  const { token } = await resolveDiscordConfig(env);
+  if (!token) return { ok: false, error: 'no_bot_token' };
+  const guildId = await getGuildId(env);
+  if (!guildId) return { ok: false, error: 'no_guild' };
+  const roleId = await getRoleId(env, guildId);
+  if (!roleId) return { ok: false, error: 'role_not_found' };
+  return discordRoleRequest('DELETE', guildId, discordId, roleId, token);
 }
 
 async function handleAdmin(request, env) {
