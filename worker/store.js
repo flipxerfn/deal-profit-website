@@ -5,22 +5,23 @@
 // exists, otherwise it falls back to memory (local dev / no binding).
 // Also stores user subscriptions for the premium system.
 
-const SUBSCRIPTIONS_SCHEMA = `
-  CREATE TABLE IF NOT EXISTS subscriptions (
+// Durable Object SQL runs through storage.exec(query, ...bindings) (SQLite storage).
+const SCHEMA_STATEMENTS = [
+  `CREATE TABLE IF NOT EXISTS subscriptions (
     user_id TEXT PRIMARY KEY,
     stripe_customer_id TEXT,
     stripe_subscription_id TEXT UNIQUE,
-    status TEXT, -- active, past_due, canceled, trialing
+    status TEXT, -- active, past_due, canceled, trialing, expired
     current_period_end INTEGER, -- unix timestamp in ms
     discord_id TEXT UNIQUE,
     discord_linked_at INTEGER,
     created_at INTEGER,
     updated_at INTEGER
-  );
-  CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_sub ON subscriptions(stripe_subscription_id);
-  CREATE INDEX IF NOT EXISTS idx_subscriptions_discord ON subscriptions(discord_id);
-  CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
-`;
+  )`,
+  'CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_sub ON subscriptions(stripe_subscription_id)',
+  'CREATE INDEX IF NOT EXISTS idx_subscriptions_discord ON subscriptions(discord_id)',
+  'CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status)',
+];
 
 export class DealStore {
   constructor(state, _env) {
@@ -30,8 +31,14 @@ export class DealStore {
 
   async _ensureSchema() {
     if (this._initialized) return;
-    await this.state.storage.sql(SUBSCRIPTIONS_SCHEMA);
+    for (const statement of SCHEMA_STATEMENTS) {
+      this.state.storage.exec(statement);
+    }
     this._initialized = true;
+  }
+
+  _rows(query, ...bindings) {
+    return this.state.storage.exec(query, ...bindings).toArray();
   }
 
   async fetch(request) {
@@ -67,6 +74,9 @@ export class DealStore {
     if (url.pathname === '/subscriptions/by-discord' && request.method === 'GET') {
       return this._handleGetByDiscord(request);
     }
+    if (url.pathname === '/subscriptions/by-stripe' && request.method === 'GET') {
+      return this._handleGetByStripe(request);
+    }
     if (url.pathname === '/subscriptions/expired' && request.method === 'GET') {
       return this._handleGetExpired(request);
     }
@@ -95,29 +105,26 @@ export class DealStore {
       discord_linked_at
     } = sub;
 
-    await this.state.storage.sql(
+    this._rows(
       `INSERT INTO subscriptions (user_id, stripe_customer_id, stripe_subscription_id, status, current_period_end, discord_id, discord_linked_at, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(user_id) DO UPDATE SET
-         stripe_customer_id = excluded.stripe_customer_id,
-         stripe_subscription_id = excluded.stripe_subscription_id,
-         status = excluded.status,
-         current_period_end = excluded.current_period_end,
-         discord_id = excluded.discord_id,
-         discord_linked_at = excluded.discord_linked_at,
+         stripe_customer_id = COALESCE(excluded.stripe_customer_id, subscriptions.stripe_customer_id),
+         stripe_subscription_id = COALESCE(excluded.stripe_subscription_id, subscriptions.stripe_subscription_id),
+         status = COALESCE(excluded.status, subscriptions.status),
+         current_period_end = COALESCE(excluded.current_period_end, subscriptions.current_period_end),
+         discord_id = COALESCE(excluded.discord_id, subscriptions.discord_id),
+         discord_linked_at = COALESCE(excluded.discord_linked_at, subscriptions.discord_linked_at),
          updated_at = excluded.updated_at`,
-      [user_id, stripe_customer_id, stripe_subscription_id, status, current_period_end, discord_id, discord_linked_at, now, now]
+      user_id, stripe_customer_id, stripe_subscription_id, status, current_period_end, discord_id, discord_linked_at, now, now
     );
     return this.getSubscription(user_id);
   }
 
   async getSubscription(user_id) {
     await this._ensureSchema();
-    const result = await this.state.storage.sql(
-      `SELECT * FROM subscriptions WHERE user_id = ?`,
-      [user_id]
-    );
-    return result.rows[0] ?? null;
+    const rows = this._rows(`SELECT * FROM subscriptions WHERE user_id = ?`, user_id);
+    return rows[0] ?? null;
   }
 
   async linkDiscord(user_id, discord_id) {
@@ -126,15 +133,15 @@ export class DealStore {
     const existing = await this.getSubscription(user_id);
     if (!existing) {
       // Create minimal subscription record for Discord linking
-      await this.state.storage.sql(
+      this._rows(
         `INSERT INTO subscriptions (user_id, status, discord_id, discord_linked_at, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?)`,
-        [user_id, 'pending_discord', discord_id, now, now, now]
+        user_id, 'pending_discord', discord_id, now, now, now
       );
     } else {
-      await this.state.storage.sql(
+      this._rows(
         `UPDATE subscriptions SET discord_id = ?, discord_linked_at = ?, updated_at = ? WHERE user_id = ?`,
-        [discord_id, now, now, user_id]
+        discord_id, now, now, user_id
       );
     }
     return this.getSubscription(user_id);
@@ -142,29 +149,34 @@ export class DealStore {
 
   async getUserByDiscordId(discord_id) {
     await this._ensureSchema();
-    const result = await this.state.storage.sql(
-      `SELECT * FROM subscriptions WHERE discord_id = ?`,
-      [discord_id]
+    const rows = this._rows(`SELECT * FROM subscriptions WHERE discord_id = ?`, discord_id);
+    return rows[0] ?? null;
+  }
+
+  async getSubscriptionByStripeId(stripe_subscription_id) {
+    await this._ensureSchema();
+    const rows = this._rows(
+      `SELECT * FROM subscriptions WHERE stripe_subscription_id = ?`,
+      stripe_subscription_id
     );
-    return result.rows[0] ?? null;
+    return rows[0] ?? null;
   }
 
   async getExpiredSubscriptions() {
     await this._ensureSchema();
     const now = Date.now();
-    const result = await this.state.storage.sql(
+    return this._rows(
       `SELECT * FROM subscriptions WHERE status = 'active' AND current_period_end < ?`,
-      [now]
+      now
     );
-    return result.rows;
   }
 
   async revokeSubscription(user_id) {
     await this._ensureSchema();
     const now = Date.now();
-    await this.state.storage.sql(
+    this._rows(
       `UPDATE subscriptions SET status = 'expired', updated_at = ? WHERE user_id = ?`,
-      [now, user_id]
+      now, user_id
     );
     return this.getSubscription(user_id);
   }
@@ -210,6 +222,16 @@ export class DealStore {
       return new Response(JSON.stringify({ error: 'discord_id required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
     const sub = await this.getUserByDiscordId(discord_id);
+    return new Response(JSON.stringify({ ok: true, subscription: sub }), { headers: { 'Content-Type': 'application/json' } });
+  }
+
+  async _handleGetByStripe(request) {
+    const url = new URL(request.url);
+    const stripe_subscription_id = url.searchParams.get('stripe_subscription_id');
+    if (!stripe_subscription_id) {
+      return new Response(JSON.stringify({ error: 'stripe_subscription_id required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+    const sub = await this.getSubscriptionByStripeId(stripe_subscription_id);
     return new Response(JSON.stringify({ ok: true, subscription: sub }), { headers: { 'Content-Type': 'application/json' } });
   }
 

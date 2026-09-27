@@ -12,6 +12,7 @@ import {
   FaArrowRight,
   FaDiscord,
 } from 'react-icons/fa';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Badge,
@@ -22,6 +23,7 @@ import {
   Accordion,
 } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
+import { startCheckout } from '../lib/checkout';
 
 const DISCORD_INVITE = 'https://discord.gg/dealprofit';
 const PRICE = '$25';
@@ -124,7 +126,7 @@ const FAQS = [
   },
 ];
 
-const PricingCard = () => (
+const PricingCard = ({ onUpgrade, loading }) => (
   <div className="mx-auto mt-12 max-w-md">
     <div className="relative overflow-hidden rounded-2xl border border-brand/30 bg-charcoal p-8 shadow-[0_30px_80px_rgba(0,0,0,0.55),0_0_60px_rgba(244,63,94,0.14)]">
       <div
@@ -144,14 +146,25 @@ const PricingCard = () => (
         <p className="mt-2 text-sm text-zinc-400">
           Start free — pay {PRICE}/month after your trial. Cancel anytime.
         </p>
-        <a
-          href="/payment"
+        <button
+          type="button"
+          onClick={onUpgrade}
+          disabled={loading}
           className={`${buttonClass({ variant: 'primary', size: 'lg' })} mt-6 w-full`}
         >
-          <FaCrown className="text-sm" />
-          Upgrade to Premium
-          <FaArrowRight className="text-sm" />
-        </a>
+          {loading ? (
+            <>
+              <FaArrowRight className="animate-spin text-sm" />
+              Redirecting to Stripe...
+            </>
+          ) : (
+            <>
+              <FaCrown className="text-sm" />
+              Upgrade to Premium
+              <FaArrowRight className="text-sm" />
+            </>
+          )}
+        </button>
         <p className="mt-3 text-xs text-zinc-500">
           Free trial via Discord → then {PRICE}/mo
         </p>
@@ -172,6 +185,17 @@ const PricingCard = () => (
 
 const Upgrade = () => {
   const prefersReduced = useReducedMotion();
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const handleUpgrade = async () => {
+    if (checkoutLoading) return;
+    setCheckoutLoading(true);
+    const result = await startCheckout();
+    if (!result.ok) {
+      // Stripe couldn't start from here — fall back to the full payment flow
+      window.location.href = '/payment';
+    }
+  };
 
   return (
     <section className="relative pb-4 pt-12" aria-labelledby="upgrade-title">
@@ -208,14 +232,16 @@ const Upgrade = () => {
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
           className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row"
         >
-          <a
-            href="/payment"
+          <button
+            type="button"
+            onClick={handleUpgrade}
+            disabled={checkoutLoading}
             className={buttonClass({ variant: 'primary', size: 'lg' })}
           >
             <FaCrown className="text-sm" />
-            Upgrade to Premium
+            {checkoutLoading ? 'Redirecting to Stripe...' : 'Upgrade to Premium'}
             <FaArrowRight className="text-sm" />
-          </a>
+          </button>
           <a
             href={DISCORD_INVITE}
             target="_blank"
@@ -229,7 +255,7 @@ const Upgrade = () => {
       </motion.div>
 
       {/* Pricing */}
-      <PricingCard />
+      <PricingCard onUpgrade={handleUpgrade} loading={checkoutLoading} />
 
       {/* Benefits grid */}
       <div className="mt-16 md:mt-20">
@@ -329,14 +355,16 @@ const Upgrade = () => {
         description="Join Discord for a free trial, then upgrade for $25/mo. Cancel anytime."
         actions={
           <>
-            <a
-              href="/payment"
+            <button
+              type="button"
+              onClick={handleUpgrade}
+              disabled={checkoutLoading}
               className={buttonClass({ variant: 'primary', size: 'lg' })}
             >
               <FaCrown className="text-sm" />
               Upgrade to Premium
               <FaArrowRight className="text-sm" />
-            </a>
+            </button>
             <a
               href={DISCORD_INVITE}
               target="_blank"

@@ -297,7 +297,7 @@ const Home = () => {
                 <FaArrowRight className="text-sm" />
               </Link>
               <a
-                href="https://whop.com/deal-profit-6dcc?a=phillipkuz9"
+                href="https://discord.gg/dealprofit"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={buttonClass({ variant: 'outline', size: 'lg' })}
@@ -535,7 +535,7 @@ const Home = () => {
               <FaArrowRight className="text-sm" />
             </a>
             <a
-              href="https://whop.com/deal-profit-6dcc?a=phillipkuz9"
+              href="https://discord.gg/dealprofit"
               target="_blank"
               rel="noopener noreferrer"
               className={buttonClass({ variant: 'outline', size: 'lg' })}

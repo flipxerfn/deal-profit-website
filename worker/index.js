@@ -943,7 +943,44 @@ async function handleReviewsAdmin(request, env, id) {
 
 function getStripe(env) {
   if (!env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY not configured');
-  return new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
+  // Workers have no Node http/crypto — use fetch + WebCrypto
+  return new Stripe(env.STRIPE_SECRET_KEY, {
+    httpClient: Stripe.createFetchHttpClient(),
+  });
+}
+
+// Support multiple webhook signing secrets (comma-separated), e.g. when both a
+// "snapshot" and a "thin" Stripe destination point at this endpoint.
+function webhookSecrets(env) {
+  return String(env.STRIPE_WEBHOOK_SECRET || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+// Subscription objects moved current_period_end around across API versions —
+// check the top level first, then subscription items.
+function subscriptionPeriodEndMs(sub) {
+  const seconds =
+    sub?.current_period_end ??
+    sub?.items?.data?.find((i) => i.current_period_end)?.current_period_end ??
+    sub?.items?.data?.[0]?.current_period_end;
+  return seconds ? seconds * 1000 : null;
+}
+
+// Stripe "thin" events only carry { id, object } — re-fetch the full resource.
+async function resolveCheckoutSession(stripe, event) {
+  const cs = event.data?.object ?? {};
+  if (cs.customer || cs.subscription || cs.payment_status) return cs;
+  if (!cs.id) return cs;
+  return stripe.checkout.sessions.retrieve(cs.id, { expand: ['subscription'] });
+}
+
+async function resolveSubscription(stripe, event) {
+  const sub = event.data?.object ?? {};
+  if (sub.items || sub.current_period_end || sub.status) return sub;
+  if (!sub.id) return sub;
+  return stripe.subscriptions.retrieve(sub.id);
 }
 
 async function getSubscriptionStore(env) {
@@ -971,11 +1008,16 @@ async function createCheckoutSession(env, userId, origin) {
       metadata: { user_id: userId }
     });
     customerId = customer.id;
-    // Update subscription record with customer ID
+    // Update subscription record with customer ID (user_id IS the discord id,
+    // so record the link at the same time)
     await store.fetch('https://store.internal/subscriptions/upsert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, stripe_customer_id: customerId })
+      body: JSON.stringify({
+        user_id: userId,
+        stripe_customer_id: customerId,
+        discord_id: /^\d{17,25}$/.test(String(userId)) ? String(userId) : null,
+      })
     });
   }
 
@@ -1008,24 +1050,90 @@ async function createCheckoutSession(env, userId, origin) {
 async function handleStripeCheckout(request, env) {
   if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
 
-  const session = await getSession(request, env);
-  if (!session) {
-    return json({ ok: false, error: 'unauthorized' }, 401);
+  // Discord OAuth is this site's login — checkout requires a linked identity
+  const user = await getDiscordSession(request, env);
+  if (!user) {
+    return json({ ok: false, error: 'discord_required' }, 401);
   }
 
   const origin = new URL(request.url).origin;
   try {
-    const result = await createCheckoutSession(env, session.u, origin);
+    const result = await createCheckoutSession(env, user.id, origin);
     return json({ ok: true, ...result });
   } catch (err) {
     return json({ ok: false, error: sanitizeError(err) }, 500);
   }
 }
 
+async function upsertSubscriptionRecord(store, fields) {
+  const res = await store.fetch('https://store.internal/subscriptions/upsert', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fields),
+  });
+  if (!res.ok) throw new Error('subscription_upsert_failed');
+  return res.json();
+}
+
+// Grant the premium Discord role once the subscription is (or becomes) paid.
+async function maybeGrantPremiumRole(env, store, userId, status) {
+  if (status !== 'active' && status !== 'trialing') return;
+  try {
+    const res = await store.fetch(
+      'https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(userId)
+    );
+    const data = await res.json();
+    const record = data.subscription;
+    const discordId =
+      record?.discord_id ??
+      (/^\d{17,25}$/.test(String(userId)) ? String(userId) : null);
+    if (!discordId) {
+      console.warn('[stripe] no discord id linked for user', userId);
+      return;
+    }
+    const role = await grantPremiumRole(env, discordId);
+    if (!role.ok) console.error('[stripe] grantPremiumRole failed:', role);
+    else console.log('[stripe] premium role granted to', discordId);
+  } catch (err) {
+    console.error('[stripe] grantPremiumRole error:', err);
+  }
+}
+
+async function revokeForSubscription(env, store, userId) {
+  try {
+    const res = await store.fetch(
+      'https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(userId)
+    );
+    const data = await res.json();
+    const discordId =
+      data.subscription?.discord_id ??
+      (/^\d{17,25}$/.test(String(userId)) ? String(userId) : null);
+    if (!discordId) return;
+    const role = await revokePremiumRole(env, discordId);
+    if (!role.ok) console.error('[stripe] revokePremiumRole failed:', role);
+  } catch (err) {
+    console.error('[stripe] revokePremiumRole error:', err);
+  }
+}
+
+async function userForSubscription(store, sub) {
+  if (sub.metadata?.user_id) return String(sub.metadata.user_id);
+  const res = await store.fetch(
+    'https://store.internal/subscriptions/by-stripe?stripe_subscription_id=' +
+      encodeURIComponent(sub.id)
+  );
+  if (res.ok) {
+    const data = await res.json();
+    if (data.subscription?.user_id) return String(data.subscription.user_id);
+  }
+  return null;
+}
+
 async function handleStripeWebhook(request, env) {
   if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
 
-  if (!env.STRIPE_WEBHOOK_SECRET) {
+  const secrets = webhookSecrets(env);
+  if (secrets.length === 0) {
     return json({ ok: false, error: 'webhook_not_configured' }, 500);
   }
 
@@ -1036,11 +1144,18 @@ async function handleStripeWebhook(request, env) {
 
   const body = await request.text();
   const stripe = getStripe(env);
-  let event;
+  const cryptoProvider = Stripe.createSubtleCryptoProvider();
 
-  try {
-    event = stripe.webhooks.constructEvent(body, sig, env.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
+  let event = null;
+  for (const secret of secrets) {
+    try {
+      event = await stripe.webhooks.constructEventAsync(body, sig, secret, undefined, cryptoProvider);
+      break;
+    } catch {
+      // wrong secret (multiple Stripe destinations) — try the next one
+    }
+  }
+  if (!event) {
     return json({ ok: false, error: 'invalid_signature' }, 400);
   }
 
@@ -1049,70 +1164,69 @@ async function handleStripeWebhook(request, env) {
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        const cs = event.data.object;
-        const userId = cs.metadata?.user_id;
-        const stripeSubId = cs.subscription;
-        const stripeCustId = cs.customer;
-
-        if (userId && stripeSubId) {
-          // Fetch subscription details from Stripe
-          const sub = await stripe.subscriptions.retrieve(stripeSubId);
-          await store.fetch('https://store.internal/subscriptions/upsert', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_id: userId,
-              stripe_customer_id: stripeCustId,
-              stripe_subscription_id: stripeSubId,
-              status: sub.status,
-              current_period_end: sub.current_period_end * 1000 // Convert to ms
-            })
-          });
+        const cs = await resolveCheckoutSession(stripe, event);
+        let sub = cs.subscription;
+        if (sub && typeof sub !== 'object') {
+          sub = await stripe.subscriptions.retrieve(sub);
         }
+        if (!sub) break; // one-time payment — nothing to manage
+
+        const userId = cs.metadata?.user_id ?? sub.metadata?.user_id;
+        if (!userId) {
+          console.warn('[stripe] checkout completed without user_id metadata');
+          break;
+        }
+
+        await upsertSubscriptionRecord(store, {
+          user_id: String(userId),
+          stripe_customer_id: typeof cs.customer === 'string' ? cs.customer : cs.customer?.id ?? null,
+          stripe_subscription_id: sub.id,
+          discord_id: /^\d{17,25}$/.test(String(userId)) ? String(userId) : null,
+          status: sub.status,
+          current_period_end: subscriptionPeriodEndMs(sub),
+        });
+        await maybeGrantPremiumRole(env, store, String(userId), sub.status);
         break;
       }
       case 'customer.subscription.updated': {
-        const sub = event.data.object;
-        const userId = sub.metadata?.user_id;
-        const stripeSubId = sub.id;
+        const sub = await resolveSubscription(stripe, event);
+        const userId = await userForSubscription(store, sub);
+        if (!userId) break;
 
-        if (userId && stripeSubId) {
-          await store.fetch('https://store.internal/subscriptions/upsert', {
+        await upsertSubscriptionRecord(store, {
+          user_id: userId,
+          stripe_subscription_id: sub.id,
+          status: sub.status,
+          current_period_end: subscriptionPeriodEndMs(sub),
+        });
+        if (sub.status === 'active' || sub.status === 'trialing') {
+          await maybeGrantPremiumRole(env, store, userId, sub.status);
+        } else if (sub.status === 'canceled' || sub.status === 'incomplete_expired') {
+          await store.fetch('https://store.internal/subscriptions/revoke', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_id: userId,
-              stripe_subscription_id: stripeSubId,
-              status: sub.status,
-              current_period_end: sub.current_period_end * 1000
-            })
+            body: JSON.stringify({ user_id: userId }),
           });
+          await revokeForSubscription(env, store, userId);
         }
         break;
       }
       case 'customer.subscription.deleted': {
-        const sub = event.data.object;
-        const userId = sub.metadata?.user_id;
-        if (userId) {
-          await store.fetch('https://store.internal/subscriptions/revoke', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId })
-          });
-        }
+        const sub = await resolveSubscription(stripe, event);
+        const userId = await userForSubscription(store, sub);
+        if (!userId) break;
+
+        await store.fetch('https://store.internal/subscriptions/revoke', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId }),
+        });
+        await revokeForSubscription(env, store, userId);
         break;
       }
-      case 'invoice.payment_failed': {
-        const invoice = event.data.object;
-        const stripeSubId = invoice.subscription;
-        if (stripeSubId) {
-          // Find user by stripe_subscription_id and mark past_due
-          const store2 = await getSubscriptionStore(env);
-          const subs = await store2.fetch('https://store.internal/subscriptions/get?user_id=all'); // We'll need a different approach
-          // For now, we'll handle this by updating when we have the user_id
-        }
+      default:
+        // Other events (invoice.*, payment events, …) — nothing to do
         break;
-      }
     }
   } catch (err) {
     console.error('Stripe webhook error:', err);
@@ -1125,17 +1239,21 @@ async function handleStripeWebhook(request, env) {
 async function handleUserSubscription(request, env) {
   if (request.method !== 'GET') return json({ ok: false, error: 'method_not_allowed' }, 405);
 
-  const session = await getSession(request, env);
-  if (!session) {
-    return json({ ok: false, error: 'unauthorized' }, 401);
+  const user = await getDiscordSession(request, env);
+  if (!user) {
+    return json({ ok: false, error: 'discord_required' }, 401);
   }
 
   const store = await getSubscriptionStore(env);
-  const sub = await store.fetch('https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(session.u));
+  const sub = await store.fetch('https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(user.id));
   if (!sub.ok) return json({ ok: false, error: 'not_found' }, 404);
   const data = await sub.json();
 
-  return json({ ok: true, subscription: data.subscription });
+  return json({
+    ok: true,
+    subscription: data.subscription,
+    discord: { id: user.id, username: user.username },
+  });
 }
 
 // ---- Discord OAuth2 -----------------------------------------------------------
@@ -1158,6 +1276,49 @@ function readOAuthStateCookie(request) {
 function clearOAuthStateCookie(request) {
   const secure = new URL(request.url).protocol === 'https:';
   return `Set-Cookie: ${OAUTH_STATE_COOKIE}=; Path=/; HttpOnly; Secure=${secure}; SameSite=Lax; Max-Age=0`;
+}
+
+// ---- Discord identity session (the site's only "login") ----------------------
+// There is no password login for customers: Discord OAuth is the identity.
+// A random token cookie maps to a stored record { id, username, at }.
+
+const DISCORD_SESSION_COOKIE = 'dp_session';
+const DISCORD_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const DISCORD_SESSION_KEY = (token) => `discord_session:${token}`;
+
+function readCookieValue(request, name) {
+  const cookie = request.headers.get('Cookie');
+  if (!cookie) return null;
+  const match = cookie.match(new RegExp(`(?:^|; )${name}=([^;]+)`));
+  return match ? match[1] : null;
+}
+
+async function createDiscordSession(env, user) {
+  const token = crypto.randomUUID();
+  const record = { id: String(user.id), username: String(user.username ?? ''), at: Date.now() };
+  await kvPut(env, DISCORD_SESSION_KEY(token), JSON.stringify(record));
+  // link any subscription created before login (discord_id passed through OAuth)
+  return token;
+}
+
+async function getDiscordSession(request, env) {
+  const token = readCookieValue(request, DISCORD_SESSION_COOKIE);
+  if (!token) return null;
+  const raw = await kvGet(env, DISCORD_SESSION_KEY(token));
+  if (!raw) return null;
+  try {
+    const record = JSON.parse(raw);
+    if (!record?.id) return null;
+    if (Date.now() - (record.at ?? 0) > DISCORD_SESSION_TTL_MS) return null;
+    return record;
+  } catch {
+    return null;
+  }
+}
+
+function sessionCookieHeader(request, token) {
+  const secure = new URL(request.url).protocol === 'https:';
+  return `${DISCORD_SESSION_COOKIE}=${token}; Path=/; HttpOnly; Secure=${secure}; SameSite=Lax; Max-Age=${Math.floor(DISCORD_SESSION_TTL_MS / 1000)}`;
 }
 
 async function handleDiscordAuth(request, env) {
@@ -1230,38 +1391,28 @@ async function handleDiscordCallback(request, env) {
   }
 
   const user = await userRes.json();
-  const discordId = user.id;
+  const discordId = String(user.id);
 
-  // Check if user has an active session
-  const session = await getSession(request, env);
-  if (!session) {
-    // Store discord_id in a temporary cookie for post-login linking
-    const frontendUrl = new URL(request.url).origin;
-    return new Response(null, {
-      status: 302,
-      headers: {
-        'Location': `${frontendUrl}/payment?discord_linked=true&discord_id=${discordId}`,
-        'Set-Cookie': clearOAuthStateCookie(request)
-      }
+  // Discord OAuth is the site's login: always establish an identity session
+  const token = await createDiscordSession(env, user);
+
+  // Record the link (user_id === discord id under this identity model)
+  try {
+    const store = await getSubscriptionStore(env);
+    await store.fetch('https://store.internal/subscriptions/link-discord', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: discordId, discord_id: discordId }),
     });
+  } catch (err) {
+    console.error('[discord] link-discord failed:', err);
   }
 
-  // Link Discord to user's subscription
-  const store = await getSubscriptionStore(env);
-  await store.fetch('https://store.internal/subscriptions/link-discord', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id: session.u, discord_id: discordId })
-  });
-
   const frontendUrl = new URL(request.url).origin;
-  return new Response(null, {
-    status: 302,
-    headers: {
-      'Location': `${frontendUrl}/payment?linked=true`,
-      'Set-Cookie': clearOAuthStateCookie(request)
-    }
-  });
+  const headers = new Headers({ 'Location': `${frontendUrl}/payment?linked=true` });
+  headers.append('Set-Cookie', clearOAuthStateCookie(request));
+  headers.append('Set-Cookie', sessionCookieHeader(request, token));
+  return new Response(null, { status: 302, headers });
 }
 
 // ---- Discord Role Management --------------------------------------------------

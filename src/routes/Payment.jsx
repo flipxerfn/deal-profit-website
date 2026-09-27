@@ -1,8 +1,23 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaDiscord, FaCrown, FaLock, FaCreditCard, FaCheckCircle, FaExclamationTriangle, FaArrowRight, FaSpinner } from 'react-icons/fa';
+import {
+  FaDiscord,
+  FaCrown,
+  FaLock,
+  FaCreditCard,
+  FaCheckCircle,
+  FaExclamationTriangle,
+  FaArrowRight,
+  FaSpinner,
+  FaBolt,
+  FaSkullCrossbones,
+  FaCoins,
+  FaComment,
+  FaChartLine,
+} from 'react-icons/fa';
 import { buttonClass, Badge, SectionHeader, FeatureCard } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
+import { fetchSubscription as fetchSubscriptionStatus, startCheckout } from '../lib/checkout';
 
 const DISCORD_INVITE = 'https://discord.gg/dealprofit';
 const PRICE = '$25';
@@ -70,13 +85,16 @@ const Payment = () => {
 
   const fetchSubscription = async () => {
     try {
-      const res = await fetch('/api/user/subscription', {
-        headers: { Accept: 'application/json' }
-      });
-      if (res.ok) {
-        const data = await res.json();
+      const data = await fetchSubscriptionStatus();
+      if (data.unauthorized) {
+        // No Discord identity yet — step 1 stays active
+        setSubscription(null);
+        setDiscordLinked(false);
+        setStep(1);
+      } else {
         setSubscription(data.subscription);
-        updateStepsFromSubscription(data.subscription);
+        if (data.discord) setDiscordLinked(true);
+        updateStepsFromSubscription(data.subscription, data.discord);
       }
     } catch (err) {
       console.error('Failed to fetch subscription:', err);
@@ -85,14 +103,15 @@ const Payment = () => {
     }
   };
 
-  const updateStepsFromSubscription = (sub) => {
-    if (!sub) return;
+  const updateStepsFromSubscription = (sub, discord) => {
+    const linked = !!discord || !!sub?.discord_id;
     const newSteps = [...STEPS];
-    newSteps[0].complete = !!sub.discord_id;
-    newSteps[1].complete = sub.status === 'trialing' || sub.status === 'active';
-    newSteps[2].complete = sub.status === 'active';
-    setStep(newSteps.findIndex(s => !s.complete) + 1 || 3);
-    setDiscordLinked(!!sub.discord_id);
+    newSteps[0].complete = linked;
+    newSteps[1].complete = sub?.status === 'trialing' || sub?.status === 'active';
+    newSteps[2].complete = sub?.status === 'active';
+    const firstIncomplete = newSteps.findIndex((s) => !s.complete);
+    setStep(firstIncomplete === -1 ? 4 : firstIncomplete + 1);
+    setDiscordLinked(linked);
   };
 
   const handleDiscordLink = () => {
@@ -102,24 +121,9 @@ const Payment = () => {
   const handleCreateCheckout = async () => {
     setCheckoutLoading(true);
     setMessage(null);
-    try {
-      const res = await fetch('/api/stripe/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({})
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.url) {
-          window.location.href = data.url;
-        }
-      } else {
-        const err = await res.json();
-        setMessage({ type: 'error', text: err.error || 'Failed to create checkout session' });
-      }
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Something went wrong. Please try again.' });
-    } finally {
+    const result = await startCheckout();
+    if (!result.ok) {
+      setMessage({ type: 'error', text: 'Failed to start checkout. Please try again.' });
       setCheckoutLoading(false);
     }
   };
@@ -281,10 +285,20 @@ const Payment = () => {
                 )}
               </button>
               {discordLinked && (
-                <p className="mt-4 text-sm text-emerald-300">
-                  <FaCheckCircle className="inline mr-1" />
-                  Your Discord is linked. Proceed to the next step.
-                </p>
+                <div className="mt-4 space-y-3">
+                  <p className="text-sm text-emerald-300">
+                    <FaCheckCircle className="inline mr-1" />
+                    Your Discord is linked.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    className={buttonClass({ variant: 'primary', size: 'lg' })}
+                  >
+                    Continue
+                    <FaArrowRight className="text-sm" />
+                  </button>
+                </div>
               )}
             </div>
           </div>

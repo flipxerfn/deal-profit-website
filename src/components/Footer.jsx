@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { FaDiscord } from 'react-icons/fa';
 import dealProfitLogo from '../assets/deal-profit-logo.png';
 
-const WHOP_URL = 'https://whop.com/deal-profit-6dcc?a=phillipkuz9';
+const DISCORD_URL = 'https://discord.gg/dealprofit';
 
 const Footer = () => {
   return (
@@ -48,12 +48,12 @@ const Footer = () => {
               <Link to="/trial" className="text-zinc-400 transition-colors hover:text-white">Free Trial</Link>
               <Link to="/upgrade" className="text-zinc-400 transition-colors hover:text-white">Upgrade</Link>
               <a
-                href={WHOP_URL}
+                href={DISCORD_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-zinc-400 transition-colors hover:text-white"
               >
-                Whop Store
+                Discord Server
               </a>
             </nav>
           </div>

@@ -20,7 +20,10 @@ describe('DealStore subscriptions', () => {
         sql: vi.fn(async (query, params) => {
           // Simple in-memory SQL simulation for tests
           return { rows: [] };
-        })
+        }),
+        exec: vi.fn((query, ...bindings) => ({
+          toArray: () => [],
+        }))
       }
     };
     store = new DealStore(mockState, {});

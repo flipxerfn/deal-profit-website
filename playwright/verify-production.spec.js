@@ -27,29 +27,29 @@ test.describe('Production Verification', () => {
     await page.screenshot({ path: 'qa-desktop-upgrade.png', fullPage: true });
     console.log('/upgrade title:', page.title());
     
-    // 6. Search loaded page for new Whop URL
+    // 6. Whop links must be gone; Discord invite must be present
     const pageContent = page.content();
-    const hasNewWhop = pageContent.includes('whop.com/deal-profit-6dcc?a=phillipkuz9');
-    const hasOldWhop = pageContent.includes('whop.com/deals-profit/deal-profit-price-errors-deals') || pageContent.includes('whop.com/deal-profit/deal-profit-01/');
+    const hasDiscordInvite = pageContent.includes('discord.gg/dealprofit');
+    const hasWhop = pageContent.includes('whop.com');
     const hasReviews = page.locator('text=Reviews').count() > 0;
     const hasUpgrade = page.locator('text=Upgrade').count() > 0;
-    
-    console.log('Has new Whop URL:', hasNewWhop);
-    console.log('Has old Whop URL:', hasOldWhop);
+
+    console.log('Has Discord invite:', hasDiscordInvite);
+    console.log('Has any Whop link:', hasWhop);
     console.log('Has /reviews link/content:', hasReviews);
     console.log('Has /upgrade link/content:', hasUpgrade);
-    
+
     // 7. Check for /reviews and /upgrade navigation
     const navLinks = page.locator('text=Reviews, text=Upgrade');
     await expect(navLinks).toBeVisible();
-    
-    // 8. Fail if new Whop URL not found
-    if (!hasNewWhop) {
-      console.error('FAIL: New Whop URL NOT found in production page!');
+
+    // 8. Fail if any Whop URL remains or Discord invite is missing
+    if (!hasDiscordInvite) {
+      console.error('FAIL: Discord invite NOT found in production page!');
       process.exit(1);
     }
-    if (hasOldWhop) {
-      console.error('FAIL: OLD Whop URL still present in production page!');
+    if (hasWhop) {
+      console.error('FAIL: Whop URL still present in production page!');
       process.exit(1);
     }
     
