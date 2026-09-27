@@ -1718,6 +1718,88 @@ async function handleAdmin(request, env) {
   return handler(request, env);
 }
 
+// ---- site counter -------------------------------------------------------------
+// Public vanity counter: total unique visitors (first-party localStorage id,
+// counted once, ever) + how many have pinged in the last 5 minutes.
+
+const STATS_TOTAL_KEY = 'stats:total';
+const STATS_SEEN_PREFIX = 'stats:seen:';
+const STATS_PRESENCE_KEY = 'stats:presence';
+const STATS_ONLINE_WINDOW_MS = 5 * 60 * 1000;
+const STATS_PRESENCE_MAX = 500; // hard cap so spam can't bloat the map
+
+function countOnline(presence, now) {
+  return Object.values(presence).filter(
+    (t) => typeof t === 'number' && now - t < STATS_ONLINE_WINDOW_MS
+  ).length;
+}
+
+async function handleSiteStats(request, env) {
+  const now = Date.now();
+
+  if (request.method === 'GET') {
+    let presence = {};
+    try {
+      presence = JSON.parse((await kvGet(env, STATS_PRESENCE_KEY)) ?? '{}') || {};
+    } catch {
+      presence = {};
+    }
+    const total = Number((await kvGet(env, STATS_TOTAL_KEY)) ?? 0) || 0;
+    return json({ ok: true, total, online: countOnline(presence, now) }, 200, {
+      'Cache-Control': 'no-store',
+    });
+  }
+
+  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
+
+  let body = {};
+  try {
+    body = await request.json();
+  } catch {
+    // fall through to vid validation
+  }
+  const vid = String(body?.vid ?? '');
+  if (!/^[a-z0-9-]{8,64}$/i.test(vid)) return json({ ok: false, error: 'invalid_vid' }, 400);
+
+  // Read current stats (needed for the response either way)
+  let presence = {};
+  try {
+    presence = JSON.parse((await kvGet(env, STATS_PRESENCE_KEY)) ?? '{}') || {};
+  } catch {
+    presence = {};
+  }
+  let total = Number((await kvGet(env, STATS_TOTAL_KEY)) ?? 0) || 0;
+
+  // Presence: stamp this visitor, prune stale entries, enforce a size cap.
+  // (No per-IP cooldown: carrier-grade NAT shares one IP across many real
+  // users, and throttling would drop them from the online count. Total is
+  // protected by the once-per-vid dedup below instead.)
+  const fresh = {};
+  for (const [k, t] of Object.entries(presence)) {
+    if (typeof t === 'number' && now - t < STATS_ONLINE_WINDOW_MS) fresh[k] = t;
+  }
+  fresh[vid] = now;
+  let entries = Object.entries(fresh);
+  if (entries.length > STATS_PRESENCE_MAX) {
+    entries.sort((a, b) => b[1] - a[1]);
+    entries = entries.slice(0, STATS_PRESENCE_MAX);
+  }
+  const presenceOut = Object.fromEntries(entries);
+  await kvPut(env, STATS_PRESENCE_KEY, JSON.stringify(presenceOut));
+
+  // Total: count each visitor id exactly once, ever
+  const seenKey = STATS_SEEN_PREFIX + vid;
+  if (!(await kvGet(env, seenKey))) {
+    await kvPut(env, seenKey, String(now));
+    total += 1;
+    await kvPut(env, STATS_TOTAL_KEY, String(total));
+  }
+
+  return json({ ok: true, total, online: countOnline(presenceOut, now) }, 200, {
+    'Cache-Control': 'no-store',
+  });
+}
+
 // ---- entrypoint ---------------------------------------------------------------
 
 export { DealStore } from './store.js';
@@ -1742,6 +1824,9 @@ export default {
     }
     if (url.pathname === '/api/user/subscription') {
       return handleUserSubscription(request, env);
+    }
+    if (url.pathname === '/api/stats') {
+      return handleSiteStats(request, env);
     }
     if (url.pathname === '/api/discord/auth') {
       return handleDiscordAuth(request, env);

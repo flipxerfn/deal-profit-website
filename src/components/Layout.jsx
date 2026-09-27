@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { motion, useScroll } from 'framer-motion';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import SiteCounter from './SiteCounter';
 import { useReducedMotion } from '../lib/motion';
 
 const Layout = () => {
@@ -50,6 +51,7 @@ const Layout = () => {
         </motion.div>
       </main>
       <Footer />
+      <SiteCounter />
     </div>
   );
 };
