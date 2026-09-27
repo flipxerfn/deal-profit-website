@@ -1396,4 +1396,52 @@ export default {
     if (env.ASSETS) return env.ASETS.fetch(request);
     return new Response('Not found', { status: 404 });
   },
+
+  async scheduled(event, env, ctx) {
+    // Cron: "0 3 * * *" (3 AM UTC daily)
+    console.log('[scheduled] Running daily role revocation check');
+    
+    try {
+      const store = await getSubscriptionStore(env);
+      
+      // Get expired subscriptions
+      const expiredRes = await store.fetch('https://store.internal/subscriptions/expired');
+      if (!expiredRes.ok) {
+        console.error('[scheduled] Failed to fetch expired subscriptions');
+        return;
+      }
+      
+      const { subscriptions } = await expiredRes.json();
+      if (!subscriptions || subscriptions.length === 0) {
+        console.log('[scheduled] No expired subscriptions found');
+        return;
+      }
+      
+      console.log(`[scheduled] Found ${subscriptions.length} expired subscriptions`);
+      
+      // Process each expired subscription
+      for (const sub of subscriptions) {
+        if (sub.discord_id) {
+          console.log(`[scheduled] Revoking role for user ${sub.user_id}, discord ${sub.discord_id}`);
+          
+          // Revoke Discord role
+          const roleResult = await revokePremiumRole(env, sub.discord_id);
+          if (!roleResult.ok) {
+            console.error(`[scheduled] Failed to revoke role for ${sub.discord_id}:`, roleResult.error);
+          }
+          
+          // Update subscription status to expired
+          await store.fetch('https://store.internal/subscriptions/revoke', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: sub.user_id })
+          });
+        }
+      }
+      
+      console.log('[scheduled] Daily role revocation complete');
+    } catch (err) {
+      console.error('[scheduled] Error:', err);
+    }
+  }
 };

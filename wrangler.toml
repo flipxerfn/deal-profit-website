@@ -23,6 +23,9 @@ class_name = "DealStore"
 type = "durable-object"
 storage = "sqlite"
 
+[triggers]
+crons = ["0 3 * * *"]
+
 [vars]
 # Override these with your real values:
 #   - In the Cloudflare dashboard under Settings -> Variables and Secrets, or
