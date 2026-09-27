@@ -31,8 +31,12 @@ import {
   sessionCookie,
   verifySession,
 } from './auth.js';
+import Stripe from 'stripe';
 
 const DISCORD_API = 'https://discord.com/api/v10';
+const STRIPE_API = 'https://api.stripe.com/v1';
+const PRICE_MONTHLY_CENTS = 2500; // $25.00
+const SUBSCRIPTION_PRICE_ID = 'price_deal_profit_monthly'; // Will be created in Stripe dashboard
 const DISCORD_FETCH_TIMEOUT_MS = 10_000;
 const CACHE_TTL_MS = 60_000;
 const EDGE_CACHE = 'public, max-age=60, s-maxage=60, stale-while-revalidate=120';
@@ -934,6 +938,205 @@ async function handleReviewsAdmin(request, env, id) {
   return json({ ok: false, error: 'method_not_allowed' }, 405);
 }
 
+// ---- Stripe helpers -----------------------------------------------------------
+
+function getStripe(env) {
+  if (!env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY not configured');
+  return new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
+}
+
+async function getSubscriptionStore(env) {
+  if (!env.DEAL_STORE) throw new Error('DEAL_STORE binding not available');
+  const id = env.DEAL_STORE.idFromName('main');
+  return env.DEAL_STORE.get(id);
+}
+
+async function createCheckoutSession(env, userId, origin) {
+  const stripe = getStripe(env);
+  const store = await getSubscriptionStore(env);
+
+  // Get or create Stripe customer
+  let subscription = await store.fetch('https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(userId));
+  let customerId;
+  if (subscription.ok) {
+    const data = await subscription.json();
+    if (data.subscription?.stripe_customer_id) {
+      customerId = data.subscription.stripe_customer_id;
+    }
+  }
+
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      metadata: { user_id: userId }
+    });
+    customerId = customer.id;
+    // Update subscription record with customer ID
+    await store.fetch('https://store.internal/subscriptions/upsert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, stripe_customer_id: customerId })
+    });
+  }
+
+  const session = await stripe.checkout.sessions.create({
+    customer: customerId,
+    mode: 'subscription',
+    line_items: [{
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: 'Deal Profit Premium',
+          description: 'Monthly subscription for premium deal alerts and Discord access'
+        },
+        unit_amount: PRICE_MONTHLY_CENTS,
+        recurring: { interval: 'month' }
+      },
+      quantity: 1
+    }],
+    success_url: `${origin}/payment?session_id={CHECKOUT_SESSION_ID}&success=true`,
+    cancel_url: `${origin}/payment?canceled=true`,
+    metadata: { user_id: userId },
+    subscription_data: {
+      metadata: { user_id: userId }
+    }
+  });
+
+  return { sessionId: session.id, url: session.url };
+}
+
+async function handleStripeCheckout(request, env) {
+  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
+
+  const session = await getSession(request, env);
+  if (!session) {
+    return json({ ok: false, error: 'unauthorized' }, 401);
+  }
+
+  const origin = new URL(request.url).origin;
+  try {
+    const result = await createCheckoutSession(env, session.u, origin);
+    return json({ ok: true, ...result });
+  } catch (err) {
+    return json({ ok: false, error: sanitizeError(err) }, 500);
+  }
+}
+
+async function handleStripeWebhook(request, env) {
+  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
+
+  if (!env.STRIPE_WEBHOOK_SECRET) {
+    return json({ ok: false, error: 'webhook_not_configured' }, 500);
+  }
+
+  const sig = request.headers.get('stripe-signature');
+  if (!sig) {
+    return json({ ok: false, error: 'missing_signature' }, 400);
+  }
+
+  const body = await request.text();
+  const stripe = getStripe(env);
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(body, sig, env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    return json({ ok: false, error: 'invalid_signature' }, 400);
+  }
+
+  const store = await getSubscriptionStore(env);
+
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const cs = event.data.object;
+        const userId = cs.metadata?.user_id;
+        const stripeSubId = cs.subscription;
+        const stripeCustId = cs.customer;
+
+        if (userId && stripeSubId) {
+          // Fetch subscription details from Stripe
+          const sub = await stripe.subscriptions.retrieve(stripeSubId);
+          await store.fetch('https://store.internal/subscriptions/upsert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: userId,
+              stripe_customer_id: stripeCustId,
+              stripe_subscription_id: stripeSubId,
+              status: sub.status,
+              current_period_end: sub.current_period_end * 1000 // Convert to ms
+            })
+          });
+        }
+        break;
+      }
+      case 'customer.subscription.updated': {
+        const sub = event.data.object;
+        const userId = sub.metadata?.user_id;
+        const stripeSubId = sub.id;
+
+        if (userId && stripeSubId) {
+          await store.fetch('https://store.internal/subscriptions/upsert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: userId,
+              stripe_subscription_id: stripeSubId,
+              status: sub.status,
+              current_period_end: sub.current_period_end * 1000
+            })
+          });
+        }
+        break;
+      }
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object;
+        const userId = sub.metadata?.user_id;
+        if (userId) {
+          await store.fetch('https://store.internal/subscriptions/revoke', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId })
+          });
+        }
+        break;
+      }
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object;
+        const stripeSubId = invoice.subscription;
+        if (stripeSubId) {
+          // Find user by stripe_subscription_id and mark past_due
+          const store2 = await getSubscriptionStore(env);
+          const subs = await store2.fetch('https://store.internal/subscriptions/get?user_id=all'); // We'll need a different approach
+          // For now, we'll handle this by updating when we have the user_id
+        }
+        break;
+      }
+    }
+  } catch (err) {
+    console.error('Stripe webhook error:', err);
+    return json({ ok: false, error: 'webhook_processing_failed' }, 500);
+  }
+
+  return json({ ok: true });
+}
+
+async function handleUserSubscription(request, env) {
+  if (request.method !== 'GET') return json({ ok: false, error: 'method_not_allowed' }, 405);
+
+  const session = await getSession(request, env);
+  if (!session) {
+    return json({ ok: false, error: 'unauthorized' }, 401);
+  }
+
+  const store = await getSubscriptionStore(env);
+  const sub = await store.fetch('https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(session.u));
+  if (!sub.ok) return json({ ok: false, error: 'not_found' }, 404);
+  const data = await sub.json();
+
+  return json({ ok: true, subscription: data.subscription });
+}
+
 async function handleAdmin(request, env) {
   const url = new URL(request.url);
   const dealsMatch = url.pathname.match(/^\/api\/admin\/deals(?:\/([^/]+))?$/);
@@ -961,7 +1164,16 @@ export default {
     if (request.method === 'GET' && url.pathname.startsWith('/api/deals')) {
       return handleDeals(env);
     }
-    if (env.ASSETS) return env.ASSETS.fetch(request);
+    if (url.pathname === '/api/stripe/create-checkout') {
+      return handleStripeCheckout(request, env);
+    }
+    if (url.pathname === '/api/stripe/webhook') {
+      return handleStripeWebhook(request, env);
+    }
+    if (url.pathname === '/api/user/subscription') {
+      return handleUserSubscription(request, env);
+    }
+    if (env.ASSETS) return env.ASETS.fetch(request);
     return new Response('Not found', { status: 404 });
   },
 };
