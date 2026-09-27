@@ -7,6 +7,7 @@ import Reviews from './routes/Reviews';
 import Trial from './routes/Trial';
 import Discord from './routes/Discord';
 import Upgrade from './routes/Upgrade';
+import Payment from './routes/Payment';
 
 // Admin is only reachable at the hidden /admin route — code-split it out of
 // the main bundle so public pages don't pay for its (heavy) icon set.
@@ -23,6 +24,7 @@ function App() {
           <Route path="/trial" element={<Trial />} />
           <Route path="/discord" element={<Discord />} />
           <Route path="/upgrade" element={<Upgrade />} />
+          <Route path="/payment" element={<Payment />} />
         </Route>
         <Route
           path="/admin"

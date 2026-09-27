@@ -1,4 +1,4 @@
-import { FaBolt, FaCoins, FaBell, FaCheck, FaShieldAlt, FaUsers, FaStar, FaCrown, FaArrowRight } from 'react-icons/fa';
+import { FaBolt, FaCoins, FaBell, FaCheck, FaShieldAlt, FaUsers, FaStar, FaCrown, FaArrowRight, FaDiscord } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { buttonClass, Badge, FeatureCard, CTASection, SectionHeader } from '../components/ui';
 import dealProfitLogo from '../assets/deal-profit-logo.png';
@@ -84,17 +84,17 @@ const Trial = () => {
 
         <motion.div {...getMotionProps(prefersReduced, motionVariants.fadeInUp)} className="mt-8">
           <a
-            href="https://whop.com/deal-profit-6dcc?a=phillipkuz9"
+            href="https://discord.gg/dealprofit"
             target="_blank"
             rel="noopener noreferrer"
             className={buttonClass({ variant: 'primary', size: 'xl' })}
           >
-            <FaCrown className="text-sm" />
-            Start Free Trial
+            <FaDiscord className="text-sm" />
+            Join Discord & Start Free Trial
             <FaArrowRight className="text-sm" />
           </a>
           <p className="mt-3 text-xs text-zinc-500">
-            Free to start · $25/month after your trial · cancel anytime
+            Join Discord → Create ticket in #trials → Get 7-day free access · $25/mo after trial · cancel anytime
           </p>
         </motion.div>
 
@@ -171,25 +171,24 @@ const Trial = () => {
       {/* Final CTA */}
       <CTASection
         title="Try Deal Profit free today."
-        description="Start the free trial, see the difference in real time — and cancel anytime if it is not for you."
+        description="Join Discord, create a ticket in #trials for 7-day access — then upgrade for $25/mo if you love it."
         actions={
           <>
-            <a
-              href="https://whop.com/deal-profit-6dcc?a=phillipkuz9"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={buttonClass({ variant: 'primary', size: 'lg' })}
-            >
-              <FaCrown className="text-sm" />
-              Start Free Trial
-            </a>
             <a
               href="https://discord.gg/dealprofit"
               target="_blank"
               rel="noopener noreferrer"
+              className={buttonClass({ variant: 'primary', size: 'lg' })}
+            >
+              <FaDiscord className="text-sm" />
+              Join Discord & Get Trial
+            </a>
+            <a
+              href="/payment"
               className={buttonClass({ variant: 'outline', size: 'lg' })}
             >
-              Join Discord first
+              <FaCrown className="text-sm" />
+              Upgrade Directly
             </a>
           </>
         }

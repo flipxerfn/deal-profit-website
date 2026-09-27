@@ -9,6 +9,8 @@ import {
   FaTrophy,
   FaCheck,
   FaCrown,
+  FaArrowRight,
+  FaDiscord,
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import {
@@ -21,7 +23,7 @@ import {
 } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 
-const WHOP_URL = 'https://whop.com/deal-profit-6dcc?a=phillipkuz9';
+const DISCORD_INVITE = 'https://discord.gg/dealprofit';
 const PRICE = '$25';
 
 const BENEFITS = [
@@ -103,12 +105,12 @@ const FAQS = [
   {
     title: 'How does the free trial work?',
     content:
-      'Start the free trial through Whop with no commitment. You keep full access until the trial ends, then it converts to the $25/month premium plan unless you cancel.',
+      'Join our Discord server and create a ticket in the #trials channel. You\'ll get 7 days of free premium access. After the trial, upgrade at /payment for $25/month.',
   },
   {
     title: 'Can I cancel anytime?',
     content:
-      'Yes — cancel from your Whop account at any time. Your access stays until the end of the current billing period.',
+      'Yes — cancel from your Stripe customer portal at any time. Your access stays until the end of the current billing period.',
   },
   {
     title: 'What makes the premium feed different?',
@@ -143,14 +145,16 @@ const PricingCard = () => (
           Start free — pay {PRICE}/month after your trial. Cancel anytime.
         </p>
         <a
-          href={WHOP_URL}
-          target="_blank"
-          rel="noopener noreferrer"
+          href="/payment"
           className={`${buttonClass({ variant: 'primary', size: 'lg' })} mt-6 w-full`}
         >
           <FaCrown className="text-sm" />
-          Start Free Trial
+          Upgrade to Premium
+          <FaArrowRight className="text-sm" />
         </a>
+        <p className="mt-3 text-xs text-zinc-500">
+          Free trial via Discord → then {PRICE}/mo
+        </p>
         <ul className="mt-6 space-y-2 text-left text-sm text-zinc-300">
           {PRICING_HIGHLIGHTS.map((feature) => (
             <li key={feature} className="flex items-center gap-2.5">
@@ -205,21 +209,21 @@ const Upgrade = () => {
           className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row"
         >
           <a
-            href={WHOP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/payment"
             className={buttonClass({ variant: 'primary', size: 'lg' })}
           >
             <FaCrown className="text-sm" />
             Upgrade to Premium
+            <FaArrowRight className="text-sm" />
           </a>
           <a
-            href={WHOP_URL}
+            href={DISCORD_INVITE}
             target="_blank"
             rel="noopener noreferrer"
             className={buttonClass({ variant: 'outline', size: 'lg' })}
           >
-            Start Free Trial
+            <FaDiscord className="text-sm" />
+            Join Discord for Free Trial
           </a>
         </motion.div>
       </motion.div>
@@ -322,25 +326,25 @@ const Upgrade = () => {
       {/* Final CTA */}
       <CTASection
         title="Ready to catch more deals?"
-        description="Start with a free trial or upgrade straight to premium. Cancel anytime."
+        description="Join Discord for a free trial, then upgrade for $25/mo. Cancel anytime."
         actions={
           <>
             <a
-              href={WHOP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/payment"
               className={buttonClass({ variant: 'primary', size: 'lg' })}
             >
               <FaCrown className="text-sm" />
               Upgrade to Premium
+              <FaArrowRight className="text-sm" />
             </a>
             <a
-              href={WHOP_URL}
+              href={DISCORD_INVITE}
               target="_blank"
               rel="noopener noreferrer"
               className={buttonClass({ variant: 'outline', size: 'lg' })}
             >
-              Start Free Trial
+              <FaDiscord className="text-sm" />
+              Join Discord for Free Trial
             </a>
           </>
         }
