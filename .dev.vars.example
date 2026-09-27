@@ -1,7 +1,7 @@
 # Local-only development secrets for `npx wrangler dev`.
 # Copy this file to `.dev.vars` and fill in real values — `.dev.vars` is gitignored.
 # The SAME values must be set in the Cloudflare dashboard (Settings -> Variables and Secrets),
-# where DISCORD_BOT_TOKEN / ADMIN_PASSWORD / ADMIN_USERNAME should be stored as secrets.
+# where DISCORD_BOT_TOKEN / ADMIN_PASSWORD / ADMIN_USERNAME / STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET / DISCORD_CLIENT_SECRET should be stored as secrets.
 
 # Discord bot token. Create one at https://discord.com/developers/applications, add it to your
 # server, and give it permission to read channels + message history in the deal categories.
@@ -17,3 +17,17 @@ ADMIN_USERNAME=goosievv
 # The admin password you choose. It stays server-side: HttpOnly session cookie, never sent
 # back to the client, never committed to git.
 ADMIN_PASSWORD=
+
+# Stripe
+# Get these from https://dashboard.stripe.com/apikeys
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PUBLISHABLE_KEY=
+
+# Discord OAuth2
+# Create OAuth2 app at https://discord.com/developers/applications
+# Add redirect URI: http://localhost:8788/api/discord/callback (dev) or https://yourdomain.com/api/discord/callback (prod)
+# Enable "Guild Members" privileged intent for role management
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+DISCORD_REDIRECT_URI=http://localhost:8788/api/discord/callback
