@@ -24,7 +24,7 @@ import {
 import DealCard from '../components/DealCard';
 import rtpcImg from '../assets/crops/deal1-hero.webp';
 import { HOME_FINDS, WHAT_WE_HUNT, HOW_IT_WORKS, COMMUNITY_STATS, DEALS } from '../data/deals';
-import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
+import { useReducedMotion, motionVariants, getMotionProps, useScrollReveal } from '../lib/motion';
 
 const HUNT_ICONS = [FaBolt, FaCoins, FaPercent, FaBell];
 
@@ -230,6 +230,10 @@ const ReviewPreview = () => {
 
 const Home = () => {
   const prefersReduced = useReducedMotion();
+  const howReveal = useScrollReveal();
+  const huntReveal = useScrollReveal();
+  const findsReveal = useScrollReveal();
+  const socialReveal = useScrollReveal();
 
   return (
     <>
@@ -391,7 +395,11 @@ const Home = () => {
 
       {/* How It Works */}
       <section className="band-full band-bleed tint-ember relative pb-4" aria-labelledby="how-title">
-        <div className="mx-auto w-full max-w-[1800px] px-4 py-8 sm:px-6 md:py-12 lg:px-8">
+        <motion.div
+          ref={howReveal.ref}
+          {...getMotionProps(prefersReduced, howReveal.isVisible ? motionVariants.scrollReveal : { initial: false, animate: { opacity: 1, y: 0 } })}
+          className="mx-auto w-full max-w-[1800px] px-4 py-8 sm:px-6 md:py-12 lg:px-8"
+        >
         <SectionHeader
           align="center"
           eyebrow="How it works"
@@ -422,12 +430,16 @@ const Home = () => {
             </motion.div>
           ))}
         </motion.div>
-        </div>
+        </motion.div>
       </section>
 
       {/* What We Hunt */}
       <section className="band-full band-bleed tint-ice relative py-12 md:py-16" aria-labelledby="hunt-title">
-        <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8">
+        <motion.div
+          ref={huntReveal.ref}
+          {...getMotionProps(prefersReduced, huntReveal.isVisible ? motionVariants.scrollReveal : { initial: false, animate: { opacity: 1, y: 0 } })}
+          className="mx-auto w-full max-w-[1800px] px-4 py-8 sm:px-6 md:py-12 lg:px-8"
+        >
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand/5 via-transparent to-transparent" aria-hidden="true" />
         <SectionHeader
           align="center"
@@ -445,12 +457,16 @@ const Home = () => {
             </motion.div>
           ))}
         </motion.div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Latest Finds */}
       <section className="band-full band-bleed tint-glow relative pb-4" aria-labelledby="finds-title">
-        <div className="mx-auto w-full max-w-[1800px] px-4 py-8 sm:px-6 md:py-12 lg:px-8">
+        <motion.div
+          ref={findsReveal.ref}
+          {...getMotionProps(prefersReduced, findsReveal.isVisible ? motionVariants.scrollReveal : { initial: false, animate: { opacity: 1, y: 0 } })}
+          className="mx-auto w-full max-w-[1800px] px-4 py-8 sm:px-6 md:py-12 lg:px-8"
+        >
         <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-brand/20 to-transparent" aria-hidden="true" />
         <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -482,12 +498,16 @@ const Home = () => {
             </motion.div>
           ))}
         </motion.div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Community Proof */}
       <section className="band-full band-bleed tint-brand relative py-12 md:py-16" aria-labelledby="social-title">
-        <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8">
+        <motion.div
+          ref={socialReveal.ref}
+          {...getMotionProps(prefersReduced, socialReveal.isVisible ? motionVariants.scrollReveal : { initial: false, animate: { opacity: 1, y: 0 } })}
+          className="mx-auto w-full max-w-[1800px] px-4 py-8 sm:px-6 md:py-12 lg:px-8"
+        >
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-glow/5 via-transparent to-transparent" aria-hidden="true" />
         <SectionHeader
           align="center"
@@ -525,7 +545,7 @@ const Home = () => {
             <FaArrowRight className="text-xs text-zinc-500" />
           </Link>
         </motion.div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Final CTA */}
