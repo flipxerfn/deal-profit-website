@@ -106,7 +106,7 @@ const LiveTicker = () => (
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-70" />
         <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand" />
       </span>
-      Live right now
+      Recent finds — examples
     </p>
     <div className="space-y-1.5">
       {TICKER.map((deal) => (
@@ -117,7 +117,7 @@ const LiveTicker = () => (
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-semibold text-white">{deal.title}</p>
             <p className="text-[11px] text-zinc-500">
-              {deal.categoryLabel} · live now
+              {deal.categoryLabel} · example post
             </p>
           </div>
           <span className="shrink-0 text-sm font-bold text-brand">
@@ -129,10 +129,12 @@ const LiveTicker = () => (
   </div>
 );
 
+// Honest alternative to a fake "caught 40s ago" ticker: send people to the
+// live feed, which posts real finds with a source link and timestamp.
 const CAUGHT = [
-  { deal: 'Penny CPU', when: '40s ago' },
-  { deal: 'RTX 5060 Gaming PC', when: '2m ago' },
-  { deal: 'Wireless Headphones', when: '6m ago' },
+  { deal: 'See the live feed', when: 'real finds, posted as they happen' },
+  { deal: 'Every post links the listing', when: 'open it and check the price yourself' },
+  { deal: 'Retired deals are marked as examples', when: 'no fake urgency, no invented countdowns' },
 ];
 
 // Rotating FOMO strip under the hero ticker (static first line under reduced motion).
@@ -364,9 +366,9 @@ const Home = () => {
               <div className="mx-2 mb-1 flex items-center justify-between gap-3 border-t border-white/10 px-1 pb-1 pt-3">
                 <p className="text-xs text-zinc-400">
                   <FaBolt className="mr-1 inline h-3 w-3 text-brand" />
-                  Live now — price just dropped
+                  Example of a price error we caught
                 </p>
-                <p className="text-xs font-semibold text-emerald-300">Deal active</p>
+                <p className="text-xs font-semibold text-zinc-500">Archived</p>
               </div>
               <LiveTicker />
               <CaughtFeed />
@@ -381,9 +383,9 @@ const Home = () => {
               className="absolute -right-2 -top-5 sm:-right-4"
             >
               <div className="inline-flex items-center gap-2 rounded-xl border border-brand/30 bg-brand/20 px-4 py-3 text-white shadow-[0_0_40px_rgba(244,63,94,0.35),0_8px_30px_rgba(0,0,0,0.4)]">
-                <FaBolt className="h-5 w-5 animate-pulse text-brand" />
+                <FaBolt className="h-5 w-5 text-brand" />
                 <div className="text-left">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-2">Live Deal</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-2">Example find</p>
                   <p className="text-sm font-extrabold">93% OFF</p>
                 </div>
               </div>

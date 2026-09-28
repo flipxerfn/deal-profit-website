@@ -275,8 +275,8 @@ function buildManualDeal(raw, id, existing) {
 }
 
 const toPublicDeal = (deal) => {
-  const { title, url, image, price, referencePrice, category, categoryLabel, description, badge, displayPrice, meta, imageAlt, imagePosition, cta, source, postedAt } = deal;
-  return { id: deal.id, title, url, image, price, referencePrice, category, categoryLabel, description, badge, displayPrice, meta, imageAlt, imagePosition, cta, source, postedAt };
+  const { title, url, image, price, referencePrice, category, categoryLabel, description, badge, displayPrice, meta, imageAlt, imagePosition, cta, source, postedAt, retailer } = deal;
+  return { id: deal.id, title, url, retailer: retailer ?? null, image, price, referencePrice, category, categoryLabel, description, badge, displayPrice, meta, imageAlt, imagePosition, cta, source, postedAt };
 };
 
 // ---- helpers ----------------------------------------------------------------

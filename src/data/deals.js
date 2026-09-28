@@ -20,12 +20,13 @@ export const DEALS = [
     referencePrice: 299.99,
     description:
       'A brand-new desktop CPU caught at a penny — a retailer price error posted the moment it went live. First come, first served.',
-    meta: ['Live now', 'Save 100%', 'Found by Deal Profit'],
+    archived: true,
+    meta: ['Archived example', 'How a penny find surfaces'],
     image: discord1Cropped,
     imageSquare: discord1Cropped,
     imageAlt: 'Penny CPU deal caught at $0.01',
     imagePosition: 'center',
-    cta: { label: 'View Deal', href: 'https://discord.gg/dealprofit' },
+    cta: { label: 'See live deals', href: '/deals' },
   },
   {
     id: 'rtx-5060-gaming-pc',
@@ -37,11 +38,12 @@ export const DEALS = [
     referencePrice: 599.99,
     description:
       'Brand new RTX 5060 gaming PC with RGB lighting — flagged the moment the retailer pricing error went live.',
-    meta: ['Live now', 'Save 93%', 'Found by Deal Profit'],
+    archived: true,
+    meta: ['Archived example', 'How a price error surfaces'],
     image: rtpcImg,
     imageAlt: 'RTX 5060 Gaming PC retailer listing at $39.99',
     imagePosition: 'center top',
-    cta: { label: 'View Deal', href: 'https://discord.gg/dealprofit' },
+    cta: { label: 'See live deals', href: '/deals' },
   },
   {
     id: 'wireless-headphones',
@@ -53,11 +55,12 @@ export const DEALS = [
     referencePrice: 129.99,
     description:
       'Premium noise-cancelling Bluetooth headphones stacked down to a fraction of retail on the listing.',
-    meta: ['Save 90%', 'Found by Deal Profit'],
+    archived: true,
+    meta: ['Archived example', 'How a stacked glitch surfaces'],
     image: headphonesImg,
     imageAlt: 'Wireless Headphones retailer listing at $12.99',
     imagePosition: 'center top',
-    cta: { label: 'View Deal', href: 'https://discord.gg/dealprofit' },
+    cta: { label: 'See live deals', href: '/deals' },
   },
 ];
 

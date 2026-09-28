@@ -173,6 +173,13 @@ export function parseDealMessage(message, channelId) {
   const { price, referencePrice } = extractPrices(`${content} ${embedText}`);
   if (price == null) return null;
 
+  // Quality gate: a product name that happens to contain a number ("Hangar 9
+  // Fuselage Hatch", "BRUTE 44 Gal") is not a deal. Require a real source link
+  // or explicit deal language, otherwise the feed fills with fake-looking posts.
+  const DEAL_LANGUAGE =
+    /\b(price error|price drop|price cut|mis-?price|system price|oops|glitch|stack(able|ed)?|coupon|promo code|\bdeal\b|\bdeals\b|\bsale\b|discount|clearance|markdown|now \$|was \$|off\b|free shipping|bogo|% ?off|under \$)/i;
+  if (!dealUrl && !DEAL_LANGUAGE.test(raw)) return null;
+
   const retailer = detectRetailer(raw, dealUrl);
 
   let title = cleanMarkdown(titleRaw).trim();
@@ -209,7 +216,9 @@ export function parseDealMessage(message, channelId) {
   else if (/\bglitch\b/i.test(lower)) badge = 'Glitch';
 
   const displayPrice = price < 1 ? 'As low as $0.01' : null;
-  const meta = retailer ? [retailer, 'Live now'] : ['Live now'];
+  const meta = dealUrl
+    ? [retailer ?? 'Listing', 'Live now']
+    : [retailer ?? 'Community post', 'No listing attached'];
 
   const messageUrl = `https://discord.com/channels/${
     message.guild_id ?? message.channel_id ?? '@me'
@@ -234,6 +243,8 @@ export function parseDealMessage(message, channelId) {
       href: dealUrl || messageUrl,
     },
     source: 'discord',
+    url: dealUrl ?? null,
+    retailer: retailer ?? null,
     postedAt: message.timestamp ?? null,
     messageId: message.id,
     channelId: channelId ?? message.channel_id ?? null,

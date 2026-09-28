@@ -1,8 +1,10 @@
 import { FaBolt } from 'react-icons/fa6';
-import { FaArrowRight } from 'react-icons/fa';
+import { FaArrowRight, FaExternalLinkAlt, FaCheckCircle } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Card, CardHover, Badge } from './ui';
 import { useReducedMotion } from '../lib/motion';
+import { hostOf, isSourceLink, timeAgo } from '../lib/dealSource';
 
 const dealOff = (deal) =>
   deal.referencePrice ? Math.round((1 - deal.price / deal.referencePrice) * 100) : null;
@@ -10,6 +12,9 @@ const dealOff = (deal) =>
 const DealCard = ({ deal, spotlight = false }) => {
   const off = dealOff(deal);
   const prefersReduced = useReducedMotion();
+  const sourceHost = hostOf(deal.url ?? deal.cta?.href);
+  const verifiable = isSourceLink(deal.url ?? deal.cta?.href);
+  const caught = timeAgo(deal.postedAt);
 
   return (
     <CardHover
@@ -100,16 +105,53 @@ const DealCard = ({ deal, spotlight = false }) => {
             </div>
           )}
 
+          {/* Trust signals: where it came from and when it was caught. */}
+          {verifiable ? (
+            <div className="space-y-1.5 border-t border-white/5 pt-3 text-xs">
+              <p className="flex items-center gap-1.5 text-emerald-300/90">
+                <FaCheckCircle className="shrink-0" aria-hidden="true" />
+                <span>
+                  Live listing
+                  {sourceHost ? (
+                    <>
+                      {' '}on <span className="font-semibold text-white">{sourceHost}</span>
+                    </>
+                  ) : null}
+                </span>
+              </p>
+              <p className="text-zinc-500">
+                {caught ? `Caught ${caught} — prices change fast.` : 'Open the listing to check the current price.'}
+              </p>
+            </div>
+          ) : deal.archived ? (
+            <div className="space-y-1.5 border-t border-white/5 pt-3 text-xs">
+              <p className="font-semibold uppercase tracking-wider text-zinc-500">
+                Example — no live listing
+              </p>
+              <p className="text-zinc-500">
+                This is an archived example of a find, not a current deal. Today&apos;s real deals are posted
+                as they&apos;re caught.
+              </p>
+            </div>
+          ) : null}
+
           {deal.cta?.href ? (
-            <a
-              href={deal.cta.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-outline w-full"
-            >
-              {deal.cta.label}
-              <FaArrowRight className="text-xs" />
-            </a>
+            deal.cta.href.startsWith('/') ? (
+              <Link to={deal.cta.href} className="btn btn-outline w-full">
+                {deal.cta.label}
+                <FaArrowRight className="text-xs" />
+              </Link>
+            ) : (
+              <a
+                href={deal.cta.href}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="btn btn-outline w-full"
+              >
+                {verifiable ? 'Check the live listing' : deal.cta.label}
+                {verifiable ? <FaExternalLinkAlt className="text-xs" /> : <FaArrowRight className="text-xs" />}
+              </a>
+            )
           ) : (
             <span className="btn btn-outline w-full cursor-default opacity-60">
               {deal.cta?.label ?? 'No link'}
