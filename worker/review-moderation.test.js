@@ -144,14 +144,22 @@ describe('review moderation from #logs', () => {
     );
   }
 
-  it('posts the review notice with ✅/❌ instructions and stores the message id', async () => {
+  it('posts the review notice with approve/reject buttons and stores the message id', async () => {
     const res = await submitReview();
+    const id = (await res.json()).id;
     expect(res.status).toBe(201);
 
     expect(postedMessages).toHaveLength(1);
     expect(postedMessages[0].content).toContain('Great deals here');
-    expect(postedMessages[0].content).toContain('✅');
-    expect(postedMessages[0].content).toContain('❌');
+    // Buttons are the primary path; reactions remain a fallback, so the copy
+    // points at the buttons and the buttons carry approve/reject custom_ids.
+    expect(postedMessages[0].content).toContain('buttons');
+    const customIds = postedMessages[0].components
+      .flatMap((row) => row.components ?? [])
+      .map((c) => c.custom_id)
+      .filter(Boolean)
+      .sort();
+    expect(customIds).toEqual([`review:approve:${id}`, `review:reject:${id}`].sort());
 
     const reviews = readReviews(env);
     expect(reviews).toHaveLength(1);

@@ -1185,6 +1185,16 @@ const adminRoutes = {
   '/api/admin/code/commit': handleCodeCommit,
 };
 
+function reviewNoticeText(value) {
+  const reviewer = value.name ?? 'Anonymous';
+  const stars = '★'.repeat(value.rating) + '☆'.repeat(5 - value.rating);
+  return (
+    `📝 **New review submitted** by **${reviewer}** — ${stars} (${value.rating}/5)\n` +
+    `> ${value.text?.slice(0, 200)}${value.text?.length > 200 ? '…' : ''}\n` +
+    `_Use the buttons to approve or reject._`
+  );
+}
+
 function logsReviewDecisionMessage(review, status) {
   const emoji = status === 'approved' ? '✅' : '❌';
   const text = review.text ?? '';
@@ -1232,17 +1242,13 @@ async function handleReviews(request, env) {
     const id = `rv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
     const review = makeReview(value, id);
 
-    // Log review submission to #logs with ✅/❌ moderation instructions.
-    // The message id is stored so the scheduled worker can apply admin
-    // reactions as approve/reject decisions.
-    const reviewer = value.name ?? 'Anonymous';
-    const stars = '★'.repeat(value.rating) + '☆'.repeat(5 - value.rating);
-    const messageId = await postToLogsChannel(
-      env,
-      `📝 **New review submitted** by **${reviewer}** — ${stars} (${value.rating}/5)\n` +
-        `> ${value.text?.slice(0, 200)}${value.text?.length > 200 ? '…' : ''}\n` +
-        `_React ✅ to approve, ❌ to reject — id \`${id}\`_`
-    );
+    // Log review submission to #logs. Approve/Reject BUTTONS make moderation
+    // instant (Discord POSTs to /api/discord/interactions on click). The
+    // ✅/❌ reaction instructions stay as a fallback path — the scheduled
+    // worker still polls reactions for anyone who prefers them.
+    const messageId = await postToLogsChannel(env, reviewNoticeText(value), {
+      components: reviewNoticeComponents(id),
+    });
     if (messageId) review.discordMessageId = messageId;
 
     all.push(review);
@@ -1566,7 +1572,7 @@ async function upsertSubscriptionRecord(store, fields) {
 let logsChannelCache = { id: null, at: 0, resolved: false };
 const LOGS_CHANNEL_TTL_MS = 5 * 60 * 1000;
 
-async function postToLogsChannel(env, content) {
+async function postToLogsChannel(env, content, extra = {}) {
   try {
     const logs = await getLogsChannel(env);
     if (!logs) return null;
@@ -1579,7 +1585,7 @@ async function postToLogsChannel(env, content) {
         'User-Agent': 'DealProfit-Website/1.0 (https://goosiev.com)',
         Accept: 'application/json',
       },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, ...extra }),
     });
     if (!res.ok) {
       console.error('[logs] #logs post failed:', res.status, await res.text().catch(() => ''));
@@ -2278,12 +2284,223 @@ async function handleSiteStats(request, env) {
   });
 }
 
-// ---- entrypoint ---------------------------------------------------------------
-
 // ---- #logs review moderation ------------------------------------------------
-// Pending reviews carry the Discord message id of their #logs notice. The
-// scheduled worker polls ✅/❌ reactions on those messages and applies
-// decisions from guild admins only (owner or Administrator permission).
+// Buttons: every review notice gets Approve / Reject buttons whose custom_id
+// is `review:approve:<id>` / `review:reject:<id>`. Clicks arrive at
+// /api/discord/interactions, signed with Ed25519 using the app's PUBLIC key
+// (Discord signs; we verify — no shared secret). We answer within 3s with an
+// ephemeral result and apply the decision via the follow-up PATCH so the user
+// gets an instant "✅ Approved" popup.
+const REVIEW_BTN_PREFIX = 'review:';
+const INTERACTION_MAX_AGE_S = 60 * 15;
+
+// Hex → Uint8Array (browsers/Workers have no Buffer)
+function hexToBytes(hex) {
+  const out = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < out.length; i += 1) out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  return out;
+}
+
+function parseInteractionPublicKey(base64) {
+  const raw = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  if (raw.length !== 32) throw new Error('bad_public_key');
+  return crypto.subtle.importKey('raw', raw, { name: 'Ed25519' }, false, ['verify']);
+}
+
+// Returns true only for a fresh, correctly-signed Discord interaction.
+async function verifyInteractionRequest(request, body, env) {
+  const publicKeyB64 = env.DISCORD_PUBLIC_KEY;
+  if (!publicKeyB64) return { ok: false, error: 'public_key_not_configured' };
+  const signature = request.headers.get('X-Signature-Ed25519');
+  const timestamp = request.headers.get('X-Signature-Timestamp');
+  if (!signature || !timestamp) return { ok: false, error: 'missing_signature' };
+  const ts = Number(timestamp);
+  if (!Number.isFinite(ts)) return { ok: false, error: 'bad_timestamp' };
+  const ageS = Math.abs(Date.now() / 1000 - ts);
+  if (ageS > INTERACTION_MAX_AGE_S) return { ok: false, error: 'stale_timestamp' };
+  try {
+    const key = await parseInteractionPublicKey(publicKeyB64);
+    const valid = await crypto.subtle.verify(
+      { name: 'Ed25519' },
+      key,
+      hexToBytes(signature),
+      new TextEncoder().encode(timestamp + body)
+    );
+    return valid ? { ok: true } : { ok: false, error: 'invalid_signature' };
+  } catch {
+    return { ok: false, error: 'invalid_signature' };
+  }
+}
+
+const interactionResponse = (body) =>
+  new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+const interactionEphemeral = (content) =>
+  interactionResponse({
+    type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+    data: { content, flags: 64 }, // EPHEMERAL — only the clicker sees this
+  });
+
+// Ack within 3s (ephemeral result), then apply the decision in the background.
+function interactionAckResponse(apply) {
+  const ack = interactionResponse({
+    type: 5, // DEFERRED_CHANNEL_UPDATE_WITH_SOURCE
+    data: { content: apply.ackText },
+  });
+  return {
+    response: ack,
+    deferred: (async () => {
+      try {
+        await apply.run();
+      } catch (err) {
+        console.error('[interactions] apply failed:', err);
+      }
+    })(),
+  };
+}
+
+function reviewNoticeComponents(reviewId) {
+  return [
+    {
+      type: 1,
+      components: [
+        {
+          type: 2,
+          style: 2, // Success
+          label: 'Approve',
+          custom_id: `${REVIEW_BTN_PREFIX}approve:${reviewId}`,
+        },
+        {
+          type: 2,
+          style: 2, // Danger
+          label: 'Reject',
+          custom_id: `${REVIEW_BTN_PREFIX}reject:${reviewId}`,
+        },
+      ],
+    },
+  ];
+}
+
+async function setReviewStatus(env, review, status) {
+  const all = await listReviews(env);
+  const target = all.find((r) => r.id === review.id);
+  if (!target) return false;
+  target.status = status;
+  target.updatedAt = new Date().toISOString();
+  await saveReviews(env, all);
+  return true;
+}
+
+async function handleDiscordInteractions(request, env) {
+  if (request.method !== 'POST') {
+    return json({ ok: false, error: 'method_not_allowed' }, 405);
+  }
+  const body = await request.text();
+  const verified = await verifyInteractionRequest(request, body, env);
+  if (!verified.ok) {
+    return json({ ok: false, error: verified.error }, 401);
+  }
+
+  let interaction;
+  try {
+    interaction = JSON.parse(body);
+  } catch {
+    return json({ ok: false, error: 'invalid_json' }, 400);
+  }
+
+  if (interaction.type === 1) {
+    return interactionResponse({ type: 1 }); // PONG
+  }
+  if (interaction.type !== 2 || !interaction.message?.components) {
+    return json({ ok: false, error: 'unsupported_interaction' }, 400);
+  }
+
+  const clickerId = String(interaction.member?.user?.id ?? interaction.user?.id ?? '');
+  const guildId = interaction.guild_id
+    ? String(interaction.guild_id)
+    : await getGuildId(env);
+  const { token: botToken } = await resolveDiscordConfig(env);
+  if (!botToken) return interactionEphemeral('⚠️ Bot token is not configured.');
+
+  if (!(await isGuildAdmin(env, guildId, clickerId, botToken))) {
+    return interactionEphemeral('🔒 Only server admins can approve or reject reviews.');
+  }
+
+  const ids = interaction.message.components
+    .flatMap((row) => row.components ?? [])
+    .map((c) => c.custom_id);
+  const known = new Set(['approve', 'reject']);
+  const clicked = ids.find((cid) => {
+    const [, action, reviewId] = String(cid).split(':');
+    return known.has(action) && reviewId === interaction.data?.custom_id?.split(':')[2];
+  });
+  const action = clicked?.split(':')[1] ?? interaction.data?.custom_id?.split(':')[1];
+  const reviewId = clicked?.split(':')[2] ?? interaction.data?.custom_id?.split(':')[2];
+
+  const all = await listReviews(env);
+  const review = all.find((r) => r.id === reviewId);
+  if (!review) return interactionEphemeral('⚠️ That review was not found (already handled?).');
+  if (review.status === action + 'd') {
+    return interactionEphemeral(`ℹ️ Already ${review.status}.`);
+  }
+
+  const status = action === 'approve' ? 'approved' : 'rejected';
+  const messageId = review.discordMessageId ?? interaction.message?.id;
+  const { response, deferred } = interactionAckResponse({
+    ackText: `${action === 'approve' ? '✅' : '❌'} **Approved** by <@${clickerId}>`,
+    run: async () => {
+      const ok = await setReviewStatus(env, review, status);
+      if (!ok) return;
+      await patchInteractionMessage(interaction, review, status, clickerId);
+      await postToLogsChannel(env, logsReviewDecisionMessage(review, status));
+    },
+  });
+  deferred.catch(() => {});
+  return response;
+}
+
+// Bake the decision into the #logs notice: buttons swapped for a disabled
+// result chip, so nobody can double-approve.
+async function patchInteractionMessage(interaction, review, status, clickerId) {
+  const chip = status === 'approved' ? '\u2705 Approved' : '\u274c Rejected';
+  try {
+    await fetch(`${DISCORD_API}/interactions/${interaction.id}/${interaction.token}/callback`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'DealProfit-Website/1.0 (https://goosiev.com)',
+      },
+      body: JSON.stringify({
+        content:
+          `**${status === 'approved' ? 'Approved' : 'Rejected'}** by <@${clickerId}>` +
+          (review.discordMessageId ? '' : ''),
+        components: [
+          {
+            type: 1,
+            components: [
+              {
+                type: 2,
+                style: 2,
+                label: chip,
+                custom_id: `${REVIEW_BTN_PREFIX}done:${review.id}`,
+                disabled: true,
+              },
+            ],
+          },
+        ],
+      }),
+    });
+  } catch (err) {
+    console.error('[interactions] message patch failed:', err);
+  }
+}
+
+// Reaction-based fallback (same admin check as the buttons): pending reviews
+// carry the Discord message id of their #logs notice, and the scheduled
+// worker polls ✅/❌ reactions on those messages. Only guild admins count.
 
 const REVIEW_MOD_EMOJI = { approve: '✅', reject: '❌' };
 const REVIEW_MOD_GUILD_CACHE_TTL_MS = 10 * 60_000;
@@ -2446,6 +2663,9 @@ export default {
     }
     if (url.pathname === '/api/discord/auth') {
       return handleDiscordAuth(request, env);
+    }
+    if (url.pathname === '/api/discord/interactions') {
+      return handleDiscordInteractions(request, env);
     }
     if (url.pathname === '/api/discord/callback') {
       return handleDiscordCallback(request, env);
