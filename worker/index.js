@@ -1137,8 +1137,18 @@ async function handleReviews(request, env) {
     if (error) return json({ ok: false, error }, 400);
     const all = await listReviews(env);
     const id = `rv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-    all.push(makeReview(value, id));
+    const review = makeReview(value, id);
+    all.push(review);
     await saveReviews(env, all);
+
+    // Log review submission to #logs
+    const reviewer = value.name ?? 'Anonymous';
+    const stars = '★'.repeat(value.rating) + '☆'.repeat(5 - value.rating);
+    await postToLogsChannel(
+      env,
+      `📝 **New review submitted** by **${reviewer}** — ${stars} (${value.rating}/5)\n> ${value.text?.slice(0, 200)}${value.text?.length > 200 ? '…' : ''}`
+    );
+
     return json({ ok: true, id }, 201);
   }
 
@@ -1178,7 +1188,15 @@ async function handleReviewsAdmin(request, env, id) {
         if (!['pending', 'approved', 'rejected'].includes(body.status)) {
           return json({ ok: false, error: 'status_invalid' }, 400);
         }
+        const oldStatus = review.status;
         review.status = body.status;
+        if (oldStatus !== body.status && (body.status === 'approved' || body.status === 'rejected')) {
+          const emoji = body.status === 'approved' ? '✅' : '❌';
+          await postToLogsChannel(
+            env,
+            `${emoji} Review **${body.status}** by admin — **${review.name ?? 'Anonymous'}** (${review.rating}/5): ${review.text?.slice(0, 150)}${review.text?.length > 150 ? '…' : ''}`
+          );
+        }
       }
       if (body.featured === true) {
         review.featured = true;
