@@ -1176,6 +1176,12 @@ const adminRoutes = {
   '/api/admin/config': handleConfig,
   '/api/admin/grant-trial': handleGrantTrial,
   '/api/admin/revoke-trial': handleRevokeTrial,
+  '/api/admin/interaction-debug': async (request, env) => {
+    const session = await getSession(request, env);
+    if (!session) return json({ ok: false, error: 'unauthorized' }, 401);
+    const raw = await kvGet(env, 'debug:interactions');
+    return json({ ok: true, debug: raw ? JSON.parse(raw) : null });
+  },
   '/api/admin/content': handleContent,
   '/api/admin/content/sync': handleContentSync,
   '/api/admin/code': handleCode,
@@ -2401,6 +2407,23 @@ async function handleDiscordInteractions(request, env) {
   const body = await request.text();
   const verified = await verifyInteractionRequest(request, body, env);
   if (!verified.ok) {
+    // TEMP DIAGNOSTIC: record exactly what arrived so we can see why Discord's
+    // verification ping is rejected. Removed once verified.
+    try {
+      await kvPut(env, 'debug:interactions', JSON.stringify({
+        at: new Date().toISOString(),
+        error: verified.error,
+        hasSig: !!request.headers.get('X-Signature-Ed25519'),
+        hasTs: !!request.headers.get('X-Signature-Timestamp'),
+        ts: request.headers.get('X-Signature-Timestamp'),
+        sigLen: (request.headers.get('X-Signature-Ed25519') || '').length,
+        bodyLen: body.length,
+        bodyHead: body.slice(0, 200),
+        cfRay: request.headers.get('cf-ray'),
+        ua: request.headers.get('user-agent'),
+        allHeaders: Array.from(request.headers.keys()),
+      }));
+    } catch {}
     return json({ ok: false, error: verified.error }, 401);
   }
 
