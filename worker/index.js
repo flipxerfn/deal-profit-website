@@ -2313,7 +2313,7 @@ async function verifyInteractionRequest(request, body, env) {
   if (!publicKeyB64) return { ok: false, error: 'public_key_not_configured' };
   const signature = request.headers.get('X-Signature-Ed25519');
   const timestamp = request.headers.get('X-Signature-Timestamp');
-  if (!signature || !timestamp) return { ok: false, error: 'missing_signature', seen: Array.from(request.headers.keys()).filter(h=>/sig|tstamp|ed25519/i.test(h)) };
+  if (!signature || !timestamp) return { ok: false, error: 'missing_signature' };
   const ts = Number(timestamp);
   if (!Number.isFinite(ts)) return { ok: false, error: 'bad_timestamp' };
   const ageS = Math.abs(Date.now() / 1000 - ts);
