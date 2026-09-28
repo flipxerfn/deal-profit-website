@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
 
 export function Tabs({ defaultValue, onValueChange, className = '', children, ...props }) {
@@ -34,10 +35,13 @@ export function Tabs({ defaultValue, onValueChange, className = '', children, ..
               onClick: () => handleChange(child.props.value),
             });
           })}
-          <div
+          <motion.div
             ref={indicatorRef}
-            className="absolute top-1 bottom-1 bg-brand rounded-md transition-all duration-200 ease-out pointer-events-none"
-            style={{ width: 0, transform: 'translateX(0)' }}
+            className="absolute top-1 bottom-1 bg-brand rounded-md pointer-events-none"
+            initial={{ scaleX: 0, opacity: 0 }}
+            animate={{ scaleX: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            style={{ transformOrigin: 'left center' }}
           />
         </div>
       </div>

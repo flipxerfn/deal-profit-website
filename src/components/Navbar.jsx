@@ -66,9 +66,10 @@ const Navbar = () => {
         <div ref={activeLinkRef} className="relative hidden items-center gap-0.5 lg:flex">
           <motion.div
             ref={indicatorRef}
-            className="absolute bottom-0 left-0 h-0.5 rounded-full bg-gradient-to-r from-brand to-glow shadow-[0_0_12px_rgba(244,63,94,0.6)] transition-all duration-300 ease-out"
-            style={{ width: 0, transform: 'translateX(0)', opacity: 0 }}
-            animate={{ width: 'auto', opacity: 1 }}
+            className="absolute bottom-0 left-0 h-0.5 rounded-full bg-gradient-to-r from-brand to-glow shadow-[0_0_12px_rgba(244,63,94,0.6)]"
+            style={{ transform: 'scaleX(0)', transformOrigin: 'left', opacity: 0 }}
+            animate={{ transform: 'scaleX(1)', opacity: 1 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
           />
           {LINKS.map((link) => (
             <NavLink
@@ -113,9 +114,9 @@ const Navbar = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
             transition={{ duration: prefersReduced ? 0 : 0.2, ease: 'easeOut' }}
             className="border-t border-white/5 bg-night/95 backdrop-blur lg:hidden overflow-hidden"
           >

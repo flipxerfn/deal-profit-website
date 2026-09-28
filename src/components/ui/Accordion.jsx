@@ -38,11 +38,10 @@ export default function Accordion({ items = [], className = '' }) {
                 <motion.div
                   id={`${id}-panel`}
                   key="content"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: prefersReduced ? 0 : 0.25, ease: 'easeOut' }}
-                  className="overflow-hidden"
                 >
                   <p className="px-5 pb-5 text-sm leading-relaxed text-zinc-400">{item.content}</p>
                 </motion.div>
