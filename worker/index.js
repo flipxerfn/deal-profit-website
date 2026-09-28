@@ -35,10 +35,9 @@ import Stripe from 'stripe';
 
 const DISCORD_API = 'https://discord.com/api/v10';
 const STRIPE_API = 'https://api.stripe.com/v1';
-// Test price: Stripe's minimum charge is $0.50 USD (1 cent is rejected with
-// amount_too_small), so this is the lowest amount possible. Swap back to 2500
-// ($25.00) when done testing.
-const PRICE_MONTHLY_CENTS = 50;
+// Monthly $25, yearly $200 (save $100/yr)
+const PRICE_MONTHLY_CENTS = 2500;
+const PRICE_YEARLY_CENTS = 20000;
 const SUBSCRIPTION_PRICE_ID = 'price_deal_profit_monthly'; // Will be created in Stripe dashboard
 // The premium role — keyed by exact ID (name lookups can't be trusted to
 // match: the role is spelled "deals-profit"). ID is authoritative.
@@ -1094,7 +1093,7 @@ async function getSubscriptionStore(env) {
 
 const TRIAL_DAYS = 7;
 
-async function createCheckoutSession(env, userId, origin, { trial = false } = {}) {
+async function createCheckoutSession(env, userId, origin, { trial = false, interval = 'month' } = {}) {
   const stripe = getStripe(env);
   const store = await getSubscriptionStore(env);
 
@@ -1126,6 +1125,13 @@ async function createCheckoutSession(env, userId, origin, { trial = false } = {}
     });
   }
 
+  const isYearly = interval === 'year';
+  const unitAmount = isYearly ? PRICE_YEARLY_CENTS : PRICE_MONTHLY_CENTS;
+  const recurrenceInterval = isYearly ? 'year' : 'month';
+  const productDescription = isYearly
+    ? 'Yearly subscription for premium deal alerts and Discord access — best value'
+    : 'Monthly subscription for premium deal alerts and Discord access';
+
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
@@ -1134,10 +1140,10 @@ async function createCheckoutSession(env, userId, origin, { trial = false } = {}
         currency: 'usd',
         product_data: {
           name: 'Deal Profit Premium',
-          description: 'Monthly subscription for premium deal alerts and Discord access'
+          description: productDescription
         },
-        unit_amount: PRICE_MONTHLY_CENTS,
-        recurring: { interval: 'month' }
+        unit_amount: unitAmount,
+        recurring: { interval: recurrenceInterval }
       },
       quantity: 1
     }],

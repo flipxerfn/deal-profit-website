@@ -14,6 +14,7 @@ import {
   FaShieldAlt,
   FaUsers,
   FaStar,
+  FaTag,
 } from 'react-icons/fa';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -24,13 +25,19 @@ import {
   FeatureCard,
   CTASection,
   Accordion,
+  CardHover,
 } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 import { startCheckout } from '../lib/checkout';
 import PaymentFlow from '../components/PaymentFlow';
 
 const DISCORD_INVITE = 'https://discord.gg/dealprofit';
-const PRICE = '$25';
+const PRICE_MONTHLY = '$25';
+const PRICE_YEARLY = '$200';
+const PRICE_MONTHLY_MO = '$25/mo';
+const PRICE_YEARLY_YR = '$200/yr';
+const YEARLY_SAVINGS = 'Save $100/yr';
+const DEFAULT_INTERVAL = 'month';
 
 const BENEFITS = [
   {
@@ -135,19 +142,24 @@ const FAQS = [
     content:
       'No. Retailers can correct pricing errors at any time, and stock is often limited. Deals are posted fast specifically so you can act before that happens.',
   },
+  {
+    title: 'Is there a yearly plan?',
+    content:
+      'Yes — choose the yearly plan for $200/year and save $100 compared to monthly billing. You get the same premium features with a full year of uninterrupted access.',
+  },
 ];
 
 const Upgrade = () => {
   const prefersReduced = useReducedMotion();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [trialLoading, setTrialLoading] = useState(false);
+  const [interval, setInterval] = useState(DEFAULT_INTERVAL); // 'month' or 'year'
 
   const handleUpgrade = async () => {
     if (checkoutLoading) return;
     setCheckoutLoading(true);
-    const result = await startCheckout();
+    const result = await startCheckout({ interval });
     if (!result.ok) {
-      // Couldn't start Stripe checkout from here — let the flow below retry
       console.error('Checkout failed to start:', result.error);
       setCheckoutLoading(false);
     }
@@ -156,7 +168,7 @@ const Upgrade = () => {
   const handleStartTrial = async () => {
     if (trialLoading) return;
     setTrialLoading(true);
-    const result = await startCheckout({ trial: true });
+    const result = await startCheckout({ trial: true, interval });
     if (!result.ok) {
       console.error('Trial checkout failed to start:', result.error);
       setTrialLoading(false);
@@ -206,7 +218,11 @@ const Upgrade = () => {
             className={buttonClass({ variant: 'primary', size: 'lg' })}
           >
             <FaCrown className="text-sm" />
-            {checkoutLoading ? 'Redirecting to Stripe...' : 'Upgrade to Premium'}
+            {checkoutLoading
+              ? 'Redirecting to Stripe...'
+              : interval === 'month'
+              ? 'Upgrade — $25/mo'
+              : 'Upgrade — $200/yr'}
             <FaArrowRight className="text-sm" />
           </button>
           <a
@@ -224,8 +240,10 @@ const Upgrade = () => {
           className="mt-6 text-sm text-zinc-400"
         >
           Start with a <strong className="text-white">7-day free trial</strong> — card required, then{' '}
-          <strong className="text-white">$25/mo</strong> only after day 7 · cancel anytime before then
-          and you pay nothing.
+          <strong className="text-white">
+            {interval === 'month' ? '$25/mo' : '$200/yr'}
+          </strong>{' '}
+          only after day 7 · cancel anytime before then and you pay nothing.
         </motion.p>
       </motion.div>
 
@@ -249,6 +267,9 @@ const Upgrade = () => {
             <h2 className="mt-1 text-xl font-bold tracking-tight text-white">
               Everything inside the free trial
             </h2>
+            <p className="mt-3 text-sm text-zinc-400">
+              Choose {interval === 'month' ? '$25/mo' : '$200/yr (save $100)'} after your 7-day trial ends.
+            </p>
             <ul className="mt-5 space-y-3">
               {TRIAL_INCLUDES.map((item) => (
                 <li key={item} className="flex items-start gap-3 text-sm text-zinc-300">
@@ -301,46 +322,93 @@ const Upgrade = () => {
         </p>
       </motion.div>
 
-      {/* Free vs Premium comparison */}
+      {/* Free vs Premium comparison with billing interval selector */}
       <motion.div
         {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-        className="mx-auto mt-14 grid max-w-[1100px] gap-5 sm:grid-cols-2 md:mt-16"
+        className="mx-auto mt-14 max-w-[1100px] md:mt-16"
       >
-        <div className="card relative overflow-hidden p-6 sm:p-8">
-          <div
-            className="absolute inset-0 bg-gradient-to-br from-zinc-900/50 to-transparent"
-            aria-hidden="true"
-          />
-          <h3 className="relative text-xs font-bold uppercase tracking-wider text-zinc-400">Free</h3>
-          <ul className="relative mt-5 space-y-3">
-            {FREE_FEATURES.map((feature) => (
-              <li key={feature} className="relative flex items-start gap-2.5 text-sm text-zinc-300">
-                <span className="relative mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded bg-zinc-800 text-zinc-500">
-                  <FaCheck className="h-3.5 w-3.5" />
-                </span>
-                {feature}
-              </li>
-            ))}
-          </ul>
+        {/* Billing interval selector */}
+        <div className="mb-8 flex items-center justify-center gap-4">
+          <span className="text-sm text-zinc-400">Billing</span>
+          <div className="relative inline-flex items-center gap-1 rounded-lg bg-charcoal p-1">
+            <button
+              type="button"
+              onClick={() => setInterval('month')}
+              className={`relative px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                interval === 'month'
+                  ? 'bg-brand text-white shadow-[0_0_16px_rgba(244,63,94,0.4)]'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setInterval('year')}
+              className={`relative px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                interval === 'year'
+                  ? 'bg-brand text-white shadow-[0_0_16px_rgba(244,63,94,0.4)]'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              Yearly
+              <FaTag className="ml-1 inline text-[10px]" aria-hidden="true" />
+            </button>
+          </div>
         </div>
 
-        <div className="relative card overflow-hidden border-brand/30 p-6 sm:p-8">
-          <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
-          <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-glow/5" aria-hidden="true" />
-          <h3 className="relative text-xs font-bold uppercase tracking-wider text-brand">
-            <FaCrown className="mr-1 inline text-sm text-brand" aria-hidden="true" />
-            Premium — {PRICE}/mo
-          </h3>
-          <ul className="relative mt-5 space-y-3">
-            {PREMIUM_FEATURES.map((feature) => (
-              <li key={feature} className="relative flex items-start gap-2.5 text-sm text-zinc-200">
-                <span className="relative mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded bg-brand/20 text-brand shadow-[0_0_8px_rgba(244,63,94,0.3)]">
-                  <FaCheck className="h-3.5 w-3.5" />
-                </span>
-                {feature}
-              </li>
-            ))}
-          </ul>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="card relative overflow-hidden p-6 sm:p-8">
+            <div
+              className="absolute inset-0 bg-gradient-to-br from-zinc-900/50 to-transparent"
+              aria-hidden="true"
+            />
+            <h3 className="relative text-xs font-bold uppercase tracking-wider text-zinc-400">Free</h3>
+            <ul className="relative mt-5 space-y-3">
+              {FREE_FEATURES.map((feature) => (
+                <li key={feature} className="relative flex items-start gap-2.5 text-sm text-zinc-300">
+                  <span className="relative mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded bg-zinc-800 text-zinc-500">
+                    <FaCheck className="h-3.5 w-3.5" />
+                  </span>
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="relative card overflow-hidden border-brand/30 p-6 sm:p-8">
+            <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
+            <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-glow/5" aria-hidden="true" />
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="relative text-xs font-bold uppercase tracking-wider text-brand flex items-center gap-2">
+                <FaCrown className="text-sm" aria-hidden="true" />
+                Premium
+              </h3>
+              {interval === 'year' && (
+                <Badge variant="glow" className="text-xs">
+                  {YEARLY_SAVINGS}
+                </Badge>
+              )}
+            </div>
+            <div className="mb-5 text-center">
+              <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
+                {interval === 'month' ? PRICE_MONTHLY_MO : PRICE_YEARLY_YR}
+              </span>
+              <p className="mt-1 text-sm text-zinc-400">
+                {interval === 'month' ? 'Billed monthly' : 'Billed annually'}
+              </p>
+            </div>
+            <ul className="relative mt-5 space-y-3">
+              {PREMIUM_FEATURES.map((feature) => (
+                <li key={feature} className="relative flex items-start gap-2.5 text-sm text-zinc-200">
+                  <span className="relative mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded bg-brand/20 text-brand shadow-[0_0_8px_rgba(244,63,94,0.3)]">
+                    <FaCheck className="h-3.5 w-3.5" />
+                  </span>
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </motion.div>
 
@@ -378,7 +446,11 @@ const Upgrade = () => {
       {/* Final CTA */}
       <CTASection
         title="Ready to catch more deals?"
-        description="Start the 7-day free trial or go straight to $25/mo. Cancel anytime."
+        description={
+          interval === 'month'
+            ? 'Start the 7-day free trial or go straight to $25/mo. Cancel anytime.'
+            : 'Start the 7-day free trial or go straight to $200/yr (save $100). Cancel anytime.'
+        }
         actions={
           <>
             <button
@@ -388,7 +460,7 @@ const Upgrade = () => {
               className={buttonClass({ variant: 'primary', size: 'lg' })}
             >
               <FaCrown className="text-sm" />
-              Upgrade to Premium
+              {interval === 'month' ? 'Upgrade — $25/mo' : 'Upgrade — $200/yr'}
               <FaArrowRight className="text-sm" />
             </button>
             <button

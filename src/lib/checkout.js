@@ -24,7 +24,7 @@ export async function fetchSubscription() {
   };
 }
 
-export async function startCheckout({ trial = false } = {}) {
+export async function startCheckout({ trial = false, interval = 'month' } = {}) {
   // Already subscribed? Let the payment page show status instead.
   try {
     const sub = await fetchSubscription();
@@ -45,7 +45,7 @@ export async function startCheckout({ trial = false } = {}) {
     const res = await fetch('/api/stripe/create-checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ trial }),
+      body: JSON.stringify({ trial, interval }),
     });
     if (res.ok) {
       const data = await res.json().catch(() => ({}));
