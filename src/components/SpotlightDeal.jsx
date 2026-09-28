@@ -1,13 +1,21 @@
 import { motion } from 'framer-motion';
-import { FaBolt } from 'react-icons/fa';
+import { FaBolt, FaCheckCircle, FaArrowRight } from 'react-icons/fa';
 import { FaDiscord } from 'react-icons/fa6';
 import { buttonClass } from './ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
+import { hostOf, isSourceLink, timeAgo } from '../lib/dealSource';
 
 const SpotlightDeal = ({ deal }) => {
   const prefersReduced = useReducedMotion();
   const off = deal.referencePrice ? Math.round((1 - deal.price / deal.referencePrice) * 100) : null;
   const img = deal.imageSquare || deal.image;
+
+  // Same honesty rule as DealCard: only call a deal "live" when it actually
+  // carries a source listing a reader can open and check themselves.
+  const sourceHost = hostOf(deal.url ?? deal.cta?.href);
+  const verifiable = isSourceLink(deal.url ?? deal.cta?.href);
+  const caught = timeAgo(deal.postedAt);
+  const headline = verifiable ? `${deal.categoryLabel || 'Find'} — live now` : 'Example of a find';
 
   return (
     <motion.section
@@ -23,14 +31,20 @@ const SpotlightDeal = ({ deal }) => {
         <div aria-hidden="true" className="grid-pattern absolute inset-0 opacity-[0.25]" />
       </div>
 
-      <div className="relative grid items-center gap-6 sm:grid-cols-[minmax(0,1fr)_230px] sm:gap-8">
+      {/* Capped and centred: without this the copy and the image drift apart
+          once the page container reaches 1800px, leaving a dead gap. */}
+      <div className="relative mx-auto grid max-w-5xl items-center gap-8 sm:grid-cols-[minmax(0,1fr)_clamp(200px,26%,300px)]">
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-70" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
-            </span>
-            Penny find — live now
+            {verifiable ? (
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-70" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
+              </span>
+            ) : (
+              <span className="h-1.5 w-1.5 rounded-full bg-zinc-500" />
+            )}
+            {headline}
           </p>
           <h2 className="mt-2 line-clamp-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
             {deal.title}
@@ -49,18 +63,45 @@ const SpotlightDeal = ({ deal }) => {
             {off != null && <span className="sticker">{off}% OFF</span>}
           </div>
 
+          {/* Provenance line — mirrors DealCard so the two can never disagree
+              about whether something is actually buyable right now. */}
+          {verifiable ? (
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-emerald-300/90">
+              <FaCheckCircle className="shrink-0" aria-hidden="true" />
+              <span>
+                Live listing
+                {sourceHost ? (
+                  <>
+                    {' '}on <span className="font-semibold text-white">{sourceHost}</span>
+                  </>
+                ) : null}
+                {caught ? ` — caught ${caught}` : ''}
+              </span>
+            </p>
+          ) : (
+            <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Example — no live listing
+            </p>
+          )}
+
           <div className="mt-6 flex flex-wrap gap-3">
-            {deal.cta?.href && (
-              <a
-                href={deal.cta.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={buttonClass({ variant: 'primary', size: 'lg' })}
-              >
-                {deal.cta.label}
-                <FaBolt className="text-xs" />
-              </a>
-            )}
+            {deal.cta?.href &&
+              (deal.cta.href.startsWith('/') ? (
+                <a href={deal.cta.href} className={buttonClass({ variant: 'primary', size: 'lg' })}>
+                  {deal.cta.label}
+                  <FaArrowRight className="text-xs" />
+                </a>
+              ) : (
+                <a
+                  href={deal.cta.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={buttonClass({ variant: 'primary', size: 'lg' })}
+                >
+                  {deal.cta.label}
+                  <FaBolt className="text-xs" />
+                </a>
+              ))}
             <a
               href="https://discord.gg/dealprofit"
               target="_blank"

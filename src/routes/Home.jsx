@@ -217,7 +217,7 @@ const ReviewPreview = () => {
                 Verified member
               </p>
             </div>
-            <span className="ml-auto inline-flex shrink-0 items-center gap-0.5" aria-label={`${review.rating} out of 5`}>
+            <span className="ml-auto inline-flex shrink-0 items-center gap-0.5" role="img" aria-label={`${review.rating} out of 5 stars`}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <FaStar key={n} className={`h-3 w-3 ${n <= review.rating ? 'text-brand' : 'text-zinc-700'}`} aria-hidden="true" />
               ))}
@@ -313,17 +313,19 @@ const Home = () => {
               </a>
             </motion.div>
 
-            {/* Trust indicators */}
+            {/* Trust indicators — a 2-up grid on phones (labels always
+                visible, since a bare icon carries no meaning) and a single
+                wrapping row from sm up. */}
             <motion.div
               {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-              className="mt-10 flex flex-wrap items-center gap-4 text-xs sm:text-sm text-zinc-400"
+              className="mt-10 grid grid-cols-2 gap-x-4 gap-y-3 text-xs text-zinc-400 sm:flex sm:flex-wrap sm:items-center sm:gap-6 sm:text-sm"
             >
               {TRUST_ITEMS.map((item) => (
                 <div key={item.label} className="flex items-center gap-2 shrink-0">
                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10 text-brand shadow-[0_0_12px_rgba(244,63,94,0.2)] shrink-0">
                     <item.icon className="h-3.5 w-3.5" />
                   </span>
-                  <div className="hidden sm:block">
+                  <div>
                     <p className="font-semibold text-white text-sm">{item.label}</p>
                     <p className="text-[10px] text-zinc-500">{item.desc}</p>
                   </div>

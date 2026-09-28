@@ -91,7 +91,7 @@ const LegalPage = ({ doc }) => {
             {doc.title}
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-relaxed text-zinc-400">{doc.intro}</p>
-          <p className="mt-4 text-xs text-zinc-500">Last updated: {doc.updated}</p>
+          <p className="mt-4 text-xs text-zinc-400">Last updated: {doc.updated}</p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             {SIBLINGS.filter((s) => s.slug !== doc.slug).map((s) => (
@@ -116,7 +116,7 @@ const LegalPage = ({ doc }) => {
               <FaList className="text-brand" />
               On this page
             </span>
-            <span className="text-zinc-500">{tocOpen ? '−' : '+'}</span>
+            <span className="text-zinc-400">{tocOpen ? '−' : '+'}</span>
           </button>
           {tocOpen && (
             <nav className="mt-2 flex flex-col gap-1 rounded-xl border border-white/10 bg-charcoal p-3 lg:hidden" aria-label="Sections">
@@ -137,7 +137,7 @@ const LegalPage = ({ doc }) => {
             {/* Desktop TOC */}
             <nav className="hidden lg:block" aria-label="Sections">
               <div className="sticky top-24">
-                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">On this page</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">On this page</p>
                 <ul className="mt-4 space-y-1 border-l border-white/10">
                   {doc.sections.map((s) => (
                     <li key={s.id}>
@@ -148,7 +148,7 @@ const LegalPage = ({ doc }) => {
                           '-ml-px block border-l-2 py-1.5 pl-3 text-sm leading-snug transition-colors',
                           activeId === s.id
                             ? 'border-brand font-medium text-white'
-                            : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                            : 'border-transparent text-zinc-400 hover:text-zinc-300'
                         )}
                       >
                         {s.heading}

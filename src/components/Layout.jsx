@@ -41,9 +41,13 @@ const Layout = () => {
       <main className="relative z-10 flex-1">
         <motion.div
           key={pathname}
-          initial={prefersReduced ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: prefersReduced ? 0 : 0.25, ease: 'easeOut' }}
+          initial={prefersReduced ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={
+            prefersReduced
+              ? { duration: 0 }
+              : { type: 'spring', stiffness: 220, damping: 26, mass: 0.8 }
+          }
         >
           <div className="mx-auto w-full max-w-[1800px] px-4 py-8 sm:px-6 md:py-12 lg:px-8">
             <Outlet />

@@ -1,0 +1,40 @@
+# Deal Profit
+
+> Deal Profit surfaces price errors, penny deals, glitches and reselling
+> opportunities as they are caught, and shares the live feed with its
+> community on Discord.
+
+## What this site is
+
+A deal-alert site. Posts are pulled from a live Discord feed, and every deal
+that carries a source link shows the retailer host plus the time it was
+caught, so a reader can open the listing and check the price themselves.
+Posts without a listing are labelled as such — the site never presents a
+placeholder as a live deal.
+
+## Pages
+
+- [Home](https://goosiev.com/) — what the service is, how it works, latest finds
+- [Deals](https://goosiev.com/deals) — the live feed, newest first
+- [Upgrade](https://goosiev.com/upgrade) — premium membership: $25/month or
+  $200/year, 7-day free trial, cancel anytime
+- [Reviews](https://goosiev.com/reviews) — member reviews
+- [Discord](https://goosiev.com/discord) — community server
+- [Terms](https://goosiev.com/terms) — Terms of Service
+- [Privacy](https://goosiev.com/privacy) — Privacy Policy
+- [Refunds](https://goosiev.com/refunds) — Refund & Cancellation Policy
+
+## API
+
+- `GET /api/deals` — the live deal feed (JSON). Each item may include `url`
+  (source listing), `retailer`, `price`, `referencePrice`, and `postedAt`.
+- `GET /api/reviews` — approved member reviews.
+- `POST /api/reviews` — submit a review (name, rating 1-5, text, category).
+
+## Important notes for agents
+
+- Deals are not guaranteed. Retailers correct prices and remove stock
+  quickly; a post that is hours old may no longer be available.
+- Prices shown are parsed from the linked listing at post time. Always
+  confirm on the retailer's page before reporting a price to anyone.
+- `/admin` is a private dashboard and is disallowed in robots.txt.

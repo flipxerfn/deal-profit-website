@@ -17,7 +17,7 @@ const Footer = () => {
                 Deal<span className="text-brand">Profit</span>
               </span>
             </div>
-            <p className="mt-3 max-w-xs text-sm leading-relaxed text-zinc-500">
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-zinc-400">
               Price errors, penny deals and profitable finds — posted the moment they go live.
             </p>
             <a
@@ -83,7 +83,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col gap-2 border-t border-white/5 pt-6 text-xs text-zinc-600 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-10 flex flex-col gap-2 border-t border-white/5 pt-6 text-xs text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 Deal Profit. All rights reserved.</p>
           <p>Deals are not guaranteed and can be corrected by retailers at any time.</p>
         </div>

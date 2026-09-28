@@ -22,7 +22,7 @@ const statusPill = {
 };
 
 const Stars = ({ rating, size = 'text-sm' }) => (
-  <span className="inline-flex items-center gap-0.5" aria-label={`${rating} out of 5`}>
+  <span className="inline-flex items-center gap-0.5" role="img" aria-label={`${rating} out of 5 stars`}>
     {[1, 2, 3, 4, 5].map((n) => (
       <FaStar key={n} className={`${size} ${n <= rating ? 'text-brand' : 'text-zinc-700'}`} aria-hidden="true" />
     ))}

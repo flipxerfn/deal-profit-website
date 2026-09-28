@@ -80,15 +80,15 @@ export const motionVariants = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
     exit: { opacity: 0, y: -20 },
-    transition: { duration: 0.4, ease: 'easeOut' },
+    transition: { type: 'spring', stiffness: 260, damping: 26, mass: 0.9 },
   },
   staggerContainer: {
-    animate: { transition: { staggerChildren: 0.08 } },
+    animate: { transition: { staggerChildren: 0.06, delayChildren: 0.04 } },
   },
   staggerItem: {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.4, ease: 'easeOut' },
+    transition: { type: 'spring', stiffness: 260, damping: 26, mass: 0.9 },
   },
 
   // Interactions (transform/opacity only)
@@ -136,7 +136,8 @@ export const motionVariants = {
 
   // Legacy aliases (still used in some components)
   cardHover: {
-    whileHover: { y: -4, transition: { duration: 0.3 } },
+    whileHover: { y: -4, scale: 1.005, transition: springs.gentle },
+    whileTap: { scale: 0.995, transition: { duration: 0.12 } },
   },
   buttonHover: {
     whileHover: { scale: 1.02 },

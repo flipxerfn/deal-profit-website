@@ -44,9 +44,6 @@
 
   body {
     background-color: var(--color-night);
-    background-image: 
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(244, 63, 94, 0.08), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(139, 92, 246, 0.06), transparent);
     color: #e7e7ec;
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -54,9 +51,38 @@
     overflow-x: clip;
   }
 
+  /* Layered ambient washes + a faint grid give the dark surface depth instead
+     of a flat void. This lives on a fixed pseudo-element rather than as
+     `background-attachment: fixed` on body — attachment:fixed forces a
+     repaint on every scroll frame (very visible jank on mobile Safari),
+     whereas a fixed-position layer is composited once and never repaints. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(244, 63, 94, 0.1), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(139, 92, 246, 0.07), transparent),
+      radial-gradient(ellipse 70% 50% at 0% 100%, rgba(34, 211, 238, 0.05), transparent),
+      linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 100% 100%, 56px 56px, 56px 56px;
+    will-change: transform;
+  }
+
+  /* Text selection + focus polish */
   ::selection {
     background: rgba(244, 63, 94, 0.45);
     color: #ffffff;
+  }
+
+  /* Slightly stronger default focus for keyboard users on anything that
+     doesn't already opt into .focus-ring */
+  :focus-visible {
+    outline: 2px solid rgba(244, 63, 94, 0.7);
+    outline-offset: 2px;
   }
 
   h1, h2, h3, h4 {
@@ -91,8 +117,9 @@
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-night whitespace-nowrap;
   }
 
+  /* brand-3 (#e02d4a) = 4.52:1 with white text; plain brand was 3.67:1 (WCAG AA fail) */
   .btn-primary {
-    @apply bg-brand text-white shadow-[0_0_24px_rgba(244,63,94,0.35)] hover:bg-brand-2 hover:shadow-[0_0_32px_rgba(244,63,94,0.5)] active:scale-[0.98];
+    @apply bg-brand-3 text-white shadow-[0_0_24px_rgba(244,63,94,0.35)] hover:bg-[#c92640] hover:shadow-[0_0_32px_rgba(244,63,94,0.5)] active:scale-[0.98];
   }
 
   .btn-outline {
@@ -127,12 +154,41 @@
     @apply w-full rounded-lg border border-white/10 bg-charcoal px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-brand/60 focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all duration-200;
   }
 
+  /* Cards get real depth: a vertical gradient surface, a soft top highlight,
+     and a defined shadow. Hover lifts + warms the border and shadow. */
   .card {
-    @apply rounded-xl border border-white/10 bg-charcoal transition-all duration-300;
+    @apply rounded-2xl border border-white/[0.08] bg-gradient-to-b from-charcoal-2 to-charcoal transition-all duration-300;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.04),
+      0 1px 2px 0 rgba(0, 0, 0, 0.4),
+      0 8px 24px -12px rgba(0, 0, 0, 0.6);
   }
 
   .card-hover {
-    @apply hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-[0_12px_48px_rgba(0,0,0,0.6),0_0_40px_rgba(244,63,94,0.15)];
+    @apply hover:-translate-y-1 hover:border-brand/40;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.07),
+      0 2px 4px 0 rgba(0, 0, 0, 0.4),
+      0 24px 56px -20px rgba(0, 0, 0, 0.75),
+      0 0 48px -12px rgba(244, 63, 94, 0.22);
+  }
+
+  /* Interactive rows/links: underline slides in from the left instead of
+     appearing instantly, so links feel responsive rather than jumpy. */
+  .link-sheen {
+    @apply relative transition-colors duration-200;
+  }
+  .link-sheen::after {
+    content: "";
+    @apply pointer-events-none absolute -bottom-0.5 left-0 h-px w-0 bg-current opacity-0 transition-all duration-300;
+  }
+  .link-sheen:hover::after {
+    @apply w-full opacity-70;
+  }
+
+  /* Focus ring shared by every interactive element. */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-night;
   }
 
   .badge {

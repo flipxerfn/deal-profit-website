@@ -52,7 +52,7 @@ const Navbar = () => {
       }`}
     >
       <nav className="mx-auto flex h-16 w-full max-w-[1800px] items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-2.5" aria-label="Deal Profit home">
+        <Link to="/" className="flex items-center gap-2.5" aria-label="Deal Profit — home">
           <img
             src={dealProfitLogo}
             alt=""
