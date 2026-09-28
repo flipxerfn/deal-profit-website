@@ -59,15 +59,15 @@ const DealCard = ({ deal, spotlight = false }) => {
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 p-5">
-        <h3 className="line-clamp-2 text-base font-bold text-white">{deal.title}</h3>
-        <p className="line-clamp-2 text-sm leading-relaxed text-zinc-400">{deal.description}</p>
+      <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
+        <h3 className="line-clamp-2 text-sm sm:text-base font-bold text-white">{deal.title}</h3>
+        <p className="line-clamp-2 text-xs sm:text-sm leading-relaxed text-zinc-400">{deal.description}</p>
 
         <div className="mt-auto space-y-3">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span
               className={`font-extrabold tracking-tight text-brand ${
-                spotlight ? 'text-[28px] drop-shadow-[0_0_14px_rgba(244,63,94,0.45)]' : 'text-2xl'
+                spotlight ? 'text-xl sm:text-2xl drop-shadow-[0_0_14px_rgba(244,63,94,0.45)]' : 'text-xl sm:text-2xl'
               }`}
             >
               {deal.displayPrice || `$${deal.price.toFixed(2)}`}

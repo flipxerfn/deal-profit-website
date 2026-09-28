@@ -234,7 +234,7 @@ const Home = () => {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative pb-16 pt-12 md:pb-20 md:pt-16" aria-labelledby="hero-title">
+      <section className="band-full band-bleed tint-brand relative pb-16 pt-12 md:pb-20 md:pt-16" aria-labelledby="hero-title">
         {/* Background: glows, animated orbs, subtle grid */}
         <div className="radial-glow-hero pointer-events-none absolute inset-0" aria-hidden="true" />
         <div className="grid-pattern pointer-events-none absolute inset-0 opacity-[0.35]" aria-hidden="true" />
@@ -255,7 +255,8 @@ const Home = () => {
           aria-hidden="true"
         />
 
-        <div className="relative grid items-center gap-10 lg:grid-cols-[1fr_0.9fr] lg:gap-16">
+        <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8">
+          <div className="relative grid items-center gap-10 lg:grid-cols-[1fr_0.9fr] lg:gap-16">
           <div>
             <motion.div
               {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
@@ -272,7 +273,7 @@ const Home = () => {
             <motion.h1
               id="hero-title"
               {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-              className="text-shadow-glow text-4xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-[44px] xl:text-5xl"
+              className="text-shadow-glow text-3xl font-extrabold leading-[1.15] tracking-tight text-white sm:text-4xl md:text-[44px] lg:text-5xl xl:text-6xl"
             >
               <StaggerLine text="Catch the deals" delay={0.08} />
               <br />
@@ -281,7 +282,7 @@ const Home = () => {
 
             <motion.p
               {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-              className="mt-5 max-w-xl text-base leading-relaxed text-zinc-400 sm:text-lg"
+              className="mt-5 max-w-xl text-sm leading-relaxed text-zinc-400 sm:text-base md:text-lg"
             >
               Price errors, penny deals and hidden discounts flagged the second they go live — plus
               profitable reselling finds from the Deal Profit community. Fast alerts so you are never
@@ -309,16 +310,16 @@ const Home = () => {
             {/* Trust indicators */}
             <motion.div
               {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-              className="mt-10 flex flex-wrap items-center gap-6 text-sm text-zinc-400"
+              className="mt-10 flex flex-wrap items-center gap-4 text-xs sm:text-sm text-zinc-400"
             >
               {TRUST_ITEMS.map((item) => (
-                <div key={item.label} className="flex items-center gap-2">
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand shadow-[0_0_12px_rgba(244,63,94,0.2)]">
-                    <item.icon className="h-4 w-4" />
+                <div key={item.label} className="flex items-center gap-2 shrink-0">
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10 text-brand shadow-[0_0_12px_rgba(244,63,94,0.2)] shrink-0">
+                    <item.icon className="h-3.5 w-3.5" />
                   </span>
-                  <div>
-                    <p className="font-semibold text-white">{item.label}</p>
-                    <p className="text-xs text-zinc-500">{item.desc}</p>
+                  <div className="hidden sm:block">
+                    <p className="font-semibold text-white text-sm">{item.label}</p>
+                    <p className="text-[10px] text-zinc-500">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -384,11 +385,13 @@ const Home = () => {
               </div>
             </motion.div>
           </motion.div>
+          </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section className="relative pb-4" aria-labelledby="how-title">
+      <section className="band-full band-bleed tint-ember relative pb-4" aria-labelledby="how-title">
+        <div className="mx-auto w-full max-w-[1800px] px-4 py-8 sm:px-6 md:py-12 lg:px-8">
         <SectionHeader
           align="center"
           eyebrow="How it works"
@@ -403,26 +406,28 @@ const Home = () => {
             <motion.div
               key={item.step}
               {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
-              className="card card-hover relative overflow-hidden p-6"
+              className="card card-hover relative overflow-hidden p-5 sm:p-6"
             >
               <span
-                className="text-stroke-brand pointer-events-none absolute -top-3 right-4 select-none text-6xl font-extrabold text-transparent"
+                className="text-stroke-brand pointer-events-none absolute -top-3 right-4 select-none text-4xl sm:text-5xl md:text-6xl font-extrabold text-transparent"
                 aria-hidden="true"
               >
                 {item.step}
               </span>
               <div className="relative">
                 <p className="text-xs font-bold uppercase tracking-widest text-brand">Step {item.step}</p>
-                <h3 className="mt-2 text-base font-bold text-white">{item.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{item.text}</p>
+                <h3 className="mt-2 text-sm sm:text-base font-bold text-white">{item.title}</h3>
+                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-zinc-400">{item.text}</p>
               </div>
             </motion.div>
           ))}
         </motion.div>
+        </div>
       </section>
 
       {/* What We Hunt */}
-      <section className="relative py-12 md:py-16" aria-labelledby="hunt-title">
+      <section className="band-full band-bleed tint-ice relative py-12 md:py-16" aria-labelledby="hunt-title">
+        <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand/5 via-transparent to-transparent" aria-hidden="true" />
         <SectionHeader
           align="center"
@@ -440,10 +445,12 @@ const Home = () => {
             </motion.div>
           ))}
         </motion.div>
+        </div>
       </section>
 
       {/* Latest Finds */}
-      <section className="relative pb-4" aria-labelledby="finds-title">
+      <section className="band-full band-bleed tint-glow relative pb-4" aria-labelledby="finds-title">
+        <div className="mx-auto w-full max-w-[1800px] px-4 py-8 sm:px-6 md:py-12 lg:px-8">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-brand/20 to-transparent" aria-hidden="true" />
         <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -475,10 +482,12 @@ const Home = () => {
             </motion.div>
           ))}
         </motion.div>
+        </div>
       </section>
 
       {/* Community Proof */}
-      <section className="relative py-12 md:py-16" aria-labelledby="social-title">
+      <section className="band-full band-bleed tint-brand relative py-12 md:py-16" aria-labelledby="social-title">
+        <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-glow/5 via-transparent to-transparent" aria-hidden="true" />
         <SectionHeader
           align="center"
@@ -516,6 +525,7 @@ const Home = () => {
             <FaArrowRight className="text-xs text-zinc-500" />
           </Link>
         </motion.div>
+        </div>
       </section>
 
       {/* Final CTA */}

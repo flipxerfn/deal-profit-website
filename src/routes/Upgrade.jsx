@@ -164,13 +164,14 @@ const Upgrade = () => {
   };
 
   return (
-    <section className="relative pb-4 pt-12" aria-labelledby="upgrade-title">
+    <section className="band-full band-bleed tint-brand relative pb-4 pt-12" aria-labelledby="upgrade-title">
       {/* Background glow */}
       <div className="radial-glow-hero pointer-events-none absolute inset-0" aria-hidden="true" />
       <div
         className="pointer-events-none absolute inset-x-0 top-1/2 h-[500px] -translate-y-1/2 bg-gradient-to-t from-brand/5 via-transparent to-transparent"
         aria-hidden="true"
       />
+      <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8">
 
       {/* Hero */}
       <motion.div
@@ -402,6 +403,7 @@ const Upgrade = () => {
           </>
         }
       />
+      </div>
     </section>
   );
 };

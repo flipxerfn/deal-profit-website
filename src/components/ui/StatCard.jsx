@@ -10,7 +10,7 @@ export default function StatCard({ icon: Icon, value, label, className = '' }) {
       <div className="relative mx-auto mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 text-brand">
         <Icon className="h-4 w-4" />
       </div>
-      <p className="relative text-2xl font-extrabold tracking-tight text-white">{value}</p>
+      <p className="relative text-xl sm:text-2xl font-extrabold tracking-tight text-white">{value}</p>
       <p className="relative mt-0.5 text-xs text-zinc-400">{label}</p>
     </div>
   );

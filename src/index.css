@@ -156,6 +156,17 @@
   .band-full {
     @apply relative w-full overflow-hidden;
   }
+  /* Breakout: lets a band escape a centered max-width parent to span the
+     full viewport (body overflow-x: clip absorbs the vw rounding). */
+  .band-bleed {
+    position: relative;
+    left: 50%;
+    right: 50%;
+    width: 100vw;
+    max-width: none;
+    margin-left: -50vw;
+    margin-right: -50vw;
+  }
   .band-full::before {
     content: "";
     @apply pointer-events-none absolute inset-0;
