@@ -1185,6 +1185,15 @@ const adminRoutes = {
   '/api/admin/code/commit': handleCodeCommit,
 };
 
+function logsReviewDecisionMessage(review, status) {
+  const emoji = status === 'approved' ? '✅' : '❌';
+  const text = review.text ?? '';
+  return (
+    `${emoji} Review **${status}** by admin — **${review.name ?? 'Anonymous'}** ` +
+    `(${review.rating}/5): ${text.slice(0, 150)}${text.length > 150 ? '…' : ''}`
+  );
+}
+
 async function handleReviews(request, env) {
   if (request.method === 'GET') {
     const all = await listReviews(env);
@@ -1222,17 +1231,22 @@ async function handleReviews(request, env) {
     const all = await listReviews(env);
     const id = `rv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
     const review = makeReview(value, id);
-    all.push(review);
-    await saveReviews(env, all);
 
-    // Log review submission to #logs
+    // Log review submission to #logs with ✅/❌ moderation instructions.
+    // The message id is stored so the scheduled worker can apply admin
+    // reactions as approve/reject decisions.
     const reviewer = value.name ?? 'Anonymous';
     const stars = '★'.repeat(value.rating) + '☆'.repeat(5 - value.rating);
-    await postToLogsChannel(
+    const messageId = await postToLogsChannel(
       env,
-      `📝 **New review submitted** by **${reviewer}** — ${stars} (${value.rating}/5)\n> ${value.text?.slice(0, 200)}${value.text?.length > 200 ? '…' : ''}`
+      `📝 **New review submitted** by **${reviewer}** — ${stars} (${value.rating}/5)\n` +
+        `> ${value.text?.slice(0, 200)}${value.text?.length > 200 ? '…' : ''}\n` +
+        `_React ✅ to approve, ❌ to reject — id \`${id}\`_`
     );
+    if (messageId) review.discordMessageId = messageId;
 
+    all.push(review);
+    await saveReviews(env, all);
     return json({ ok: true, id }, 201);
   }
 
@@ -1275,11 +1289,7 @@ async function handleReviewsAdmin(request, env, id) {
         const oldStatus = review.status;
         review.status = body.status;
         if (oldStatus !== body.status && (body.status === 'approved' || body.status === 'rejected')) {
-          const emoji = body.status === 'approved' ? '✅' : '❌';
-          await postToLogsChannel(
-            env,
-            `${emoji} Review **${body.status}** by admin — **${review.name ?? 'Anonymous'}** (${review.rating}/5): ${review.text?.slice(0, 150)}${review.text?.length > 150 ? '…' : ''}`
-          );
+          await postToLogsChannel(env, logsReviewDecisionMessage(review, body.status));
         }
       }
       if (body.featured === true) {
@@ -1558,15 +1568,44 @@ const LOGS_CHANNEL_TTL_MS = 5 * 60 * 1000;
 
 async function postToLogsChannel(env, content) {
   try {
+    const logs = await getLogsChannel(env);
+    if (!logs) return null;
+
+    const res = await fetch(`${DISCORD_API}/channels/${logs.channelId}/messages`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bot ${logs.token}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'DealProfit-Website/1.0 (https://goosiev.com)',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ content }),
+    });
+    if (!res.ok) {
+      console.error('[logs] #logs post failed:', res.status, await res.text().catch(() => ''));
+      return null;
+    }
+    const data = await res.json().catch(() => null);
+    return data?.id ?? null;
+  } catch (err) {
+    console.error('[logs] #logs post error:', err);
+    return null;
+  }
+}
+
+// Resolve (and cache) the guild's #logs channel plus the bot token.
+// Returns { guildId, channelId, token } or null when unavailable.
+async function getLogsChannel(env) {
+  try {
     const { token } = await resolveDiscordConfig(env);
     if (!token) {
       console.warn('[logs] no bot token — skipping #logs message');
-      return false;
+      return null;
     }
     const guildId = await getGuildId(env);
     if (!guildId) {
       console.warn('[logs] no guild id — skipping #logs message');
-      return false;
+      return null;
     }
     if (!logsChannelCache.resolved || Date.now() - logsChannelCache.at > LOGS_CHANNEL_TTL_MS) {
       const channels = await discordGet(`/guilds/${guildId}/channels`, token);
@@ -1576,24 +1615,11 @@ async function postToLogsChannel(env, content) {
       logsChannelCache = { id: logs?.id ?? null, at: Date.now(), resolved: true };
       if (!logs?.id) console.warn('[logs] #logs channel not found in guild');
     }
-    const channelId = logsChannelCache.id;
-    if (!channelId) return false;
-
-    const res = await fetch(`${DISCORD_API}/channels/${channelId}/messages`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bot ${token}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'DealProfit-Website/1.0 (https://goosiev.com)',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({ content }),
-    });
-    if (!res.ok) console.error('[logs] #logs post failed:', res.status, await res.text().catch(() => ''));
-    return res.ok;
+    if (!logsChannelCache.id) return null;
+    return { guildId, channelId: logsChannelCache.id, token };
   } catch (err) {
-    console.error('[logs] #logs post error:', err);
-    return false;
+    console.error('[logs] #logs resolve error:', err);
+    return null;
   }
 }
 
@@ -2254,6 +2280,141 @@ async function handleSiteStats(request, env) {
 
 // ---- entrypoint ---------------------------------------------------------------
 
+// ---- #logs review moderation ------------------------------------------------
+// Pending reviews carry the Discord message id of their #logs notice. The
+// scheduled worker polls ✅/❌ reactions on those messages and applies
+// decisions from guild admins only (owner or Administrator permission).
+
+const REVIEW_MOD_EMOJI = { approve: '✅', reject: '❌' };
+const REVIEW_MOD_GUILD_CACHE_TTL_MS = 10 * 60_000;
+
+let reviewModGuildCache = { at: 0, botId: null, ownerId: null, roles: null };
+
+async function reviewModGuild(env, guildId, token) {
+  if (
+    reviewModGuildCache.roles &&
+    reviewModGuildCache.guildId === guildId &&
+    Date.now() - reviewModGuildCache.at < REVIEW_MOD_GUILD_CACHE_TTL_MS
+  ) {
+    return reviewModGuildCache;
+  }
+  const [me, guild, roles] = await Promise.all([
+    discordGet('/users/@me', token).catch(() => null),
+    discordGet(`/guilds/${guildId}`, token).catch(() => null),
+    discordGet(`/guilds/${guildId}/roles`, token).catch(() => null),
+  ]);
+  reviewModGuildCache = {
+    at: Date.now(),
+    guildId,
+    botId: me?.id ?? null,
+    ownerId: guild?.owner_id ?? null,
+    roles: Array.isArray(roles) ? roles : [],
+  };
+  return reviewModGuildCache;
+}
+
+async function isGuildAdmin(env, guildId, userId, token) {
+  const info = await reviewModGuild(env, guildId, token);
+  if (!userId) return false;
+  if (info.ownerId && userId === info.ownerId) return true;
+  let member;
+  try {
+    member = await discordGet(`/guilds/${guildId}/members/${userId}`, token);
+  } catch {
+    return false;
+  }
+  const memberRoles = new Set(member?.roles ?? []);
+  return info.roles.some(
+    (r) => memberRoles.has(r.id) && (BigInt(r.permissions ?? '0') & 8n) === 8n
+  );
+}
+
+async function reviewModReactors(env, channelId, messageId, token) {
+  const out = { approve: new Set(), reject: new Set() };
+  for (const [key, emoji] of Object.entries(REVIEW_MOD_EMOJI)) {
+    try {
+      const users = await discordGet(
+        `/channels/${channelId}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}?limit=100`,
+        token
+      );
+      for (const u of Array.isArray(users) ? users : []) {
+        if (u?.id) out[key].add(String(u.id));
+      }
+    } catch (err) {
+      // 404 = message deleted → caller treats as gone; other errors just skip
+      if (err?.status === 404) return null;
+    }
+  }
+  return out;
+}
+
+async function discordAckReaction(channelId, messageId, emoji, token) {
+  try {
+    const res = await fetch(
+      `${DISCORD_API}/channels/${channelId}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}/@me`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bot ${token}`,
+          'User-Agent': 'DealProfit-Website/1.0 (https://goosiev.com)',
+        },
+      }
+    );
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function checkReviewReactions(env) {
+  const logs = await getLogsChannel(env);
+  if (!logs) return;
+  const info = await reviewModGuild(env, logs.guildId, logs.token);
+  if (!info.roles) return;
+
+  const all = await listReviews(env);
+  const pending = all.filter((r) => r.status === 'pending' && r.discordMessageId);
+  if (pending.length === 0) return;
+
+  let changed = false;
+  for (const review of pending) {
+    let reactors;
+    try {
+      reactors = await reviewModReactors(env, logs.channelId, review.discordMessageId, logs.token);
+    } catch {
+      continue;
+    }
+    if (!reactors) continue; // message deleted — leave the record for dashboard triage
+
+    const adminsFor = async (ids) => {
+      const admins = [];
+      for (const id of ids) {
+        if (id === info.botId) continue; // never count our own ack reactions
+        if (await isGuildAdmin(env, logs.guildId, id, logs.token)) admins.push(id);
+      }
+      return admins;
+    };
+    const rejecters = await adminsFor(reactors.reject);
+    const approvers = rejecters.length === 0 ? await adminsFor(reactors.approve) : [];
+    // Reject wins on conflict — safer default for public content
+    const decision = rejecters.length > 0 ? 'rejected' : approvers.length > 0 ? 'approved' : null;
+    if (!decision) continue;
+
+    review.status = decision;
+    review.updatedAt = new Date().toISOString();
+    changed = true;
+    await discordAckReaction(
+      logs.channelId,
+      review.discordMessageId,
+      decision === 'approved' ? '✅' : '❌',
+      logs.token
+    );
+    await postToLogsChannel(env, logsReviewDecisionMessage(review, decision));
+    console.log(`[reviews] ${decision} ${review.id} via #logs reaction`);
+  }
+  if (changed) await saveReviews(env, all);
+}
+
 export { DealStore } from './store.js';
 
 export default {
@@ -2294,19 +2455,30 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
-    // Cron: "0 3 * * *" (3 AM UTC daily)
-    console.log('[scheduled] Running daily role revocation check');
-    
+    // Runs every 5 min ("*/5 * * * *"): #logs review-reaction moderation.
+    // The heavy role-revocation sweep stays daily (gated on `cron:last_daily`).
     try {
+      await checkReviewReactions(env);
+    } catch (err) {
+      console.error('[scheduled] review moderation error:', err);
+    }
+
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const lastDaily = await kvGet(env, 'cron:last_daily');
+      if (lastDaily === today) return;
+      await kvPut(env, 'cron:last_daily', today);
+      console.log('[scheduled] Running daily role revocation check');
+
       const store = await getSubscriptionStore(env);
-      
+
       // Get expired subscriptions
       const expiredRes = await store.fetch('https://store.internal/subscriptions/expired');
       if (!expiredRes.ok) {
         console.error('[scheduled] Failed to fetch expired subscriptions');
         return;
       }
-      
+
       const { subscriptions } = await expiredRes.json();
       if (!subscriptions || subscriptions.length === 0) {
         console.log('[scheduled] No expired subscriptions found');

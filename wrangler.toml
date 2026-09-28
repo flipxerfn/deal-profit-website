@@ -24,7 +24,9 @@ type = "durable-object"
 storage = "sqlite"
 
 [triggers]
-crons = ["0 3 * * *"]
+# Every 5 min: #logs review-reaction moderation. The daily role-revocation
+# sweep is date-gated inside scheduled() so it still runs ~once a day.
+crons = ["*/5 * * * *"]
 
 [vars]
 # Override these with your real values:
