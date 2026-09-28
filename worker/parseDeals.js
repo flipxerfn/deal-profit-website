@@ -101,6 +101,18 @@ export function extractPrices(raw) {
 }
 
 export function detectRetailer(text, dealUrl) {
+  // The source link is ground truth: label the card with the host people will
+  // actually visit, so "Amazon" never labels a link to dmflip.com.
+  if (dealUrl) {
+    try {
+      const host = new URL(dealUrl).hostname.replace(/^www\./, '');
+      if (host && !/(^|\.)(discord\.(gg|com|me)|cdn\.discordapp\.com)$/i.test(host)) {
+        return host;
+      }
+    } catch {
+      // fall through to text detection
+    }
+  }
   const hay = `${text ?? ''} ${dealUrl ?? ''}`.toLowerCase();
   for (const [key, label] of Object.entries(RETAILERS)) {
     if (hay.includes(key)) return label;
