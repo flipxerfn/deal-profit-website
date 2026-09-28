@@ -8,7 +8,7 @@ const Footer = () => {
   return (
     <footer className="border-t border-white/10 bg-charcoal/40">
       <div className="mx-auto max-w-[1800px] px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr] lg:grid-cols-[1.4fr_repeat(4,1fr)]">
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2.5">
@@ -70,6 +70,15 @@ const Footer = () => {
               >
                 Invite Link
               </a>
+            </nav>
+          </div>
+          {/* Legal */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Legal</p>
+            <nav className="mt-4 flex flex-col gap-2.5 text-sm" aria-label="Legal">
+              <Link to="/terms" className="text-zinc-400 transition-colors hover:text-white">Terms of Service</Link>
+              <Link to="/privacy" className="text-zinc-400 transition-colors hover:text-white">Privacy Policy</Link>
+              <Link to="/refunds" className="text-zinc-400 transition-colors hover:text-white">Refund &amp; Cancellation</Link>
             </nav>
           </div>
         </div>

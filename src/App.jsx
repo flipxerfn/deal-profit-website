@@ -6,6 +6,9 @@ import Deals from './routes/Deals';
 import Reviews from './routes/Reviews';
 import Discord from './routes/Discord';
 import Upgrade from './routes/Upgrade';
+import Terms from './routes/Terms';
+import Privacy from './routes/Privacy';
+import Refunds from './routes/Refunds';
 
 // Admin is only reachable at the hidden /admin route — code-split it out of
 // the main bundle so public pages don't pay for its (heavy) icon set.
@@ -28,6 +31,9 @@ function App() {
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/discord" element={<Discord />} />
           <Route path="/upgrade" element={<Upgrade />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/refunds" element={<Refunds />} />
           <Route path="/payment" element={<Redirect to="/upgrade" />} />
           <Route path="/trial" element={<Redirect to="/upgrade" />} />
         </Route>
