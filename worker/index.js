@@ -1089,6 +1089,85 @@ function getEmbeddedManifest() {
   };
 }
 
+const CODE_ALLOWLIST = [
+  'src/components/',
+  'src/routes/',
+  'src/lib/',
+  'src/hooks/',
+  'src/index.css',
+  'src/main.jsx',
+];
+
+function isCodePathAllowed(path) {
+  if (typeof path !== 'string') return false;
+  if (path.includes('..')) return false;
+  return CODE_ALLOWLIST.some((prefix) => path === prefix || path.startsWith(prefix));
+}
+
+// Code API — admin file browser/editor backend. Reads served from the repo is
+// not possible inside the Worker, so `tree` returns the editable surface and
+// file read/write/preview/commit are staged behind these endpoints until the
+// GitHub PAT integration lands (tracked in docs/superpowers/plans/2026-09-28-admin-cms.md).
+async function handleCode(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ ok: false, authenticated: false, error: 'unauthorized' }, 401);
+
+  const url = new URL(request.url);
+  const filePath = url.searchParams.get('path');
+
+  if (request.method === 'GET') {
+    if (url.pathname.endsWith('/tree')) {
+      return json({
+        ok: true,
+        tree: {
+          type: 'folder',
+          name: 'src',
+          path: 'src',
+          children: [
+            { type: 'file', name: 'index.css', path: 'src/index.css' },
+            { type: 'file', name: 'main.jsx', path: 'src/main.jsx' },
+            { type: 'folder', name: 'components', path: 'src/components', children: [] },
+            { type: 'folder', name: 'routes', path: 'src/routes', children: [] },
+            { type: 'folder', name: 'lib', path: 'src/lib', children: [] },
+            { type: 'folder', name: 'hooks', path: 'src/hooks', children: [] },
+          ],
+        },
+      });
+    }
+    if (filePath) {
+      if (!isCodePathAllowed(filePath)) return json({ ok: false, error: 'path_not_allowed' }, 403);
+      return json({ ok: false, error: 'github_not_configured' }, 501);
+    }
+    return json({ ok: false, error: 'path required' }, 400);
+  }
+
+  if (request.method === 'PUT') {
+    if (!originIsAllowed(request)) return json({ ok: false, error: 'forbidden' }, 403);
+    if (!filePath || !isCodePathAllowed(filePath)) {
+      return json({ ok: false, error: 'path_not_allowed' }, 403);
+    }
+    return json({ ok: false, error: 'github_not_configured' }, 501);
+  }
+
+  return json({ ok: false, error: 'method_not_allowed' }, 405);
+}
+
+async function handleCodePreview(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ ok: false, authenticated: false, error: 'unauthorized' }, 401);
+  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
+  if (!originIsAllowed(request)) return json({ ok: false, error: 'forbidden' }, 403);
+  return json({ ok: false, error: 'github_not_configured' }, 501);
+}
+
+async function handleCodeCommit(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ ok: false, authenticated: false, error: 'unauthorized' }, 401);
+  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
+  if (!originIsAllowed(request)) return json({ ok: false, error: 'forbidden' }, 403);
+  return json({ ok: false, error: 'github_not_configured' }, 501);
+}
+
 const adminRoutes = {
   '/api/admin/login': handleLogin,
   '/api/admin/logout': handleLogout,
@@ -1099,6 +1178,11 @@ const adminRoutes = {
   '/api/admin/revoke-trial': handleRevokeTrial,
   '/api/admin/content': handleContent,
   '/api/admin/content/sync': handleContentSync,
+  '/api/admin/code': handleCode,
+  '/api/admin/code/tree': handleCode,
+  '/api/admin/code/file': handleCode,
+  '/api/admin/code/preview': handleCodePreview,
+  '/api/admin/code/commit': handleCodeCommit,
 };
 
 async function handleReviews(request, env) {
@@ -1441,7 +1525,10 @@ async function handleStripeCheckout(request, env) {
     // no body — plain subscription
   }
   try {
-    const result = await createCheckoutSession(env, user.id, origin, { trial: body?.trial === true });
+    const result = await createCheckoutSession(env, user.id, origin, {
+      trial: body?.trial === true,
+      interval: body?.interval === 'year' ? 'year' : 'month',
+    });
     return json({ ok: true, ...result });
   } catch (err) {
     return json({ ok: false, error: sanitizeError(err) }, 500);

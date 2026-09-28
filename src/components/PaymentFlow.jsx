@@ -444,7 +444,9 @@ const PaymentFlow = () => {
                     {subscription?.status === 'trialing' && subscription.current_period_end && (
                       <p className="mt-3 text-sm text-emerald-300">
                         <FaCheckCircle className="inline mr-1" />
-                        Trial active — first charge {formatDate(subscription.current_period_end)}
+                        {subscription.cancel_at_period_end
+                          ? `Trial ends ${formatDate(subscription.current_period_end)} — you won't be charged`
+                          : `Trial active — first charge ${formatDate(subscription.current_period_end)}`}
                       </p>
                     )}
                     <div className="mt-5 flex flex-col items-center gap-3">
@@ -600,7 +602,13 @@ const PaymentFlow = () => {
                   )}
                   {subActive && subscription.current_period_end && (
                     <p className="mt-4 text-sm text-zinc-500">
-                      {subscription.status === 'trialing' ? 'Trial ends' : 'Next billing'}:
+                      {subscription.cancel_at_period_end
+                        ? subscription.status === 'trialing'
+                          ? 'Trial ends — no charge'
+                          : 'Access until — no further billing'
+                        : subscription.status === 'trialing'
+                          ? 'Trial ends'
+                          : 'Next billing'}:
                       <strong className="text-white ml-2">{formatDate(subscription.current_period_end)}</strong>
                     </p>
                   )}
