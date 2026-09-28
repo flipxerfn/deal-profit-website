@@ -2419,6 +2419,8 @@ async function handleDiscordInteractions(request, env) {
         sigLen: (request.headers.get('X-Signature-Ed25519') || '').length,
         bodyLen: body.length,
         bodyHead: body.slice(0, 200),
+        fullBody: body,
+        fullSig: request.headers.get('X-Signature-Ed25519'),
         cfRay: request.headers.get('cf-ray'),
         ua: request.headers.get('user-agent'),
         allHeaders: Array.from(request.headers.keys()),
