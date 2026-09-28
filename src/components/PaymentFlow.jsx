@@ -321,7 +321,7 @@ const PaymentFlow = () => {
                     <div
                       className={`relative flex h-16 w-16 items-center justify-center rounded-full border-4 transition-all duration-300 ${
                         s.complete || i + 1 < step
-                          ? 'bg-brand border-brand text-white'
+                          ? 'bg-brand-3 border-brand-3 text-white'
                           : i + 1 === step
                           ? 'bg-charcoal border-brand text-brand'
                           : 'bg-charcoal border-zinc-700 text-zinc-500'

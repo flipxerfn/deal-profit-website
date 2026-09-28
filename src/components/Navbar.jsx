@@ -58,8 +58,10 @@ const Navbar = () => {
             alt=""
             className="h-8 w-auto drop-shadow-[0_0_16px_rgba(244,63,94,0.45)]"
           />
+          {/* The space matters: the accessible name must contain the visible
+              text verbatim, and "Deal Profit" is the actual brand name. */}
           <span className="text-[15px] font-bold tracking-tight text-white">
-            Deal<span className="text-brand">Profit</span>
+            Deal <span className="text-brand">Profit</span>
           </span>
         </Link>
 

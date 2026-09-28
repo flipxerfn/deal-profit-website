@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -7,6 +7,12 @@ const read = (p) => readFileSync(resolve(root, p), 'utf8');
 // Strip CSS comments so prose that merely *mentions* a declaration (e.g. the
 // comment explaining why we avoid it) can't satisfy or break a gate.
 const readCss = (p) => read(p).replace(/\/\*[\s\S]*?\*\//g, '');
+
+// Depth-first list of every file under a directory, relative to the repo root.
+const walk = (dir) =>
+  readdirSync(resolve(root, dir), { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? walk(`${dir}/${e.name}`) : [`${dir}/${e.name}`]
+  );
 
 // These gate the accessibility/SEO polish pass on the stylesheet, component and
 // public/ sources. They are source-level assertions on purpose: the same style
@@ -66,6 +72,37 @@ describe('contrast compliance (WCAG AA)', () => {
     expect(primary).not.toMatch(/bg-brand(?![\w-])/);
   });
 
+  it('never puts white text on a solid brand or brand-2 background', () => {
+    // Every interactive surface, not just the .btn utility class. The Button
+    // component, the /upgrade plan toggle and the checkout step badge all
+    // carry their own literal colours, and each was 3.67:1.
+    // Brand *tints* (bg-brand/10, /20) are fine — white on those is ~17:1 —
+    // so the check keys on a solid token, i.e. one with no /opacity suffix.
+    const offenders = [];
+    for (const file of walk('src')) {
+      if (!/\.(jsx|js)$/.test(file)) continue;
+      for (const [i, line] of read(file).split('\n').entries()) {
+        if (!/text-white/.test(line)) continue;
+        if (/bg-brand(?![\w-])/.test(line) || /bg-brand-2(?![\w-])/.test(line)) {
+          // A trailing /NN is a tint, not a solid fill.
+          if (!/bg-brand(?:-\d)?\/\d/.test(line)) {
+            offenders.push(`${file}:${i + 1}  ${line.trim()}`);
+          }
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps the Button component on the compliant primary variant', () => {
+    const btn = read('src/components/ui/Button.jsx');
+    const primary = btn.match(/primary:\s*'([^']*)'/)?.[1] ?? '';
+    expect(primary).toContain('bg-brand-3');
+    expect(primary).not.toMatch(/bg-brand(?![\w-])/);
+    // brand-2 is 2.72:1 against white — unusable as a hover background too.
+    expect(primary).not.toMatch(/hover:bg-brand-2(?![\w-])/);
+  });
+
   it('never uses text-zinc-500 or darker for body copy on the dark surface', () => {
     // zinc-500 on charcoal is 4.01:1 — below AA. zinc-400 is 7.57:1.
     for (const file of ['src/components/Footer.jsx', 'src/components/LegalPage.jsx']) {
@@ -90,12 +127,24 @@ describe('accessible names', () => {
   });
 
   it('keeps the logo link accessible name in sync with its visible text', () => {
-    // The visible text is "Deal Profit", so the name must contain it —
-    // otherwise label-content-name-mismatch fails.
+    // The rule Lighthouse enforces: the accessible name must contain the
+    // visible text verbatim. The wordmark renders "Deal" + "Profit" as two
+    // spans, so it only reads "Deal Profit" if there is a space between them.
+    // Miss it and the name says "Deal Profit" while the text says
+    // "DealProfit" — exactly the mismatch that failed the audit.
     const navbar = read('src/components/Navbar.jsx');
-    const name = navbar.match(/aria-label="Deal Profit([^"]*)"/)?.[1];
-    expect(name).toBeDefined();
-    expect(name).not.toBe('');
+    // Capture the literal text between the opening tag and the coloured
+    // "Profit" span. It must be "Deal " *including* the trailing space —
+    // that space is the whole point, so it is captured rather than skipped.
+    const wordmark = navbar.match(
+      /aria-label="Deal Profit — home"[\s\S]*?<span className="text-\[15px\][^"]*">([^<]*)<span/
+    );
+    expect(wordmark, 'logo wordmark markup not found').not.toBeNull();
+    // trimStart (not trim): the trailing space is the character under test.
+    // With it: 'Deal '. Without it: 'Deal' — which fails here.
+    expect(wordmark[1].trimStart()).toBe('Deal ');
+    const name = navbar.match(/aria-label="(Deal Profit[^"]*)"/)?.[1] ?? '';
+    expect(name).toContain('Deal Profit');
   });
 });
 
