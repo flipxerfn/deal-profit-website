@@ -24,7 +24,23 @@ export async function fetchSubscription() {
   };
 }
 
+// ─── TOGGLE THIS TO GO LIVE WITH STRIPE ───
+// The Stripe account isn't verified yet (no SSN / no live bank account), so
+// buy buttons send people to Discord instead of a checkout that can't take
+// money. When you've done the Stripe verification, change false → true and
+// push. Everything below is the original Stripe flow, untouched.
+const USE_STRIPE_CHECKOUT = false;
+
+export const DISCORD_INVITE = 'https://discord.gg/dealprofit';
+
 export async function startCheckout({ trial = false, interval = 'month' } = {}) {
+  // Discord mode: straight to the invite. The { trial, interval } args are
+  // still passed in and simply unused until USE_STRIPE_CHECKOUT is flipped.
+  if (!USE_STRIPE_CHECKOUT) {
+    window.location.href = DISCORD_INVITE;
+    return { ok: true, redirected: true };
+  }
+
   // No Discord identity yet? Link it first — checkout requires a user.
   // (Members included: the button always goes to Stripe.)
   try {

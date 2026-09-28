@@ -28,10 +28,9 @@ import {
   CardHover,
 } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
-import { startCheckout } from '../lib/checkout';
+import { startCheckout, DISCORD_INVITE } from '../lib/checkout';
 import PaymentFlow from '../components/PaymentFlow';
 
-const DISCORD_INVITE = 'https://discord.gg/dealprofit';
 const PRICE_MONTHLY = '$25';
 const PRICE_YEARLY = '$200';
 const PRICE_MONTHLY_MO = '$25/mo';
