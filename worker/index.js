@@ -911,6 +911,184 @@ async function handleRevokeTrial(request, env) {
   return json({ ok: true, subscription, role: { ok: role.ok, error: role.error ?? null } });
 }
 
+// Content API — read/write editable site content (stored in KV, synced from git)
+async function handleContent(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ ok: false, authenticated: false, error: 'unauthorized' }, 401);
+
+  const url = new URL(request.url);
+  const route = url.searchParams.get('route');
+  const component = url.searchParams.get('component');
+
+  if (request.method === 'GET') {
+    if (!route || !component) {
+      // Return full manifest
+      const manifest = await getContentManifest(env);
+      return json({ ok: true, manifest });
+    }
+    const content = await getContent(env, route, component);
+    return json({ ok: true, content });
+  }
+
+  if (request.method === 'PUT') {
+    if (!originIsAllowed(request)) return json({ ok: false, error: 'forbidden' }, 403);
+    if (!route || !component) return json({ ok: false, error: 'route and component required' }, 400);
+
+    let body = {};
+    try { body = await request.json(); } catch { return json({ ok: false, error: 'invalid_json' }, 400); }
+
+    const manifest = await getContentManifest(env);
+    const routeConfig = manifest.routes?.[route];
+    const componentSchema = routeConfig?.components?.[component];
+    if (!componentSchema) return json({ ok: false, error: 'component not found' }, 404);
+
+    // Validate against schema
+    const validated = validateContent(body, componentSchema.fields);
+    if (!validated.ok) return json({ ok: false, error: validated.error }, 400);
+
+    await setContent(env, route, component, validated.data);
+    return json({ ok: true, content: validated.data });
+  }
+
+  return json({ ok: false, error: 'method_not_allowed' }, 405);
+}
+
+async function handleContentSync(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ ok: false, authenticated: false, error: 'unauthorized' }, 401);
+  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
+
+  try {
+    const manifest = await fetchContentManifestFromGit(env);
+    await syncContentToKV(env, manifest);
+    return json({ ok: true, synced: true });
+  } catch (e) {
+    console.error('[content] sync failed:', e);
+    return json({ ok: false, error: 'sync_failed' }, 500);
+  }
+}
+
+async function getContentManifest(env) {
+  const cached = await kvGet(env, 'content:manifest');
+  if (cached) {
+    try { return JSON.parse(cached); } catch {}
+  }
+  // Fallback to embedded manifest
+  return getEmbeddedManifest();
+}
+
+async function setContent(env, route, component, data) {
+  const key = `content:${route}:${component}`;
+  await kvPut(env, key, JSON.stringify(data));
+  // Update manifest timestamp
+  const manifest = await getContentManifest(env);
+  if (manifest.routes?.[route]?.components?.[component]) {
+    manifest.routes[route].components[component].updatedAt = Date.now();
+    await kvPut(env, 'content:manifest', JSON.stringify(manifest));
+  }
+}
+
+async function getContent(env, route, component) {
+  const key = `content:${route}:${component}`;
+  const cached = await kvGet(env, key);
+  if (cached) {
+    try { return JSON.parse(cached); } catch {}
+  }
+  // Fallback to embedded default
+  const manifest = await getContentManifest(env);
+  return manifest.routes?.[route]?.components?.[component]?.fields ? 
+    getDefaultValues(manifest.routes[route].components[component].fields) : null;
+}
+
+function getDefaultValues(fields) {
+  const result = {};
+  for (const [key, schema] of Object.entries(fields)) {
+    result[key] = schema.default ?? null;
+  }
+  return result;
+}
+
+function validateContent(data, schema) {
+  const result = {};
+  for (const [key, fieldSchema] of Object.entries(schema)) {
+    const value = data[key];
+    if (value === undefined || value === null) {
+      if (fieldSchema.default !== undefined) {
+        result[key] = fieldSchema.default;
+        continue;
+      }
+      if (fieldSchema.required) return { ok: false, error: `Missing required field: ${key}` };
+    }
+    // Type validation
+    if (fieldSchema.type === 'string' && typeof value !== 'string') return { ok: false, error: `Field ${key} must be string` };
+    if (fieldSchema.type === 'number' && typeof value !== 'number') return { ok: false, error: `Field ${key} must be number` };
+    if (fieldSchema.type === 'array') {
+      if (!Array.isArray(value)) return { ok: false, error: `Field ${key} must be array` };
+      if (fieldSchema.itemType === 'object' && fieldSchema.itemFields) {
+        result[key] = value.map(item => validateContent(item, fieldSchema.itemFields).data ?? {});
+      } else {
+        result[key] = value;
+      }
+    } else {
+      result[key] = value;
+    }
+  }
+  return { ok: true, data: result };
+}
+
+async function fetchContentManifestFromGit(env) {
+  // TODO: Implement GitHub API fetch when GitHub PAT is configured
+  // For now, return embedded manifest
+  return getEmbeddedManifest();
+}
+
+async function syncContentToKV(env, manifest) {
+  await kvPut(env, 'content:manifest', JSON.stringify(manifest));
+  // Seed defaults for any missing content
+  for (const [route, routeConfig] of Object.entries(manifest.routes || {})) {
+    for (const [component, componentSchema] of Object.entries(routeConfig.components || {})) {
+      const key = `content:${route}:${component}`;
+      const existing = await kvGet(env, key);
+      if (!existing && componentSchema.fields) {
+        await kvPut(env, key, JSON.stringify(getDefaultValues(componentSchema.fields)));
+      }
+    }
+  }
+}
+
+function getEmbeddedManifest() {
+  // This is the source of truth — synced from src/content/content-manifest.json at build time
+  // For production, this would be injected at build time. For now, return minimal structure.
+  return {
+    version: 1,
+    routes: {
+      "/": {
+        name: "Home",
+        components: {
+          "Hero": { fields: { title: { type: "string", default: "Catch the deals before everyone else." }, subtitle: { type: "string", default: "Price errors, penny deals and hidden discounts flagged the second they go live..." }, ctaPrimary: { type: "string", default: "Explore Deals" }, ctaSecondary: { type: "string", default: "Start Free Trial" } } },
+          "HowItWorks": { fields: { eyebrow: { type: "string", default: "How it works" }, title: { type: "string", default: "From find to profit in three steps" }, description: { type: "string", default: "No paid bot subscriptions, no resellers farming referrals. Just fast, verified deal alerts." }, steps: { type: "array", default: [] } } },
+          "WhatWeHunt": { fields: { eyebrow: { type: "string", default: "What we hunt" }, title: { type: "string", default: "The four pillars of the hunt" }, description: { type: "string", default: "Every post is verified and shared with the community before the retailer notices." }, pillars: { type: "array", default: [] } } },
+          "LatestFinds": { fields: { eyebrow: { type: "string", default: "Live finds" }, title: { type: "string", default: "Latest finds" } } },
+          "CommunityProof": { fields: { eyebrow: { type: "string", default: "Community proof" }, title: { type: "string", default: "Trusted by thousands of deal hunters" }, description: { type: "string", default: "Real feedback from people hunting price errors, penny finds and glitch deals with Deal Profit." }, stats: { type: "array", default: [] } } },
+          "FinalCTA": { fields: { title: { type: "string", default: "Never miss a deal again." }, description: { type: "string", default: "Join the community where price errors, penny deals and profitable finds are posted the moment they go live." } } }
+        }
+      },
+      "/upgrade": {
+        name: "Upgrade",
+        components: {
+          "Hero": { fields: { eyebrow: { type: "string", default: "Deal Profit Premium" }, title: { type: "string", default: "Get more than the free feed. Upgrade for faster alerts and more deals." }, description: { type: "string", default: "Free deals are just the beginning. Upgrade for faster alerts, more deal opportunities, and access to premium features designed to help you catch deals before they disappear." } } },
+          "TrialIncludes": { fields: { eyebrow: { type: "string", default: "What's included" }, title: { type: "string", default: "Everything inside the free trial" }, items: { type: "array", default: [] } } },
+          "Benefits": { fields: { eyebrow: { type: "string", default: "Everything included" }, title: { type: "string", default: "Built for people who hate missing deals" }, description: { type: "string", default: "Every premium feature is designed around one goal: catching the deal before it is gone." }, benefits: { type: "array", default: [] } } },
+          "Comparison": { fields: { title: { type: "string", default: "Free gives you access to deals. Premium gives you more ways to catch them." }, description: { type: "string", default: "The free feed is useful for browsing deals. Premium is designed for people who want faster notifications, more deal opportunities, premium Discord access, and additional alerts for price errors, penny deals, and more chances to catch deals before they disappear." }, freeFeatures: { type: "array", default: [] }, premiumFeatures: { type: "array", default: [] } } },
+          "TrustIndicators": { fields: { items: { type: "array", default: [] } } },
+          "FAQ": { fields: { eyebrow: { type: "string", default: "FAQ" }, title: { type: "string", default: "Questions, answered" }, description: { type: "string", default: "Everything you need to know before joining premium." }, items: { type: "array", default: [] } } },
+          "FinalCTA": { fields: { title: { type: "string", default: "Ready to catch more deals?" }, description: { type: "string", default: "Start the 7-day free trial or go straight to $25/mo. Cancel anytime." } } }
+        }
+      }
+    }
+  };
+}
+
 const adminRoutes = {
   '/api/admin/login': handleLogin,
   '/api/admin/logout': handleLogout,
@@ -919,6 +1097,8 @@ const adminRoutes = {
   '/api/admin/config': handleConfig,
   '/api/admin/grant-trial': handleGrantTrial,
   '/api/admin/revoke-trial': handleRevokeTrial,
+  '/api/admin/content': handleContent,
+  '/api/admin/content/sync': handleContentSync,
 };
 
 async function handleReviews(request, env) {

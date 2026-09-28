@@ -1,0 +1,364 @@
+{
+  "version": 1,
+  "routes": {
+    "/": {
+      "name": "Home",
+      "components": {
+        "Hero": {
+          "fields": {
+            "title": {
+              "type": "string",
+              "label": "Hero Title",
+              "default": "Catch the deals before everyone else."
+            },
+            "subtitle": {
+              "type": "string",
+              "label": "Hero Subtitle",
+              "default": "Price errors, penny deals and hidden discounts flagged the second they go live — plus profitable reselling finds from the Deal Profit community. Fast alerts so you are never late to the deal."
+            },
+            "ctaPrimary": {
+              "type": "string",
+              "label": "Primary CTA Text",
+              "default": "Explore Deals"
+            },
+            "ctaSecondary": {
+              "type": "string",
+              "label": "Secondary CTA Text",
+              "default": "Start Free Trial"
+            }
+          }
+        },
+        "HowItWorks": {
+          "fields": {
+            "eyebrow": {
+              "type": "string",
+              "label": "Section Eyebrow",
+              "default": "How it works"
+            },
+            "title": {
+              "type": "string",
+              "label": "Section Title",
+              "default": "From find to profit in three steps"
+            },
+            "description": {
+              "type": "string",
+              "label": "Section Description",
+              "default": "No paid bot subscriptions, no resellers farming referrals. Just fast, verified deal alerts."
+            },
+            "steps": {
+              "type": "array",
+              "label": "Steps",
+              "itemType": "object",
+              "itemFields": {
+                "step": { "type": "number", "label": "Step Number" },
+                "title": { "type": "string", "label": "Step Title" },
+                "text": { "type": "string", "label": "Step Text" }
+              },
+              "default": [
+                { "step": 1, "title": "We Hunt", "text": "Our system monitors 500+ retailers 24/7 for price errors, penny deals, and glitches." },
+                { "step": 2, "title": "You Get Alerted", "text": "Instant notifications via Discord, email, or push — before the deal disappears." },
+                { "step": 3, "title": "You Profit", "text": "Buy the deal, resell if you want, or just enjoy the savings. Your call." }
+              ]
+            }
+          }
+        },
+        "WhatWeHunt": {
+          "fields": {
+            "eyebrow": {
+              "type": "string",
+              "label": "Section Eyebrow",
+              "default": "What we hunt"
+            },
+            "title": {
+              "type": "string",
+              "label": "Section Title",
+              "default": "The four pillars of the hunt"
+            },
+            "description": {
+              "type": "string",
+              "label": "Section Description",
+              "default": "Every post is verified and shared with the community before the retailer notices."
+            },
+            "pillars": {
+              "type": "array",
+              "label": "Pillars",
+              "itemType": "object",
+              "itemFields": {
+                "title": { "type": "string", "label": "Pillar Title" },
+                "text": { "type": "string", "label": "Pillar Text" }
+              },
+              "default": [
+                { "title": "Price Errors", "text": "Retail pricing mistakes — items listed at fractions of their real price." },
+                { "title": "Penny Deals", "text": "Clearance items marked down to $0.01-$1.00 by accident or oversight." },
+                { "title": "Glitch Finds", "text": "Stacking coupons, broken promo codes, and cart exploits that slash prices." },
+                { "title": "Hidden Discounts", "text": "Unadvertised sales, employee pricing leaks, and secret clearance sections." }
+              ]
+            }
+          }
+        },
+        "LatestFinds": {
+          "fields": {
+            "eyebrow": {
+              "type": "string",
+              "label": "Section Eyebrow",
+              "default": "Live finds"
+            },
+            "title": {
+              "type": "string",
+              "label": "Section Title",
+              "default": "Latest finds"
+            }
+          }
+        },
+        "CommunityProof": {
+          "fields": {
+            "eyebrow": {
+              "type": "string",
+              "label": "Section Eyebrow",
+              "default": "Community proof"
+            },
+            "title": {
+              "type": "string",
+              "label": "Section Title",
+              "default": "Trusted by thousands of deal hunters"
+            },
+            "description": {
+              "type": "string",
+              "label": "Section Description",
+              "default": "Real feedback from people hunting price errors, penny finds and glitch deals with Deal Profit."
+            },
+            "stats": {
+              "type": "array",
+              "label": "Community Stats",
+              "itemType": "object",
+              "itemFields": {
+                "label": { "type": "string", "label": "Stat Label" },
+                "value": { "type": "string", "label": "Stat Value" },
+                "icon": { "type": "string", "label": "Icon Key" }
+              },
+              "default": [
+                { "label": "Members", "value": "10,000+", "icon": "users" },
+                { "label": "Deals Posted", "value": "50,000+", "icon": "bolt" },
+                { "label": "Avg Savings", "value": "93%", "icon": "percent" },
+                { "label": "Response Time", "value": "< 5 min", "icon": "bell" }
+              ]
+            }
+          }
+        },
+        "FinalCTA": {
+          "fields": {
+            "title": {
+              "type": "string",
+              "label": "CTA Title",
+              "default": "Never miss a deal again."
+            },
+            "description": {
+              "type": "string",
+              "label": "CTA Description",
+              "default": "Join the community where price errors, penny deals and profitable finds are posted the moment they go live."
+            }
+          }
+        }
+      }
+    },
+    "/upgrade": {
+      "name": "Upgrade",
+      "components": {
+        "Hero": {
+          "fields": {
+            "eyebrow": {
+              "type": "string",
+              "label": "Hero Eyebrow",
+              "default": "Deal Profit Premium"
+            },
+            "title": {
+              "type": "string",
+              "label": "Hero Title",
+              "default": "Get more than the free feed. Upgrade for faster alerts and more deals."
+            },
+            "description": {
+              "type": "string",
+              "label": "Hero Description",
+              "default": "Free deals are just the beginning. Upgrade for faster alerts, more deal opportunities, and access to premium features designed to help you catch deals before they disappear."
+            }
+          }
+        },
+        "TrialIncludes": {
+          "fields": {
+            "eyebrow": {
+              "type": "string",
+              "label": "Section Eyebrow",
+              "default": "What's included"
+            },
+            "title": {
+              "type": "string",
+              "label": "Section Title",
+              "default": "Everything inside the free trial"
+            },
+            "items": {
+              "type": "array",
+              "label": "Trial Items",
+              "itemType": "string",
+              "default": [
+                "Instant access to member deal channels",
+                "Price error and penny deal alerts",
+                "Reselling opportunities from the community",
+                "Cancel anytime during the trial"
+              ]
+            }
+          }
+        },
+        "Benefits": {
+          "fields": {
+            "eyebrow": {
+              "type": "string",
+              "label": "Section Eyebrow",
+              "default": "Everything included"
+            },
+            "title": {
+              "type": "string",
+              "label": "Section Title",
+              "default": "Built for people who hate missing deals"
+            },
+            "description": {
+              "type": "string",
+              "label": "Section Description",
+              "default": "Every premium feature is designed around one goal: catching the deal before it is gone."
+            },
+            "benefits": {
+              "type": "array",
+              "label": "Benefits",
+              "itemType": "object",
+              "itemFields": {
+                "title": { "type": "string", "label": "Benefit Title" },
+                "text": { "type": "string", "label": "Benefit Text" },
+                "icon": { "type": "string", "label": "Icon Key" }
+              },
+              "default": [
+                { "title": "Faster Deal Alerts", "text": "Get important deal alerts faster so you have more time to check them before they disappear.", "icon": "bolt" },
+                { "title": "More Deal Opportunities", "text": "See additional deal opportunities beyond the public free feed.", "icon": "fire" },
+                { "title": "Reselling Opportunities", "text": "Discover deals that may be interesting for potential resale opportunities.", "icon": "coins" },
+                { "title": "Price Errors & Glitches", "text": "Get alerts for unusual pricing, price errors, glitches, and hidden discounts.", "icon": "skull-crossbones" },
+                { "title": "Penny Deals", "text": "Stay on top of penny and extremely low-priced finds.", "icon": "comment" },
+                { "title": "Premium Discord Access", "text": "Join the private Deal Profit community and access premium channels.", "icon": "shield-alt" },
+                { "title": "Priority Alerts", "text": "Make important deal alerts easier to catch with faster, more focused notifications.", "icon": "bell" },
+                { "title": "More Frequent Finds", "text": "Get access to more deal opportunities instead of relying only on the public feed.", "icon": "chart-line" },
+                { "title": "Premium-Only Opportunities", "text": "Access selected opportunities that aren't included in the public free feed.", "icon": "trophy" }
+              ]
+            }
+          }
+        },
+        "Comparison": {
+          "fields": {
+            "title": {
+              "type": "string",
+              "label": "Comparison Title",
+              "default": "Free gives you access to deals. Premium gives you more ways to catch them."
+            },
+            "description": {
+              "type": "string",
+              "label": "Comparison Description",
+              "default": "The free feed is useful for browsing deals. Premium is designed for people who want faster notifications, more deal opportunities, premium Discord access, and additional alerts for price errors, penny deals, and more chances to catch deals before they disappear."
+            },
+            "freeFeatures": {
+              "type": "array",
+              "label": "Free Features",
+              "itemType": "string",
+              "default": [
+                "Public deal feed",
+                "Selected free deals",
+                "Basic deal browsing",
+                "Search & filter deals",
+                "Community reviews"
+              ]
+            },
+            "premiumFeatures": {
+              "type": "array",
+              "label": "Premium Features",
+              "itemType": "string",
+              "default": [
+                "Everything in Free",
+                "Faster alerts",
+                "Premium Discord access",
+                "Premium-only deal opportunities",
+                "More deal opportunities",
+                "Price error alerts",
+                "Penny deal alerts",
+                "Reselling opportunities",
+                "More focused notifications"
+              ]
+            }
+          }
+        },
+        "TrustIndicators": {
+          "fields": {
+            "items": {
+              "type": "array",
+              "label": "Trust Items",
+              "itemType": "object",
+              "itemFields": {
+                "label": { "type": "string", "label": "Label" },
+                "desc": { "type": "string", "label": "Description" },
+                "icon": { "type": "string", "label": "Icon Key" }
+              },
+              "default": [
+                { "label": "Verified Deals", "desc": "Every deal manually reviewed", "icon": "shield-alt" },
+                { "label": "Active Community", "desc": "10,000+ deal hunters", "icon": "users" },
+                { "label": "High Success Rate", "desc": "93% average savings", "icon": "star" }
+              ]
+            }
+          }
+        },
+        "FAQ": {
+          "fields": {
+            "eyebrow": {
+              "type": "string",
+              "label": "FAQ Eyebrow",
+              "default": "FAQ"
+            },
+            "title": {
+              "type": "string",
+              "label": "FAQ Title",
+              "default": "Questions, answered"
+            },
+            "description": {
+              "type": "string",
+              "label": "FAQ Description",
+              "default": "Everything you need to know before joining premium."
+            },
+            "items": {
+              "type": "array",
+              "label": "FAQ Items",
+              "itemType": "object",
+              "itemFields": {
+                "title": { "type": "string", "label": "Question" },
+                "content": { "type": "string", "label": "Answer" }
+              },
+              "default": [
+                { "title": "How does the free trial work?", "content": "Start the 7-day free trial from any trial button — you'll link your Discord, then check out with Stripe. It's free for 7 days; your card is charged $25/month only if you keep the subscription past day 7. Cancel anytime during the trial." },
+                { "title": "Can I cancel anytime?", "content": "Yes — cancel from your Stripe customer portal at any time. Your access stays until the end of the current billing period." },
+                { "title": "What makes the premium feed different?", "content": "Premium members get faster alerts plus priority notifications for price errors, penny deals and reselling opportunities that stay out of the public feed." },
+                { "title": "Are the deals guaranteed?", "content": "No. Retailers can correct pricing errors at any time, and stock is often limited. Deals are posted fast specifically so you can act before that happens." },
+                { "title": "Is there a yearly plan?", "content": "Yes — choose the yearly plan for $200/year and save $100 compared to monthly billing. You get the same premium features with a full year of uninterrupted access." }
+              ]
+            }
+          }
+        },
+        "FinalCTA": {
+          "fields": {
+            "title": {
+              "type": "string",
+              "label": "CTA Title",
+              "default": "Ready to catch more deals?"
+            },
+            "description": {
+              "type": "string",
+              "label": "CTA Description",
+              "default": "Start the 7-day free trial or go straight to $25/mo. Cancel anytime."
+            }
+          }
+        }
+      }
+    }
+  }
+}
