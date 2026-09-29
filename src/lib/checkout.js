@@ -54,6 +54,11 @@ export async function startCheckout({ trial = false } = {}) {
 // this instead, passing { trial, interval } through as it already expects.
 // The 7-day trial, monthly/yearly interval and Discord OAuth pre-step are all
 // still here and still work.
+//
+// BEFORE re-enabling: the js.stripe.com/v3 script tag was removed from
+// index.html, because nothing in the browser ever used the Stripe.js SDK — it
+// cost every visitor ~50KB and third-party cookies for nothing. Put it back in
+// <head> first, or 3DS confirmation will fail at the point of payment.
 export async function startStripeCheckout({ trial = false, interval = 'month' } = {}) {
   // No Discord identity yet? Link it first — checkout requires a user.
   // (Members included: the button always goes to Stripe.)
