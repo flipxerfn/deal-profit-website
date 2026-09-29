@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { motion, useScroll } from 'framer-motion';
 import Navbar from './Navbar';
@@ -20,6 +20,29 @@ const Layout = () => {
     html.style.scrollBehavior = 'auto';
     window.scrollTo(0, 0);
     html.style.scrollBehavior = prev;
+  }, [pathname]);
+
+  // Whop Pixel: track client-side route changes.
+  //
+  // The snippet in index.html fires track("page") on a hard document load, but
+  // this is a single-page app — going / -> /deals -> /upgrade never reloads the
+  // document, so without this the only page view Whop would ever see is the one
+  // a visitor happened to land on. /upgrade is the page that matters and it
+  // would never register.
+  //
+  // The first render is skipped because the head snippet already covered it,
+  // otherwise a cold load would be counted twice.
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    // Ad blockers routinely kill t.whop.tw, which leaves `whop` undefined.
+    // Touching it unguarded would throw and take the whole page down with it.
+    if (typeof window !== 'undefined' && typeof window.whop?.track === 'function') {
+      window.whop.track('page');
+    }
   }, [pathname]);
 
   return (
