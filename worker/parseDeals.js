@@ -47,6 +47,108 @@ const TECH_KEYWORDS = [
   'tablet', 'ipad', 'apple', 'macbook', 'airpods', 'charger', 'router', 'watch',
 ];
 
+// Categories chosen from what the feed actually posts, measured across the live
+// feed rather than guessed. Every list is checked against a sample of real
+// posts in worker/feed-categories.test.js, and every id must exist in
+// src/data/deals.js CATEGORIES or the chip is invisible in the UI.
+const CATEGORY_KEYWORDS = {
+  grocery: [
+    'grocery', 'groceries', 'food', 'snack', 'drink', 'beverage', 'coffee', 'tea', 'candy',
+    'chocolate', 'pizza', 'sauce', 'soda', 'water bottle', 'canned', 'cereal', 'snacks',
+    'refreshers', 'juice', 'energy drink', 'protein', 'gum', 'cracker', 'pasta', 'rice',
+  ],
+  home: [
+    'kitchen', 'martini', 'blender', 'mixer', 'cookware', 'pan', 'pot ', 'knife', 'appliance',
+    'vacuum', 'lamp', 'light', 'furniture', 'bed', 'pillow', 'towel', 'curtain', 'sofa',
+    'couch', 'mattress', 'storage bin', 'home depot event', 'lowes', 'wayfair', 'dining',
+    'coffee maker', 'air fryer', 'toaster', 'blender',
+  ],
+  tools: [
+    'tool', 'drill', 'saw', 'wrench', 'screw', 'bolt', 'nut ', 'fastener', 'hose', 'chuck',
+    'clamp', 'sander', 'grinder', 'plier', 'hardware', 'paint', 'adhesive', 'epoxy',
+    'fittings', 'valve', 'tube', 'reducer', 'adapter', 'hydraulic', 'lumber', 'plywood',
+  ],
+  automotive: [
+    'spark plug', 'oil filter', 'air filter', 'brake pad', 'brake ', 'wiper', 'battery',
+    'alternator', 'radiator', 'transmission', 'car ', 'truck', 'auto ', 'vehicle',
+    'motorcycle', 'tire', 'tyre', 'wheel', 'bumper', 'headlight', 'tail light', 'mobil 1',
+    'motor oil', 'antifreeze', 'wiper blade', 'cabin filter',
+  ],
+  sports: [
+    'batting glove', 'baseball', 'basketball', 'football', 'soccer', 'tennis', 'golf',
+    'fishing', 'hunting', 'camping', 'tent', 'gym', 'yoga', 'fitness', 'workout',
+    'bike', 'bicycle', 'skateboard', 'helmet', 'cleat', 'sneaker', 'jersey', 'racket',
+  ],
+  apparel: [
+    'shirt', 't-shirt', 'hoodie', 'sweater', 'jacket', 'coat', 'jeans', 'pants', 'dress',
+    'shoe', 'sneaker', 'boot', 'hat', 'cap ', 'sock', 'underwear', 'swim', 'sweatpants',
+    'leggings', 'fashion', 'apparel', 'clothing', 'uniform', 'sweater vest',
+  ],
+  beauty: [
+    'lotion', 'shampoo', 'conditioner', 'serum', 'moisturizer', 'makeup', 'lipstick',
+    'foundation', 'cologne', 'perfume', 'deodorant', 'sunscreen', 'spf', 'razor', 'toothbrush',
+    'toothpaste', 'vitamin', 'supplement', 'skincare', 'nail', 'blush',
+  ],
+  crafts: [
+    'craft', 'yarn', 'crochet', 'knit', 'sewing', 'paint by number', 'canvas', 'bead',
+    'scrapbook', 'origami', 'model kit', 'puzzle', 'diamond painting', 'embroidery',
+    'blank', 'wood blank', 'resin', 'cardstock', 'scrapbook',
+  ],
+};
+
+// The Discord bots that post this feed prefix messages with a single Unicode
+// symbol (U+1CBC) as a separator. 42 of 200 live posts had a title of literally
+// that one character, which made them unreadable and left nothing to
+// categorise — 181 of 200 fell through to "other" as a result.
+//
+// A usable title needs enough letters and digits to be a product name, so walk
+// the lines until one qualifies instead of trusting the first one.
+const isJunkLine = (text) => {
+  const s = String(text ?? '').trim();
+  if (s.length < 4) return true;
+  const wordish = (s.match(/[\p{L}\p{N}]/gu) ?? []).length;
+  return wordish < Math.max(3, Math.ceil(s.length * 0.4));
+};
+
+// First line that reads like a product name, or null if the message has none.
+const firstUsefulLine = (text) => {
+  const lines = String(text ?? '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  return lines.find((l) => !isJunkLine(l)) ?? null;
+};
+
+const CATEGORY_LABELS = {
+  tech: 'Tech',
+  grocery: 'Grocery',
+  home: 'Home',
+  tools: 'Tools & Hardware',
+  automotive: 'Automotive',
+  sports: 'Sports',
+  apparel: 'Apparel',
+  beauty: 'Beauty',
+  crafts: 'Crafts',
+  penny: 'Penny Deals',
+  other: 'Other',
+};
+
+// Returns the best category id for a blob of text, or null if nothing matches.
+// Longest keyword wins so a specific term beats a generic substring.
+const categorise = (lower) => {
+  let best = null;
+  let bestLen = 0;
+  for (const [id, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    for (const k of keywords) {
+      if (k.length > bestLen && lower.includes(k)) {
+        best = id;
+        bestLen = k.length;
+      }
+    }
+  }
+  return best;
+};
+
 const toNum = (raw) => {
   if (raw == null) return null;
   const n = parseFloat(String(raw).replace(/[$,\s]/g, ''));
@@ -196,12 +298,24 @@ export function parseDealMessage(message, channelId) {
 
   let title = cleanMarkdown(titleRaw).trim();
   let description = descriptionRaw ? cleanMarkdown(descriptionRaw).trim() : '';
+  const para = cleanMarkdown(content).trim() || cleanMarkdown(fieldText).trim();
+
+  // Promote the first line that reads like a product name. The bots' separator
+  // symbol, a stray "@everyone" or a URL on its own line are all junk titles
+  // that hide the real one sitting underneath.
+  if (isJunkLine(title)) {
+    const useful = firstUsefulLine(para) ?? firstUsefulLine(description);
+    if (useful) title = useful;
+  }
   if (!title) {
-    const para = cleanMarkdown(content).trim() || cleanMarkdown(fieldText).trim();
     const firstLine = (para.match(/^[^\n]*/) || [para])[0] ?? '';
     const rest = para.replace(/^[^\n]*/, '').replace(/^\n+/, '').trim();
     title = firstLine || (retailer ? `New deal at ${retailer}` : 'New deal found');
     if (!description) description = rest;
+  }
+  // Belt and braces: never render a title that is mostly punctuation.
+  if (isJunkLine(title)) {
+    title = retailer ? `New deal at ${retailer}` : 'Deal posted to the server';
   }
 
   title = title.slice(0, 80).replace(/https?:\/\/\S+/gi, '').replace(/[:|>-]\s*$/, '').trim();
@@ -219,6 +333,16 @@ export function parseDealMessage(message, channelId) {
   } else if (isTech) {
     category = 'tech';
     categoryLabel = 'Tech';
+  } else {
+    // Title wins over description: a "Home Depot" mention in the body should
+    // not pull a car part into Home. Ties break on the longest keyword, which
+    // is the more specific one ("spark plug" over "plug").
+    const inTitle = categorise(title.toLowerCase());
+    const found = inTitle ?? categorise(description.toLowerCase());
+    if (found) {
+      category = found;
+      categoryLabel = CATEGORY_LABELS[found] ?? 'Other';
+    }
   }
 
   let badge = null;

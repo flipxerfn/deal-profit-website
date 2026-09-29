@@ -6,9 +6,21 @@ import { FEED_STATS, pctPostsLinkable } from './siteFacts';
 const MEDIAN_SAVING = FEED_STATS.medianSavingPct;
 const PCT_LINKABLE = pctPostsLinkable;
 
+// Must stay in sync with CATEGORY_LABELS / CATEGORY_KEYWORDS in
+// worker/parseDeals.js. A category the worker emits but the chip list lacks is
+// invisible in the UI and silently swallowed by the filter — pinned by
+// worker/feed-categories.test.js.
 export const CATEGORIES = [
   { id: 'all', label: 'All' },
   { id: 'tech', label: 'Tech' },
+  { id: 'grocery', label: 'Grocery' },
+  { id: 'home', label: 'Home' },
+  { id: 'tools', label: 'Tools' },
+  { id: 'automotive', label: 'Auto' },
+  { id: 'sports', label: 'Sports' },
+  { id: 'apparel', label: 'Apparel' },
+  { id: 'beauty', label: 'Beauty' },
+  { id: 'crafts', label: 'Crafts' },
   { id: 'penny', label: 'Penny Deals' },
   { id: 'other', label: 'Other' },
 ];
