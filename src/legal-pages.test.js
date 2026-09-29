@@ -30,21 +30,30 @@ describe('legal pages', () => {
     routeFiles.forEach((src) => expect(src).toContain('LegalPage'));
   });
 
-  it('states the actual prices and trial length', () => {
-    // Prices/length live in config.js so the pages and checkout can't drift;
-    // assert the values themselves, plus that the docs use them.
+  it('states the actual prices', () => {
+    // Prices live in config.js so the pages and checkout can't drift; assert
+    // the values themselves, plus that the docs use them.
+    //
+    // There is deliberately no TRIAL_DAYS any more: the trial is a Discord
+    // visit with no card and no clock, so a trial-length constant would only
+    // invite copy that implies a charge.
     const config = fs.readFileSync(path.join(dir, 'config.js'), 'utf8');
     expect(config).toContain("PRICE_MONTHLY = '$25'");
     expect(config).toContain("PRICE_YEARLY = '$200'");
-    expect(config).toContain('TRIAL_DAYS = 7');
+    // Strip comments first: the retirement note deliberately names the
+    // constant, and a bare substring check would trip over its own comment.
+    const code = config.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    expect(code).not.toContain('TRIAL_DAYS');
     const all = terms + privacy + refunds;
     expect(all).toContain('PRICE_MONTHLY');
     expect(all).toContain('PRICE_YEARLY');
-    expect(all).toContain('TRIAL_DAYS');
   });
 
   it('covers payment processing and cancellation rights', () => {
-    expect(terms).toMatch(/Stripe/);
+    // Whop is the merchant of record, so the terms must name Whop — and must
+    // not still blame Stripe, which no longer takes this site's money.
+    expect(terms).toMatch(/Whop/);
+    expect(terms).not.toMatch(/\bStripe\b/);
     expect(terms).toMatch(/cancel/i);
     expect(refunds).toMatch(/cancel/i);
     expect(refunds).toMatch(/refund/i);

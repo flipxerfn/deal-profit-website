@@ -11,4 +11,5 @@ export const SERVICE_NAME = 'Deal Profit';
 export const PREMIUM_ROLE = 'deals-profit';
 export const PRICE_MONTHLY = '$25';
 export const PRICE_YEARLY = '$200';
-export const TRIAL_DAYS = 7;
+// There is no timed card trial any more: the trial lives in Discord and is not
+// billed, so a TRIAL_DAYS value would only invite copy that promises a charge.

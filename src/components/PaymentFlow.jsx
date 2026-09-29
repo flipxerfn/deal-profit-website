@@ -12,6 +12,7 @@ import {
 import { buttonClass, Badge, SectionHeader } from './ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 import { fetchSubscription as fetchSubscriptionStatus, startCheckout } from '../lib/checkout';
+import CancelViaWhop from './CancelViaWhop';
 
 const DISCORD_INVITE = 'https://discord.gg/dealprofit';
 const PRICE = '$25';
@@ -621,6 +622,9 @@ const PaymentFlow = () => {
                     </div>
                   )}
                   {subActive ? (
+                    /* Legacy Stripe subscribers only. Whop is the seller now, so
+                       this branch is dormant but kept: startStripeCheckout() is
+                       still one line away if the Stripe account is verified. */
                     subscription.cancel_at_period_end ? (
                       <button
                         onClick={() => handleCancelSubscription(true)}
@@ -653,9 +657,9 @@ const PaymentFlow = () => {
                       </button>
                     )
                   ) : (
-                    <p className="mt-5 text-sm text-zinc-500">
-                      Role detected live on your Discord account — there is no billing to manage here.
-                    </p>
+                    /* A Whop member. They have real billing, just not with us —
+                       so point them at the only place that can stop it. */
+                    <CancelViaWhop />
                   )}
                 </div>
               </div>

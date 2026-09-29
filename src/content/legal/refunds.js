@@ -3,7 +3,6 @@ import {
   BUSINESS_LEGAL_NAME,
   PRICE_MONTHLY,
   PRICE_YEARLY,
-  TRIAL_DAYS,
   DISCORD_INVITE,
 } from './config';
 
@@ -20,17 +19,17 @@ export const refunds = {
       id: 'cancel-now',
       heading: '1. How to cancel',
       body: [
-        'Sign in and open the /upgrade page on this site. The member card shows your status and a Cancel Subscription button. Click it and confirm.',
-        'Cancellation takes effect immediately as a flag and ends your billing at the end of your current period. You can also manage or cancel at any time from the billing portal linked in your confirmation email.',
-        `If you have trouble cancelling, email ${CONTACT_EMAIL} or ask in ${DISCORD_INVITE} and we will cancel it for you.`,
+        'Subscriptions are billed through Whop, which is our payment provider, so cancelling is done from your Whop account rather than on this site. Whop holds your card and is the only party that can stop a future charge.',
+        'On our Whop product page, open the community menu and choose "Manage membership". Alternatively, sign in at whop.com, go to Profile → Orders, select the subscription and choose "Cancel membership".',
+        'You can also just ask: message us in Discord or email us and we will cancel it for you. You do not need to do anything technical.',
       ],
     },
     {
       id: 'trial',
       heading: '2. Free trial',
       body: [
-        `A trial is ${TRIAL_DAYS} days. Cancel during the trial and you will never be charged — no charge is created at all.`,
-        'A payment method is required to start a trial so that your membership can continue automatically if you do nothing.',
+        'The free trial happens in our Discord server, not through a checkout. No card is involved at any point, so there is no charge to be made, no payment method on file, and nothing for you to cancel.',
+        'If you decide to subscribe, that is a separate, deliberate step where you choose a plan and pay on Whop. We will never start a paid subscription for you, and we will never charge a card that you have not personally used to buy a plan.',
       ],
     },
     {
@@ -71,8 +70,8 @@ export const refunds = {
       id: 'upgrades',
       heading: '6. Changing plans (monthly ↔ yearly)',
       body: [
-        `You can switch between ${PRICE_MONTHLY}/month and ${PRICE_YEARLY}/year. When you switch, the new plan starts and the previous plan ends; you are charged or credited the difference for the remaining time at the moment of the change.`,
-        'Switching to yearly from monthly never charges you twice for the same period.',
+        `Both plans are offered on the same Whop product: ${PRICE_MONTHLY}/month and ${PRICE_YEARLY}/year. Manage the change from "Manage membership" on the Whop product page, where the available plans and any credit for the remainder of your current period are shown before you confirm.`,
+        'You are never charged twice for the same period, and switching to the yearly plan never charges you more than the yearly price in total.',
       ],
     },
     {

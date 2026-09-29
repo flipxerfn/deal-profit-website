@@ -29,6 +29,17 @@ export async function fetchSubscription() {
 export const WHOP_CHECKOUT_URL = 'https://whop.com/dealprofitco/premium-access-d5-f664/';
 export const DISCORD_INVITE = 'https://discord.gg/dealprofit';
 
+// Cancelling is Whop's to handle, not ours. Whop is the merchant of record, so
+// only Whop can stop a future charge.
+//
+// Whop exposes a per-membership `manage_url`
+// (https://whop.com/billing/manage/mem_xxx) and a cancel API, but both are keyed
+// on the membership ID, which cannot be derived from a Discord session. Until a
+// Whop webhook records that mapping we send people to the product page, where
+// Whop's own "Manage membership" control lives, and spell out the fallback.
+// Honest, and it works today.
+export const WHOP_SIGN_IN_URL = 'https://whop.com/';
+
 // Subscriptions are sold on Whop. The free trial is Discord-only on purpose:
 // no card is taken during a trial, so there is nothing a trial member can
 // dispute. Paid members buy on Whop.

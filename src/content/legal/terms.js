@@ -6,7 +6,6 @@ import {
   DISCORD_INVITE,
   PRICE_MONTHLY,
   PRICE_YEARLY,
-  TRIAL_DAYS,
 } from './config';
 
 export const terms = {
@@ -40,19 +39,19 @@ export const terms = {
       heading: '3. Subscriptions, trials, and billing',
       body: [
         `Paid membership is offered as ${PRICE_MONTHLY}/month or ${PRICE_YEARLY}/year. Prices are shown in US dollars and may change with at least 30 days notice before your next renewal.`,
-        `New members may start a ${TRIAL_DAYS}-day free trial. A payment method is required to start the trial, but you are not charged until the trial ends. If you cancel during the trial, you are never charged.`,
+        `New members can try the member channels free in our Discord server. The trial does not involve a checkout or a card, so no payment method is collected and there is nothing to be charged. A paid subscription only ever begins when you personally choose a plan and pay for it.`,
         'Billing is recurring and renews automatically at the end of each period until you cancel. We will notify you by email and/or in Discord before each renewal.',
-        'Payments are processed by Stripe. Stripe handles your card details; we never see or store your full card number. Wallets such as Apple Pay and Google Pay may be used where supported.',
-        'If a payment fails, we may retry it. If it cannot be collected, your membership and premium Discord role may be suspended until payment succeeds.',
+        'Payments are processed by Whop, which is our payment provider. Whop handles your card details; we never see or store your full card number. Wallets such as Apple Pay and Google Pay may be used where supported.',
+        'If a payment fails, Whop may retry it. If it cannot be collected, your membership and premium Discord role may be suspended until payment succeeds.',
       ],
     },
     {
       id: 'cancel',
       heading: '4. Cancellation',
       body: [
-        'You can cancel at any time from the /upgrade page on this site. There are no cancellation fees and no minimum commitment.',
+        'You can cancel at any time from your Whop account — use "Manage membership" on our Whop product page, or Profile → Orders on whop.com. There are no cancellation fees and no minimum commitment. You can also message us and we will cancel it for you.',
         'When you cancel, your premium access continues until the end of the period you already paid for, and your Discord role stays active until that date. After that date you are not charged again and the role is removed.',
-        'Cancelling during a free trial prevents any charge and ends the trial immediately.',
+        'A free trial involves no payment method, so there is no charge to prevent and nothing to cancel.',
       ],
     },
     {
