@@ -21,6 +21,8 @@ export const CATEGORIES = [
   { id: 'apparel', label: 'Apparel' },
   { id: 'beauty', label: 'Beauty' },
   { id: 'crafts', label: 'Crafts' },
+  { id: 'pets', label: 'Pets' },
+  { id: 'toys', label: 'Toys' },
   { id: 'penny', label: 'Penny Deals' },
   { id: 'other', label: 'Other' },
 ];

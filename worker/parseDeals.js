@@ -45,6 +45,10 @@ const TECH_KEYWORDS = [
   'earbud', 'speaker', 'soundbar', 'phone', 'iphone', 'android', 'samsung', 'ssd', 'nvme', 'hard drive',
   'cpu', 'processor', 'ram ', 'motherboard', 'keyboard', 'mouse', 'camera', 'drone',
   'tablet', 'ipad', 'apple', 'macbook', 'airpods', 'charger', 'router', 'watch',
+  // Business desktops were landing in "other": "HP EliteDesk 800 G6 Mini PC"
+  // matched nothing, not even "desktop".
+  'mini pc', 'micro pc', 'all-in-one', 'aio pc', 'elitedesk', 'thinkcentre',
+  'optiplex', 'elitebook', 'power supply', 'wifi adapter', 'smart watch',
 ];
 
 // Categories chosen from what the feed actually posts, measured across the live
@@ -61,18 +65,24 @@ const CATEGORY_KEYWORDS = {
     'kitchen', 'martini', 'blender', 'mixer', 'cookware', 'pan', 'pot ', 'knife', 'appliance',
     'vacuum', 'lamp', 'light', 'furniture', 'bed', 'pillow', 'towel', 'curtain', 'sofa',
     'couch', 'mattress', 'storage bin', 'home depot event', 'lowes', 'wayfair', 'dining',
-    'coffee maker', 'air fryer', 'toaster', 'blender',
+    'coffee maker', 'air fryer', 'toaster', 'blender', 'floor cleaner',
+    'vacuum cleaner', 'humidifier', 'dehumidifier', 'air purifier', 'space heater',
+    'ceiling fan', 'water pitcher', 'airpot', 'instapot', 'dishwasher',
   ],
   tools: [
     'tool', 'drill', 'saw', 'wrench', 'screw', 'bolt', 'nut ', 'fastener', 'hose', 'chuck',
     'clamp', 'sander', 'grinder', 'plier', 'hardware', 'paint', 'adhesive', 'epoxy',
     'fittings', 'valve', 'tube', 'reducer', 'adapter', 'hydraulic', 'lumber', 'plywood',
+    'air cap', 'needle', 'nozzle', 'airbrush', 'sharpie', 'marker', 'tape measure',
+    'utility knife', 'cement mixer', 'miter saw', 'socket set', 'extension cord',
   ],
   automotive: [
     'spark plug', 'oil filter', 'air filter', 'brake pad', 'brake ', 'wiper', 'battery',
     'alternator', 'radiator', 'transmission', 'car ', 'truck', 'auto ', 'vehicle',
     'motorcycle', 'tire', 'tyre', 'wheel', 'bumper', 'headlight', 'tail light', 'mobil 1',
     'motor oil', 'antifreeze', 'wiper blade', 'cabin filter',
+    'running board', 'step bar', 'manifold', 'gasket', 'spark plug wire',
+    'catalytic', 'hitch', 'tow hook', 'floor mat', 'seat cover', 'touch up paint',
   ],
   sports: [
     'batting glove', 'baseball', 'basketball', 'football', 'soccer', 'tennis', 'golf',
@@ -88,6 +98,16 @@ const CATEGORY_KEYWORDS = {
     'lotion', 'shampoo', 'conditioner', 'serum', 'moisturizer', 'makeup', 'lipstick',
     'foundation', 'cologne', 'perfume', 'deodorant', 'sunscreen', 'spf', 'razor', 'toothbrush',
     'toothpaste', 'vitamin', 'supplement', 'skincare', 'nail', 'blush',
+  ],
+  pets: [
+    'litter box', 'litter', 'pet ', 'dog ', 'cat ', 'cat food', 'dog food', 'puppy',
+    'kitten', 'aquarium', 'fish tank', 'bird cage', 'hamster', 'rabbit', 'leash',
+    'collar', 'grooming', 'flea ', 'chew toy', 'bird feeder', 'pet bed',
+  ],
+  toys: [
+    'funko', 'pop!', 'vinyl figure', 'figure', 'doll', 'lego', 'action figure',
+    'board game', 'puzzle', 'o gauge', 'model train', 'nECA', 'diecast',
+    'collectible', 'blind box', 'play set', 'toy ', 'plush', 'stuffed animal',
   ],
   crafts: [
     'craft', 'yarn', 'crochet', 'knit', 'sewing', 'paint by number', 'canvas', 'bead',
@@ -129,6 +149,8 @@ const CATEGORY_LABELS = {
   apparel: 'Apparel',
   beauty: 'Beauty',
   crafts: 'Crafts',
+  pets: 'Pets',
+  toys: 'Toys',
   penny: 'Penny Deals',
   other: 'Other',
 };
@@ -148,6 +170,12 @@ const categorise = (lower) => {
   }
   return best;
 };
+
+// Tracking/affiliate hops observed in the live feed. A deal card whose button
+// sends the reader through one of these is not a verifiable listing, so the
+// post is dropped entirely rather than filed under "Other".
+const AFFILIATE_HOSTS =
+  /(^|\/\/|\.)(mavely\.app\.link|bit\.ly|tinyurl\.com|shorte\.st|lnkd\.in|redirect\.is|go\.linkbux|oneclick\.me|awesometele\.com|couponenabled\.com|dealsplusr\.com)\b/i;
 
 const toNum = (raw) => {
   if (raw == null) return null;
@@ -293,6 +321,13 @@ export function parseDealMessage(message, channelId) {
   const DEAL_LANGUAGE =
     /\b(price error|price drop|price cut|mis-?price|system price|oops|glitch|stack(able|ed)?|coupon|promo code|\bdeal\b|\bdeals\b|\bsale\b|discount|clearance|markdown|now \$|was \$|off\b|free shipping|bogo|% ?off|under \$)/i;
   if (!dealUrl && !DEAL_LANGUAGE.test(raw)) return null;
+
+  // Affiliate redirects are not listings. A mavely.app.link hop carries a price
+  // and a URL so it clears the gate above, but there is no product and no
+  // retailer page behind it — the reader lands on a tracking redirect. Posts
+  // like "CHECK FOR STOCK $7.98 WalmartPartner ad" were the worst-looking
+  // entries in the feed, so they are dropped rather than categorised.
+  if (dealUrl && AFFILIATE_HOSTS.test(dealUrl)) return null;
 
   const retailer = detectRetailer(raw, dealUrl);
 

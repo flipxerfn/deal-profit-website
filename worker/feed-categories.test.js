@@ -141,6 +141,14 @@ describe('categories', () => {
       ['Waring Pro Martini Maker', 'https://www.amazon.com/dp/8', 'home'],
       ['TCL 25" Mini-LED Gaming Monitor', 'https://www.walmart.com/ip/9', 'tech'],
       ['BCI Crafts Reclaimed Wood Heart Blank', 'https://www.amazon.com/dp/10', 'crafts'],
+      // Second pass: these were all still landing in "other" on the live feed.
+      ['HP EliteDesk 800 G6 Mini PC', 'https://www.homedepot.com/p/12', 'tech'],
+      ['ARIES 2554010 NovaTrac 6" x 53" Black Steel Running Boards', 'https://www.amazon.com/dp/13', 'automotive'],
+      ['Victor Reinz 95128SG Intake Manifold Gasket', 'https://www.homedepot.com/p/14', 'automotive'],
+      ['BISSELL SpinWave Hard Floor Cleaner', 'https://www.homedepot.com/p/15', 'home'],
+      ['Automatic Litter Box Bundle', 'https://www.amazon.com/dp/16', 'pets'],
+      ['Funko POP Heroes: CatWoman Vinyl Figure', 'https://www.amazon.com/dp/17', 'toys'],
+      ['Lionel Harry Potter Order of the Phoenix O Gauge Boxcar', 'https://www.amazon.com/dp/18', 'toys'],
     ];
     for (const [title, url, expected] of cases) {
       expect(priced(title, url), title).toBe(expected);
@@ -165,10 +173,37 @@ describe('categories', () => {
       ['Reclaimed wood blank', 'https://amazon.com/dp/7'],
       ['Martini maker', 'https://amazon.com/dp/8'],
       ['Unclassifiable thing', 'https://example.com/p/9'],
+      ['Automatic Litter Box Bundle', 'https://amazon.com/dp/16'],
+      ['Funko POP Vinyl Figure', 'https://amazon.com/dp/17'],
     ];
     for (const [t, u] of samples) {
       const cat = priced(t, u);
       expect(known.has(cat), `${t} -> ${cat}`).toBe(true);
     }
+  });
+});
+
+describe('posts that are not deals at all', () => {
+  const withEmbed = (fields) => parse(message({ embeds: [embed({ color: 0, fields: [], ...fields })] }));
+
+  it('rejects an affiliate redirect with no product behind it', () => {
+    // "CHECK FOR STOCK $7.98 WalmartPartner ad" — a mavely.app.link affiliate
+    // hop. It has a price and a link, so it passed the old gate, but there is
+    // no product and no retailer listing behind it.
+    const deal = withEmbed({
+      title: 'CHECK FOR STOCK $7.98',
+      description: 'WalmartPartner ad',
+      url: 'https://mavely.app.link/5M9FrMSTP6b',
+    });
+    expect(deal).toBeNull();
+  });
+
+  it('still keeps a real deal on a real retailer', () => {
+    const deal = withEmbed({
+      title: 'Ninja Foodi Air Fryer - Dualzone',
+      description: 'Now $149, retail $229!',
+      url: 'https://www.amazon.com/dp/B07XJ8C8F5',
+    });
+    expect(deal).not.toBeNull();
   });
 });
