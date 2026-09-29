@@ -28,7 +28,7 @@ import {
   CardHover,
 } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
-import { startCheckout, DISCORD_INVITE } from '../lib/checkout';
+import { startCheckout } from '../lib/checkout';
 import PaymentFlow from '../components/PaymentFlow';
 
 const PRICE_MONTHLY = '$25';
@@ -108,10 +108,10 @@ const PREMIUM_FEATURES = [
 
 // Trial content merged in from the old /trial page
 const TRIAL_INCLUDES = [
-  'Instant access to member deal channels',
+  'Instant access to the member deal channels',
   'Price error and penny deal alerts',
   'Reselling opportunities from the community',
-  'Cancel anytime during the trial',
+  'No card needed — nothing to cancel, nothing to be charged',
 ];
 
 const TRUST_ITEMS = [
@@ -124,12 +124,12 @@ const FAQS = [
   {
     title: 'How does the free trial work?',
     content:
-      'Start the 7-day free trial from any trial button — you\'ll link your Discord, then check out with Stripe. It\'s free for 7 days; your card is charged $25/month only if you keep the subscription past day 7. Cancel anytime during the trial.',
+      'Click any trial button and you land in our Discord server, where the member channels are. Try it there. No card is taken for the trial, so there is nothing to cancel and no charge to forget about. Subscribe on Whop when you are ready.',
   },
   {
     title: 'Can I cancel anytime?',
     content:
-      'Yes — cancel from your Stripe customer portal at any time. Your access stays until the end of the current billing period.',
+      'Yes — cancel from your Whop account at any time, or just ask in the Discord server. Your access stays until the end of the period you already paid for.',
   },
   {
     title: 'What makes the premium feed different?',
@@ -218,31 +218,30 @@ const Upgrade = () => {
           >
             <FaCrown className="text-sm" />
             {checkoutLoading
-              ? 'Redirecting to Stripe...'
+              ? 'Opening checkout...'
               : interval === 'month'
               ? 'Upgrade — $25/mo'
               : 'Upgrade — $200/yr'}
             <FaArrowRight className="text-sm" />
           </button>
-          <a
-            href={DISCORD_INVITE}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={handleStartTrial}
+            disabled={trialLoading}
             className={buttonClass({ variant: 'outline', size: 'lg' })}
           >
             <FaDiscord className="text-sm" />
-            Join Discord
-          </a>
+            {trialLoading ? 'Opening Discord...' : 'Start Free Trial'}
+          </button>
         </motion.div>
         <motion.p
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
           className="mt-6 text-sm text-zinc-400"
         >
-          Start with a <strong className="text-white">7-day free trial</strong> — card required, then{' '}
-          <strong className="text-white">
-            {interval === 'month' ? '$25/mo' : '$200/yr'}
-          </strong>{' '}
-          only after day 7 · cancel anytime before then and you pay nothing.
+          The free trial happens in <strong className="text-white">Discord</strong> — join the server,{' '}
+          try the member channels, and if you like it subscribe for{' '}
+          <strong className="text-white">{interval === 'month' ? '$25/mo' : '$200/yr'}</strong>. No
+          card for the trial, so there is nothing to cancel and nothing to be charged.
         </motion.p>
       </motion.div>
 
@@ -267,7 +266,7 @@ const Upgrade = () => {
               Everything inside the free trial
             </h2>
             <p className="mt-3 text-sm text-zinc-400">
-              Choose {interval === 'month' ? '$25/mo' : '$200/yr (save $100)'} after your 7-day trial ends.
+              Subscribe for {interval === 'month' ? '$25/mo' : '$200/yr (save $100)'} whenever you're ready.
             </p>
             <ul className="mt-5 space-y-3">
               {TRIAL_INCLUDES.map((item) => (
@@ -447,8 +446,8 @@ const Upgrade = () => {
         title="Ready to catch more deals?"
         description={
           interval === 'month'
-            ? 'Start the 7-day free trial or go straight to $25/mo. Cancel anytime.'
-            : 'Start the 7-day free trial or go straight to $200/yr (save $100). Cancel anytime.'
+            ? 'Try it free in Discord, then subscribe for $25/mo. Cancel anytime.'
+            : 'Try it free in Discord, then subscribe for $200/yr (save $100). Cancel anytime.'
         }
         actions={
           <>
@@ -469,7 +468,7 @@ const Upgrade = () => {
               className={buttonClass({ variant: 'outline', size: 'lg' })}
             >
               <FaCrown className="text-sm" />
-              {trialLoading ? 'Redirecting…' : 'Start 7-Day Free Trial'}
+              {trialLoading ? 'Opening Discord…' : 'Start Free Trial'}
             </button>
           </>
         }

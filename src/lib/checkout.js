@@ -1,12 +1,13 @@
-// Shared Stripe checkout launcher used by the /upgrade page (which absorbed
-// the old /payment and /trial pages).
+// Shared checkout launcher used by the /upgrade page (which absorbed the old
+// /payment and /trial pages).
 //
-// Flow:
-//   1. If the visitor has no Discord identity yet (401), send them to Discord
-//      OAuth first — Discord is the account for this site.
-//   2. Otherwise ALWAYS create a Stripe Checkout Session and redirect to it —
-//      even for existing members (e.g. monthly -> yearly switch). Stripe
-//      handles proration; the webhook upserts the record to the new sub.
+// Current flow:
+//   - Free trial  -> Discord invite. No card, so a trial member has nothing to
+//                    dispute.
+//   - Subscribe   -> Whop, where the plan is chosen and paid for.
+//
+// startStripeCheckout() below is the previous self-billed Stripe flow, kept
+// intact for when the Stripe account is verified.
 
 export async function fetchSubscription() {
   const res = await fetch('/api/user/subscription', {
@@ -24,23 +25,25 @@ export async function fetchSubscription() {
   };
 }
 
-// ─── TOGGLE THIS TO GO LIVE WITH STRIPE ───
-// The Stripe account isn't verified yet (no SSN / no live bank account), so
-// buy buttons send people to Discord instead of a checkout that can't take
-// money. When you've done the Stripe verification, change false → true and
-// push. Everything below is the original Stripe flow, untouched.
-const USE_STRIPE_CHECKOUT = false;
-
+// Where a member actually subscribes, and where the free trial happens.
+export const WHOP_CHECKOUT_URL = 'https://whop.com/dealprofitco/premium-access-d5-f664/';
 export const DISCORD_INVITE = 'https://discord.gg/dealprofit';
 
-export async function startCheckout({ trial = false, interval = 'month' } = {}) {
-  // Discord mode: straight to the invite. The { trial, interval } args are
-  // still passed in and simply unused until USE_STRIPE_CHECKOUT is flipped.
-  if (!USE_STRIPE_CHECKOUT) {
-    window.location.href = DISCORD_INVITE;
-    return { ok: true, redirected: true };
-  }
+// Subscriptions are sold on Whop. The free trial is Discord-only on purpose:
+// no card is taken during a trial, so there is nothing a trial member can
+// dispute. Paid members buy on Whop.
+export async function startCheckout({ trial = false } = {}) {
+  window.location.href = trial ? DISCORD_INVITE : WHOP_CHECKOUT_URL;
+  return { ok: true, redirected: true };
+}
 
+// ─── The original Stripe Checkout flow, kept intact and dormant ───
+// Nothing calls this while startCheckout points at Whop. Use it again when the
+// Stripe account is verified (SSN + live bank account): make startCheckout call
+// this instead, passing { trial, interval } through as it already expects.
+// The 7-day trial, monthly/yearly interval and Discord OAuth pre-step are all
+// still here and still work.
+export async function startStripeCheckout({ trial = false, interval = 'month' } = {}) {
   // No Discord identity yet? Link it first — checkout requires a user.
   // (Members included: the button always goes to Stripe.)
   try {

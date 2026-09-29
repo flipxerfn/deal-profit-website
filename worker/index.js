@@ -1082,7 +1082,7 @@ function getEmbeddedManifest() {
           "Comparison": { fields: { title: { type: "string", default: "Free gives you access to deals. Premium gives you more ways to catch them." }, description: { type: "string", default: "The free feed is useful for browsing deals. Premium is designed for people who want faster notifications, more deal opportunities, premium Discord access, and additional alerts for price errors, penny deals, and more chances to catch deals before they disappear." }, freeFeatures: { type: "array", default: [] }, premiumFeatures: { type: "array", default: [] } } },
           "TrustIndicators": { fields: { items: { type: "array", default: [] } } },
           "FAQ": { fields: { eyebrow: { type: "string", default: "FAQ" }, title: { type: "string", default: "Questions, answered" }, description: { type: "string", default: "Everything you need to know before joining premium." }, items: { type: "array", default: [] } } },
-          "FinalCTA": { fields: { title: { type: "string", default: "Ready to catch more deals?" }, description: { type: "string", default: "Start the 7-day free trial or go straight to $25/mo. Cancel anytime." } } }
+          "FinalCTA": { fields: { title: { type: "string", default: "Ready to catch more deals?" }, description: { type: "string", default: "Try it free in Discord, then subscribe for $25/mo. Cancel anytime." } } }
         }
       }
     }

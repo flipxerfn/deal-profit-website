@@ -27,7 +27,7 @@ const STEPS = [
   {
     number: 2,
     title: 'Trial or Subscribe',
-    description: 'Start a free 7-day trial, or skip straight to premium',
+    description: 'Try it free in Discord, or subscribe straight to premium',
     icon: FaCrown,
     complete: false,
   },
@@ -261,7 +261,7 @@ const PaymentFlow = () => {
         align="center"
         eyebrow="Get started"
         title="Set up in two steps"
-        description={`Link your Discord, then start your 7-day free trial or subscribe for ${PRICE}/mo — cancel anytime.`}
+        description={`Link your Discord, then try it free in the server or subscribe for ${PRICE}/mo — cancel anytime.`}
       />
 
       {/* Status badge — role-aware: the live role wins over a stale record */}
@@ -436,10 +436,11 @@ const PaymentFlow = () => {
                     <span className="mb-3 inline-block rounded-full border border-zinc-700 px-3 py-1 text-xs font-bold uppercase tracking-wider text-zinc-400">
                       Optional
                     </span>
-                    <h2 className="text-xl font-extrabold text-white">Start Your 7-Day Free Trial</h2>
+                    <h2 className="text-xl font-extrabold text-white">Try It Free in Discord</h2>
                     <p className="mt-2 text-zinc-400 max-w-md mx-auto">
-                      Free for 7 days, then <strong className="text-white">$25/month</strong>. Cancel anytime
-                      during the trial and you won't be charged.
+                      Join the server and use the member channels as long as you like. No card is
+                      taken, so there's nothing to cancel and nothing to be charged. Subscribe for{' '}
+                      <strong className="text-white">$25/month</strong> when you want to keep it.
                     </p>
                     {subscription?.status === 'trialing' && subscription.current_period_end && (
                       <p className="mt-3 text-sm text-emerald-300">
@@ -464,7 +465,7 @@ const PaymentFlow = () => {
                         ) : (
                           <>
                             <FaCrown className="text-sm" />
-                            Start 7-Day Free Trial
+                            Try It Free in Discord
                             <FaArrowRight className="text-sm" />
                           </>
                         )}
@@ -476,7 +477,7 @@ const PaymentFlow = () => {
                         </p>
                       )}
                       <p className="text-xs text-zinc-500">
-                        Card required at signup — charged only after 7 days. Then{' '}
+                        No card needed for the trial —{' '}
                         <a
                           href={DISCORD_INVITE}
                           target="_blank"
@@ -485,7 +486,7 @@ const PaymentFlow = () => {
                         >
                           join our Discord
                         </a>{' '}
-                        for the premium channels.
+                        and try the premium channels first.
                       </p>
                       <p className="text-sm text-zinc-500">
                         Already have a trial or subscription?{' '}
