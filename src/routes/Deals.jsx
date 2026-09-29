@@ -5,10 +5,13 @@ import {
   FaTriangleExclamation,
   FaXmark,
   FaBolt,
+  FaLock,
 } from 'react-icons/fa6';
 import { motion } from 'framer-motion';
 import DealCard from '../components/DealCard';
 import SpotlightDeal from '../components/SpotlightDeal';
+import DiscordLogin from '../components/DiscordLogin';
+import { useAuth } from '../lib/useAuth';
 import { Button, Input, Select, Badge, SkeletonCard } from '../components/ui';
 import { CATEGORIES, DEALS as DEMO_DEALS } from '../data/deals';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
@@ -70,6 +73,8 @@ const Deals = () => {
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const searchRef = useRef(null);
   const prefersReduced = useReducedMotion();
+  // Gate is "is your Discord linked", not "do you hold the premium role".
+  const { signedIn, signIn } = useAuth();
 
   // Keyboard shortcuts: "/" focuses the search box (unless the user is typing
   // somewhere else), "Escape" clears the query while search is focused.
@@ -167,7 +172,12 @@ const Deals = () => {
     return sorted;
   }, [feed.deals, query, category, sort]);
 
+  // Signed out visitors see a real slice of the feed, not an empty page.
+  const FREE_PREVIEW_COUNT = 6;
   const activeLabel = CATEGORIES.find((c) => c.id === category)?.label;
+
+  const visible = signedIn ? filtered : filtered.slice(0, FREE_PREVIEW_COUNT);
+  const hiddenCount = filtered.length - visible.length;
   const pill = statusPill[feed.source];
 
   // Per-category counts for the filter chips.
@@ -287,9 +297,24 @@ const Deals = () => {
       {feed.deals.length > 0 && (
         <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
           <p aria-live="polite">
-            Showing{' '}
-            <span className="font-semibold text-zinc-300">{filtered.length}</span> of{' '}
-            <span className="font-semibold text-zinc-300">{feed.deals.length}</span> deals
+            {signedIn ? (
+              <>
+                Showing{' '}
+                <span className="font-semibold text-zinc-300">{filtered.length}</span> of{' '}
+                <span className="font-semibold text-zinc-300">{feed.deals.length}</span> deals
+              </>
+            ) : (
+              <>
+                Showing{' '}
+                <span className="font-semibold text-zinc-300">{visible.length}</span> sample deals
+                {hiddenCount > 0 && (
+                  <>
+                    {' '}· <span className="font-semibold text-zinc-300">{hiddenCount} more</span>{' '}
+                    for members
+                  </>
+                )}
+              </>
+            )}
             {category !== 'all' && <> in <span className="font-semibold text-zinc-300">{activeLabel}</span></>}
             {query.trim() && <> matching <span className="font-semibold text-zinc-300">"{query.trim()}"</span></>}
           </p>
@@ -373,20 +398,58 @@ const Deals = () => {
           </Button>
         </motion.div>
       ) : filtered.length > 0 ? (
-        <motion.div
-          {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
-          className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-        >
-          {filtered.map((deal) => (
+        <>
+          <motion.div
+            {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
+            className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {visible.map((deal) => (
+              <motion.div
+                key={deal.id}
+                className="min-w-0"
+                {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
+              >
+                <DealCard deal={deal} />
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Signed out: show a real slice of the feed, then ask. Locking the
+              lot would leave the public page with nothing to look at, which
+              reads as a scam rather than as a paid community. */}
+          {!signedIn && hiddenCount > 0 && (
             <motion.div
-              key={deal.id}
-              className="min-w-0"
-              {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
+              {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+              className="relative mt-6 overflow-hidden rounded-2xl border border-brand/25 bg-gradient-to-b from-charcoal to-charcoal-2 p-8 text-center sm:p-10"
             >
-              <DealCard deal={deal} />
+              <div
+                className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/50 to-transparent"
+                aria-hidden="true"
+              />
+              {/* Fade the teaser row into the gate so the cut-off is deliberate. */}
+              <div
+                className="pointer-events-none absolute inset-x-0 -top-24 h-24 bg-gradient-to-b from-transparent to-charcoal-2"
+                aria-hidden="true"
+              />
+              <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl bg-brand/15 text-brand">
+                <FaLock className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <h2 className="mt-4 text-xl font-extrabold text-white">
+                {hiddenCount} more {hiddenCount === 1 ? 'deal' : 'deals'} in the full feed
+              </h2>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-zinc-400">
+                Sign in with Discord to see every find as it is caught, plus the member-only
+                channels in our server. No card needed.
+              </p>
+              <DiscordLogin
+                label="Sign in with Discord"
+                size="lg"
+                onClick={signIn}
+                className="mt-6"
+              />
             </motion.div>
-          ))}
-        </motion.div>
+          )}
+        </>
       ) : (
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}

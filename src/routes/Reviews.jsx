@@ -12,6 +12,8 @@ import {
 import { motion } from 'framer-motion';
 import { Button, Input, Textarea, Select, Badge, Avatar, Label, RatingBars } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
+import { useAuth } from '../lib/useAuth';
+import DiscordLogin from '../components/DiscordLogin';
 
 const RATING_FILTERS = [
   { id: 'all', label: 'All ratings' },
@@ -74,6 +76,9 @@ const Reviews = () => {
   const [state, setState] = useState({ loading: true, reviews: [], summary: null, featured: null, error: null });
   const [filter, setFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
+  // Gate is Discord linked only — the premium role is not required.
+  const { signedIn, loading: authLoading, signIn, user } = useAuth();
+  const discordName = user?.username ?? '';
   const [form, setForm] = useState(EMPTY);
   const [hoverRating, setHoverRating] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -261,10 +266,36 @@ const Reviews = () => {
             </option>
           ))}
         </Select>
-        <Button variant="primary" size="sm" onClick={() => setShowForm((v) => !v)}>
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => {
+            // Signing in is the only way to review — the gate lives on the
+            // button so the form is never reachable signed out.
+            if (!signedIn) return signIn();
+            if (!form.name && discordName) setForm((f) => ({ ...f, name: discordName }));
+            setShowForm((v) => !v);
+          }}
+        >
           {showForm ? 'Close' : 'Leave a review'}
         </Button>
       </motion.div>
+
+      {/* Signed out: say why the button above will bounce, instead of leaving
+          someone to discover it by clicking. */}
+      {!signedIn && !authLoading && (
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+          className="mb-8 flex flex-col items-start gap-3 rounded-xl border border-brand/25 bg-gradient-to-b from-charcoal to-charcoal-2 p-5 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p className="text-sm text-zinc-300">
+            <span className="font-semibold text-white">Reviews are for members.</span> Link your
+            Discord to post one — no card needed, and reviews go live after a moderator approves
+            them.
+          </p>
+          <DiscordLogin label="Sign in with Discord" onClick={signIn} className="shrink-0" />
+        </motion.div>
+      )}
 
       {formMsg && !showForm && (
         <motion.div
@@ -285,21 +316,29 @@ const Reviews = () => {
         >
           <h2 className="text-sm font-extrabold uppercase tracking-wider text-white">Leave a review</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            No email or personal info needed — just your name, a rating and what you think. Your
-            review appears once a moderator approves it.
+            Posting as your Discord name — no email or personal info needed. Your review appears
+            once a moderator approves it.
           </p>
 
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
             <label className="block">
-              <Label>Display name</Label>
+              <Label>Your Discord name</Label>
+              {/* Fixed to the signed-in account. A free-text name would let
+                  anyone post as anyone, which is the thing the sign-in gate
+                  exists to prevent. */}
               <Input
                 type="text"
-                value={form.name}
+                value={form.name || discordName}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 maxLength={40}
-                placeholder="e.g. PennyHunter"
-                aria-label="Display name"
+                readOnly
+                aria-label="Your Discord name"
+                aria-describedby="discord-name-hint"
+                className="cursor-not-allowed opacity-70"
               />
+              <span id="discord-name-hint" className="mt-1 block text-[11px] text-zinc-500">
+                Taken from your linked Discord account.
+              </span>
             </label>
 
             <div className="block">

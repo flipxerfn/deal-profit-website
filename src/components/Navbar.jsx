@@ -4,6 +4,9 @@ import dealProfitLogo from '../assets/deal-profit-logo.png';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '../lib/motion';
+import { useAuth } from '../lib/useAuth';
+import DiscordLogin from './DiscordLogin';
+import SiteSearch from './SiteSearch';
 
 const LINKS = [
   { to: '/', label: 'Home' },
@@ -20,6 +23,7 @@ const Navbar = () => {
   const { pathname } = useLocation();
   const activeLinkRef = useRef(null);
   const indicatorRef = useRef(null);
+  const { signedIn, user, signIn } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -65,6 +69,10 @@ const Navbar = () => {
           </span>
         </Link>
 
+        {/* Search sits left of the nav links so it's in the top-left area on
+            every page, and stays out of the way on phones. */}
+        <SiteSearch className="mr-2 hidden w-56 xl:block" />
+
         <div ref={activeLinkRef} className="relative hidden items-center gap-0.5 lg:flex">
           <motion.div
             ref={indicatorRef}
@@ -100,6 +108,26 @@ const Navbar = () => {
             <FaCrown className="text-xs" />
             Get Premium
           </a>
+          {/* Discord is the account here, so this is the only sign-in. Signed
+              out it reads as "Sign in"; signed in it shows who you are. */}
+          {!signedIn ? (
+            <DiscordLogin
+              label="Sign in"
+              size="sm"
+              onClick={signIn}
+              className="hidden sm:inline-flex"
+            />
+          ) : (
+            <div
+              className="hidden items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm sm:flex"
+              title={user?.username ? `Signed in as ${user.username}` : 'Signed in'}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+              <span className="max-w-[9rem] truncate text-zinc-200">
+                {user?.username ?? 'Signed in'}
+              </span>
+            </div>
+          )}
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 hover:bg-white/5 lg:hidden"
@@ -123,6 +151,8 @@ const Navbar = () => {
             className="border-t border-white/5 bg-night/95 backdrop-blur lg:hidden overflow-hidden"
           >
             <div className="mx-auto max-w-[1800px] px-4 py-3 sm:px-6">
+              {/* The desktop search is hidden below xl, so phones get it here. */}
+              <SiteSearch className="mb-3" />
               <a
                 href="/upgrade"
                 className="btn btn-primary w-full mb-3"
@@ -130,6 +160,15 @@ const Navbar = () => {
                 <FaCrown className="text-xs" />
                 Get Premium
               </a>
+              {/* Mobile has no room for the inline sign-in, so it lives here. */}
+              {!signedIn ? (
+                <DiscordLogin label="Sign in with Discord" onClick={signIn} className="mb-3 w-full" />
+              ) : (
+                <p className="mb-3 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-zinc-300">
+                  Signed in as{' '}
+                  <span className="font-semibold text-white">{user?.username ?? 'member'}</span>
+                </p>
+              )}
               {LINKS.map((link) => (
                 <NavLink
                   key={link.to}

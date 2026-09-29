@@ -1,6 +1,6 @@
 // Shared facts for the legal pages. Values the site owner must replace before
 // taking real payments are marked as TODO and surfaced in the page footer.
-export const CONTACT_EMAIL = 'support@goosiev.com'; // TODO: confirm this inbox exists
+export const CONTACT_EMAIL = 'altacc901210@gmail.com';
 export const BUSINESS_LEGAL_NAME = 'Deal Profit'; // TODO: add registered/legal name if different
 export const BUSINESS_ADDRESS = '[Business address — add before going live]'; // TODO
 export const JURISDICTION = '[Your state / country of residence]'; // TODO

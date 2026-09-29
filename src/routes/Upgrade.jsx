@@ -30,6 +30,7 @@ import {
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 import { startCheckout } from '../lib/checkout';
 import PaymentFlow from '../components/PaymentFlow';
+import { UPGRADE_FAQS as FAQS } from '../lib/upgradeContent';
 
 const PRICE_MONTHLY = '$25';
 const PRICE_YEARLY = '$200';
@@ -120,33 +121,6 @@ const TRUST_ITEMS = [
   { icon: FaStar, label: 'High Success Rate', desc: '93% average savings' },
 ];
 
-const FAQS = [
-  {
-    title: 'How does the free trial work?',
-    content:
-      'Click any trial button and you land in our Discord server, where the member channels are. Try it there. No card is taken for the trial, so there is nothing to cancel and no charge to forget about. Subscribe on Whop when you are ready.',
-  },
-  {
-    title: 'Can I cancel anytime?',
-    content:
-      'Yes — cancel from your Whop account at any time, or just ask in the Discord server. Your access stays until the end of the period you already paid for.',
-  },
-  {
-    title: 'What makes the premium feed different?',
-    content:
-      'Premium members get faster alerts plus priority notifications for price errors, penny deals and reselling opportunities that stay out of the public feed.',
-  },
-  {
-    title: 'Are the deals guaranteed?',
-    content:
-      'No. Retailers can correct pricing errors at any time, and stock is often limited. Deals are posted fast specifically so you can act before that happens.',
-  },
-  {
-    title: 'Is there a yearly plan?',
-    content:
-      'Yes — choose the yearly plan for $200/year and save $100 compared to monthly billing. You get the same premium features with a full year of uninterrupted access.',
-  },
-];
 
 const Upgrade = () => {
   const prefersReduced = useReducedMotion();
@@ -243,6 +217,38 @@ const Upgrade = () => {
           <strong className="text-white">{interval === 'month' ? '$25/mo' : '$200/yr'}</strong>. No
           card for the trial, so there is nothing to cancel and nothing to be charged.
         </motion.p>
+
+        {/* The part people actually get wrong: clicking a button on a site
+            should not be a mystery. Say exactly what each button does and what
+            happens next, before they commit to anything. */}
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+          className="mx-auto mt-10 grid max-w-4xl gap-4 text-left sm:grid-cols-2"
+        >
+          {[
+            {
+              title: 'What the trial button does',
+              body: 'Opens our Discord server. There you can read the member channels as long as you like. No card is taken and nothing is charged — ever, unless you choose to subscribe.',
+            },
+            {
+              title: 'What the upgrade button does',
+              body: `Takes you to our checkout page on Whop, where you pay ${interval === 'month' ? '$25 a month' : '$200 a year'}. Whop handles the card details — they never touch this site.`,
+            },
+            {
+              title: 'What happens after you pay',
+              body: 'You get a confirmation email, our bot invites you to the server and gives you the Premium role, and the member channels open up. Usually within a minute.',
+            },
+            {
+              title: 'How to cancel',
+              body: 'Cancel from your Whop account any time, or just ask in the server. You keep access until the end of the period you already paid for, and are not charged again.',
+            },
+          ].map((item) => (
+            <div key={item.title} className="rounded-xl border border-white/10 bg-charcoal-2/60 p-5">
+              <p className="text-sm font-semibold text-white">{item.title}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{item.body}</p>
+            </div>
+          ))}
+        </motion.div>
       </motion.div>
 
       {/* Setup flow (moved from /payment) — action first, before the marketing */}
