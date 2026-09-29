@@ -24,6 +24,9 @@ import {
 import DealCard from '../components/DealCard';
 import rtpcImg from '../assets/crops/deal1-hero.webp';
 import { HOME_FINDS, WHAT_WE_HUNT, HOW_IT_WORKS, COMMUNITY_STATS, DEALS } from '../data/deals';
+import { FEED_STATS, pctPostsLinkable } from '../data/siteFacts';
+
+const medianSavingPct = FEED_STATS.medianSavingPct;
 import { useReducedMotion, motionVariants, getMotionProps, useScrollReveal } from '../lib/motion';
 
 const HUNT_ICONS = [FaBolt, FaCoins, FaPercent, FaBell];
@@ -35,11 +38,14 @@ const STAT_ICONS = {
   bell: FaBell,
 };
 
+// Claims here are measured, not aspirational. "Every deal manually reviewed"
+// and "10,000+ deal hunters" were both untrue and both the kind of thing a
+// reviewer screenshots.
 const TRUST_ITEMS = [
-  { icon: FaShieldAlt, label: 'Verified Deals', desc: 'Every deal manually reviewed' },
-  { icon: FaUsers, label: 'Active Community', desc: '10,000+ deal hunters' },
-  { icon: FaStar, label: 'High Success Rate', desc: '93% average savings' },
-  { icon: FaBell, label: 'Real-time Alerts', desc: 'Instant notifications' },
+  { icon: FaShieldAlt, label: 'Verifiable', desc: `${pctPostsLinkable}% link to the listing` },
+  { icon: FaCoins, label: 'Real savings', desc: `${medianSavingPct}% median off, measured` },
+  { icon: FaBell, label: 'Fast posts', desc: 'Shared as they are caught' },
+  { icon: FaBolt, label: 'No hype', desc: 'Dead links marked as examples' },
 ];
 
 const TICKER = DEALS;
@@ -362,7 +368,7 @@ const Home = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-extrabold tracking-tight text-brand">$39.99</p>
-                  <p className="text-xs font-semibold text-brand-2">Save 93%</p>
+                  <p className="text-xs font-semibold text-brand-2">Example: 93% off</p>
                 </div>
               </div>
               <div className="mx-2 mb-1 flex items-center justify-between gap-3 border-t border-white/10 px-1 pb-1 pt-3">
@@ -516,7 +522,7 @@ const Home = () => {
         <SectionHeader
           align="center"
           eyebrow="Community proof"
-          title="Trusted by thousands of deal hunters"
+          title="What members actually see"
           description="Real feedback from people hunting price errors, penny finds and glitch deals with Deal Profit."
         />
 

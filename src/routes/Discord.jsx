@@ -1,9 +1,10 @@
-import { FaDiscord, FaBolt, FaLock, FaUsers, FaGlobe, FaShieldAlt, FaComments } from 'react-icons/fa';
+import { FaDiscord, FaBolt, FaLock, FaUsers, FaShieldAlt, FaCoins, FaComments } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { buttonClass, StatCard, Avatar, CTASection } from '../components/ui';
 import discord1Cropped from '../assets/crops/discord1-cropped.webp';
 import discord2Cropped from '../assets/crops/discord2-cropped.webp';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
+import { FEED_STATS, pctPostsLinkable } from '../data/siteFacts';
 
 const BENEFITS = [
   {
@@ -23,11 +24,12 @@ const BENEFITS = [
   },
 ];
 
+// Measured from the live feed, not estimated — see data/siteFacts.js.
 const STATS = [
-  { icon: FaGlobe, value: '10K+', label: 'Members' },
-  { icon: FaBolt, value: '50+', label: 'Deals/Day' },
-  { icon: FaShieldAlt, value: '93%', label: 'Avg Savings' },
-  { icon: FaComments, value: '24/7', label: 'Activity' },
+  { icon: FaBolt, value: String(FEED_STATS.dealsInFeed), label: 'Finds in feed' },
+  { icon: FaShieldAlt, value: `${pctPostsLinkable}%`, label: 'Linkable' },
+  { icon: FaCoins, value: `${FEED_STATS.medianSavingPct}%`, label: 'Median off' },
+  { icon: FaComments, value: '24/7', label: 'Monitoring' },
 ];
 
 const MEMBER_INITIALS = ['PH', 'RK', 'JT', 'MS', 'AL'];
@@ -157,15 +159,15 @@ const Discord = () => {
           ))}
         </div>
         <p className="text-sm text-zinc-400">
-          <span className="font-semibold text-white">10,000+ deal hunters</span> already in the
-          server
+          <span className="font-semibold text-white">{FEED_STATS.dealsInFeed} finds</span> posted to
+          the server so far
         </p>
       </motion.div>
 
       {/* CTA */}
       <CTASection
         eyebrow="Live community"
-        title="10,000+ deal hunters are already inside."
+        title="New members are joining as finds are caught."
         description="Join the server, catch the next price error first, and learn from the people who find them daily."
         actions={
           <a

@@ -1,6 +1,10 @@
 import rtpcImg from '../assets/crops/deal1-hero.webp';
 import headphonesImg from '../assets/crops/deal2-card.webp';
 import discord1Cropped from '../assets/crops/discord1-cropped.webp';
+import { FEED_STATS, pctPostsLinkable } from './siteFacts';
+
+const MEDIAN_SAVING = FEED_STATS.medianSavingPct;
+const PCT_LINKABLE = pctPostsLinkable;
 
 export const CATEGORIES = [
   { id: 'all', label: 'All' },
@@ -84,11 +88,13 @@ export const HOW_IT_WORKS = [
   },
 ];
 
+// Figures are measured from the live feed, not estimated — see siteFacts.js for
+// how each was derived and why invented ones were removed.
 export const COMMUNITY_STATS = [
-  { value: '10K+', label: 'Deal hunters', icon: 'users' },
-  { value: '50+', label: 'Deals posted daily', icon: 'bolt' },
-  { value: '93%', label: 'Average savings', icon: 'percent' },
-  { value: '24/7', label: 'Live alerts', icon: 'bell' },
+  { value: '200', label: 'Finds in the feed', icon: 'bolt' },
+  { value: `${MEDIAN_SAVING}%`, label: 'Median saving on a posted find', icon: 'percent' },
+  { value: `${PCT_LINKABLE}%`, label: 'Link straight to the listing', icon: 'shield' },
+  { value: '24/7', label: 'Monitoring', icon: 'bell' },
 ];
 
 export const WHAT_WE_HUNT = [

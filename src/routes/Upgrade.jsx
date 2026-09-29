@@ -31,6 +31,9 @@ import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion'
 import { startCheckout } from '../lib/checkout';
 import PaymentFlow from '../components/PaymentFlow';
 import { UPGRADE_FAQS as FAQS } from '../lib/upgradeContent';
+import { FEED_STATS, pctPostsLinkable } from '../data/siteFacts';
+
+const medianSavingPct = FEED_STATS.medianSavingPct;
 
 const PRICE_MONTHLY = '$25';
 const PRICE_YEARLY = '$200';
@@ -116,9 +119,9 @@ const TRIAL_INCLUDES = [
 ];
 
 const TRUST_ITEMS = [
-  { icon: FaShieldAlt, label: 'Verified Deals', desc: 'Every deal manually reviewed' },
-  { icon: FaUsers, label: 'Active Community', desc: '10,000+ deal hunters' },
-  { icon: FaStar, label: 'High Success Rate', desc: '93% average savings' },
+  { icon: FaShieldAlt, label: 'Verifiable', desc: `${pctPostsLinkable}% link to the listing` },
+  { icon: FaCoins, label: 'Real savings', desc: `${medianSavingPct}% median off, measured` },
+  { icon: FaBell, label: 'Fast posts', desc: 'Shared as they are caught' },
 ];
 
 
