@@ -177,6 +177,46 @@ const stripAdArtifacts = (text) =>
     .replace(/\s{2,}/g, ' ')
     .trim();
 
+/**
+ * Remove Discord mention markup from a title.
+ *
+ * The bots emit these UNTERMINATED — "<@&1531649408050135195" with no closing
+ * ">". That is why they survived: every version of this function required a
+ * closing bracket, so `<@[!&]?\d{15,25}>` never matched and the pings rendered
+ * on the public /deals page in 53 of 200 posts.
+ *
+ * So the closing bracket is optional. The ID length is what makes that safe.
+ *
+ * The floor is 10 digits, not 15. Real bots emit short IDs: the live feed
+ * carried "<@&10913930904907", which is 14 digits, and a {15,25} floor
+ * silently missed it while matching the 19-digit one beside it. Snowflakes are
+ * normally 17-20, but these are bot-generated and the feed is the evidence.
+ *
+ * The count is REQUIRED, never lazy. A lazy `\d{10,25}?` matches as few as
+ * two digits, which ate "<@&15" and left the rest glued to the title.
+ *
+ * Also strips the proper <@&id> form, <@!id> nicknames, the :emoji: shorthand
+ * some bots use, and the whitespace these leave behind. Applied to the title
+ * AND the description: a ping in the description is equally visible on the card.
+ */
+const stripDiscordPings = (text) =>
+  String(text ?? '')
+    .replace(/<@[!&]?\d{10,25}>?/g, ' ')
+    .replace(/:[a-z0-9_]{2,32}:/gi, ' ')
+    .replace(/[@@]\d{10,25}/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    // Trailing separator left where a ping was removed: "$649 <@&…," is
+    // "$649". Scoped to whitespace, comma and colon ONLY.
+    //
+    // Two earlier versions broke existing titles here. Collapsing whitespace
+    // before any punctuation rewrote "Air Fryer - Dualzone" as
+    // "Fryer- Dualzone". Stripping the full punctuation set removed the "!"
+    // that was part of the real product name. The other trims in this file
+    // (stripAdArtifacts and the final title slice) own that punctuation, so
+    // this one only has to undo the substitution it made.
+    .replace(/[\s,:]+$/, '')
+    .trim();
+
 // First line that reads like a product name, or null if the message has none.
 const firstUsefulLine = (text) => {
   const lines = String(text ?? '')
@@ -391,9 +431,26 @@ export function parseDealMessage(message, channelId) {
 
   const retailer = detectRetailer(raw, dealUrl);
 
-  let title = cleanMarkdown(titleRaw).trim();
-  let description = descriptionRaw ? cleanMarkdown(descriptionRaw).trim() : '';
-  const para = cleanMarkdown(content).trim() || cleanMarkdown(fieldText).trim();
+  // The deal bots ping deal channels inside the TITLE, so a raw embed title
+  // arrives as:
+  //
+  //   "MILWAUKEE M18 8-TOOL COMBO KIT FOR $649 <@&1531649408050135195 <@&109…"
+  //
+  // 53 of 200 posts in the live feed carried this, and the ping was rendering
+  // on the public /deals page. Discord role pings mean nothing to a visitor and
+  // they make the site look scraped rather than curated.
+  //
+  // Stripped at EVERY entry point, not just the title. Stripping only the title
+  // is not enough: the title then reads as junk, the promotion logic below
+  // reaches into `para` to find a real product line, and `para` still has the
+  // pings in it — so the ping comes straight back.
+  let title = stripDiscordPings(cleanMarkdown(titleRaw).trim());
+  let description = descriptionRaw
+    ? stripDiscordPings(cleanMarkdown(descriptionRaw).trim())
+    : '';
+  const para =
+    stripDiscordPings(cleanMarkdown(content).trim()) ||
+    stripDiscordPings(cleanMarkdown(fieldText).trim());
 
   // Promote the first line that reads like a product name. The bots' separator
   // symbol, a stray "@everyone", a URL on its own line and a bare "🔥 NEW DEAL"
