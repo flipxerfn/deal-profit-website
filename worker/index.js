@@ -549,6 +549,56 @@ async function handleDeals(env) {
   }
 }
 
+/**
+ * List the text channels the bot can see, so the admin panel can offer a picker
+ * for the success channel.
+ *
+ * The owner has no way to discover a snowflake by eye, and the previous UI
+ * asked for a raw ID. That is a support problem waiting to happen: a mistyped
+ * ID silently produces an empty feed, which looks identical to "the channel is
+ * quiet this week".
+ *
+ * Names only, and only for channels the bot is already a member of. Thread
+ * channels (type 11) are included deliberately — a success channel is often a
+ * thread. The bot token is never returned.
+ */
+async function listBotChannels(env) {
+  const { token } = await resolveDiscord(env);
+  if (!token) return { ok: false, error: 'no_bot_token', channels: [] };
+  try {
+    const guilds = await discordGet('/users/@me/guilds', token);
+    if (!Array.isArray(guilds) || guilds.length === 0) {
+      return { ok: false, error: 'not_in_any_guild', channels: [] };
+    }
+    const out = [];
+    for (const guild of guilds) {
+      const channels = await discordGet(`/guilds/${guild.id}/channels`, token);
+      if (!Array.isArray(channels)) continue;
+      for (const ch of channels) {
+        // 0 = text, 5 = announcement, 11 = public thread. Everything else is a
+        // voice channel or category, which cannot hold these posts.
+        if (ch?.type !== 0 && ch?.type !== 5 && ch?.type !== 11) continue;
+        out.push({
+          id: String(ch.id),
+          name: ch.name ?? 'unnamed',
+          type: ch.type,
+          categoryId: ch.parent_id ? String(ch.parent_id) : null,
+        });
+      }
+    }
+    return { ok: true, channels: out };
+  } catch {
+    return { ok: false, error: 'unreachable', channels: [] };
+  }
+}
+
+async function handleChannelList(request, env) {
+  const session = await getSession(request, env);
+  if (!session) return json({ ok: false, error: 'unauthorized' }, 401);
+  if (request.method !== 'GET') return json({ ok: false, error: 'method_not_allowed' }, 405);
+  return json(await listBotChannels(env));
+}
+
 // ---- admin auth -------------------------------------------------------------
 
 const revoked = new Map(); // jti -> exp (best-effort in-isolate revocation on logout)
@@ -1196,6 +1246,7 @@ const adminRoutes = {
   '/api/admin/status': handleStatus,
   '/api/admin/sync': handleSync,
   '/api/admin/config': handleConfig,
+  '/api/admin/channels': handleChannelList,
   '/api/admin/grant-trial': handleGrantTrial,
   '/api/admin/revoke-trial': handleRevokeTrial,
   '/api/admin/interaction-debug': async (request, env) => {

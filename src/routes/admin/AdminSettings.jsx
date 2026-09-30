@@ -13,6 +13,8 @@ const AdminSettings = () => {
   const [token, setToken] = useState('');
   const [categories, setCategories] = useState('');
   const [successChannel, setSuccessChannel] = useState('');
+  const [channels, setChannels] = useState([]);
+  const [channelsNote, setChannelsNote] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [tokenSet, setTokenSet] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -39,6 +41,35 @@ const AdminSettings = () => {
 
   useEffect(() => {
     load();
+  }, []);
+
+  // Fetch the server's channels so the success channel can be picked by name.
+  // Discovering a snowflake by eye is a support problem: a mistyped ID silently
+  // yields an empty feed, which is indistinguishable from a quiet week.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/channels', { headers: { Accept: 'application/json' } });
+        const body = res.ok ? await res.json().catch(() => null) : null;
+        if (!alive) return;
+        if (body?.ok && Array.isArray(body.channels)) {
+          setChannels(body.channels);
+          setChannelsNote(null);
+        } else {
+          setChannelsNote(
+            body?.error === 'no_bot_token'
+              ? 'Set a bot token above to list channels.'
+              : 'Could not list channels — paste the ID or link instead.'
+          );
+        }
+      } catch {
+        if (alive) setChannelsNote('Could not reach the server — paste the ID or link instead.');
+      }
+    })();
+    return () => {
+      alive = false;
+    };
   }, []);
 
   const onSave = async (e) => {
@@ -177,18 +208,44 @@ const AdminSettings = () => {
               <FaTrophy className="text-brand" />
               Member Success Channel
             </label>
-            <input
-              type="text"
-              value={successChannel}
-              onChange={(e) => setSuccessChannel(e.target.value)}
-              placeholder="Paste the channel ID or a channel link"
-              className="input w-full font-mono text-sm"
-              aria-label="Member success channel ID"
-            />
-            <p className="mt-1.5 text-xs text-zinc-500">
-              The channel where members post their own finds. Posts here appear on the site's front
-              page as the &quot;What members actually caught&quot; band, with the image leading. Paste
-              the ID or the whole channel link; leave blank to turn the band off.
+            {channels.length > 0 ? (
+              <div className="space-y-2">
+                <select
+                  value={successChannel}
+                  onChange={(e) => setSuccessChannel(e.target.value)}
+                  className="input w-full"
+                  aria-label="Member success channel"
+                >
+                  <option value="">Not set — the band is off</option>
+                  {channels.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      #{c.name}
+                      {c.type === 11 ? ' (thread)' : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-zinc-500">
+                  Showing the {channels.length} text channels this bot can see. Pick the one members
+                  post their finds in. Not set turns the band off.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={successChannel}
+                  onChange={(e) => setSuccessChannel(e.target.value)}
+                  placeholder="Paste the channel ID or a channel link"
+                  className="input w-full font-mono text-sm"
+                  aria-label="Member success channel ID"
+                />
+                {channelsNote && <p className="text-xs text-zinc-500">{channelsNote}</p>}
+              </div>
+            )}
+            <p className="text-xs text-zinc-500">
+              Posts from this channel appear on the site&apos;s front page as &quot;What members
+              actually caught&quot;, image first. Deal announcements are filtered out — only
+              member posts show.
             </p>
           </div>
 
