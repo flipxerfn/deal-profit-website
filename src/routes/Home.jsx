@@ -279,11 +279,36 @@ const Home = () => {
             className="relative"
           >
             <div className="rounded-2xl border border-white/10 bg-charcoal p-3 shadow-[0_24px_70px_rgba(0,0,0,0.55),0_0_50px_rgba(244,63,94,0.12)]">
+              {/*
+                The live feed LEADS the card. It used to sit underneath a large
+                archived example image, captioned "the live feed is below" — so
+                the largest thing on the front page, and the first thing a
+                visitor read, was a $39.99 RTX 5060 that never existed.
+
+                Every other part of this site works to establish that the finds
+                are real: measured discount rates, a "99% link to the listing"
+                claim, a live strip of items with minute-old timestamps. A
+                fabricated deal sitting on top of all of it argues against the
+                thing the page is selling, and it is exactly the element a
+                reviewer screenshots first. The example image is still useful —
+                it shows what a catch looks like — so it stays, below the real
+                things, labelled.
+              */}
+              <LiveHeroFeed />
+
+              <div className="mx-2 mt-1 border-t border-white/10 px-1 py-3">
+                <p className="text-xs text-zinc-400">
+                  <FaBolt className="mr-1 inline h-3 w-3 text-brand" />
+                  What a catch looks like — archived example, not a live find
+                </p>
+              </div>
+
               <div className="relative aspect-[16/9] overflow-hidden rounded-lg bg-charcoal-2">
                 <img
                   src={rtpcImg}
-                  alt="RTX 5060 Gaming PC retailer listing for $39.99"
+                  alt="Archived example: an RTX 5060 gaming PC listed at $39.99 against a $599.99 retail price"
                   decoding="async"
+                  loading="lazy"
                   className="h-full w-full object-cover object-center brightness-[0.96]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal/50 via-black/5 to-black/15" aria-hidden="true" />
@@ -301,34 +326,26 @@ const Home = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-extrabold tracking-tight text-brand">$39.99</p>
-                  <p className="text-xs font-semibold text-brand-2">Example: 93% off</p>
+                  <p className="text-xs font-semibold text-brand-2">Archived example: 93% off</p>
                 </div>
               </div>
-              <div className="mx-2 mb-1 border-t border-white/10 px-1 pb-1 pt-3">
-                <p className="text-xs text-zinc-400">
-                  <FaBolt className="mr-1 inline h-3 w-3 text-brand" />
-                  Archived example — the live feed is below
-                </p>
-              </div>
-              <LiveHeroFeed />
             </div>
 
-            {/* Floating badge */}
-            <motion.div
-              {...getMotionProps(prefersReduced, {
-                ...motionVariants.fadeInUp,
-                animate: { opacity: 1, y: 0, rotate: [-2, 2, -2, 0] },
-              })}
-              className="absolute -right-2 -top-5 sm:-right-4"
-            >
-              <div className="inline-flex items-center gap-2 rounded-xl border border-brand/30 bg-brand/20 px-4 py-3 text-white shadow-[0_0_40px_rgba(244,63,94,0.35),0_8px_30px_rgba(0,0,0,0.4)]">
-                <FaBolt className="h-5 w-5 text-brand" />
-                <div className="text-left">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-2">Example find</p>
-                  <p className="text-sm font-extrabold">93% OFF</p>
-                </div>
-              </div>
-            </motion.div>
+            {/*
+              The floating "Example find / 93% OFF" badge that used to sit at
+              the top-right of this card is gone.
+
+              Two reasons, and the second is the one that mattered. It floated
+              at the top of the card, which after the reorder is the live feed,
+              so it would have labelled real finds as an example. And it put a
+              fabricated discount figure in the most prominent position on the
+              page — a statistic for a deal that never happened, above a
+              headline about catching deals that do.
+
+              The archived example is still labelled in two places below, which
+              is where the labelling belongs: attached to the thing it is
+              labelling.
+            */}
           </motion.div>
           </div>
           {/* The one piece of motion on the page driven by data rather than a

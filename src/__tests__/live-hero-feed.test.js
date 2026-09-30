@@ -60,12 +60,51 @@ describe('the hero is the live feed, not the archived set', () => {
     expect(home).not.toMatch(/<CaughtFeed/);
   });
 
+  it('leads the hero card, ahead of the archived example', () => {
+    // The card used to open with a large image of an RTX 5060 listed at
+    // $39.99 — a deal that never existed — captioned "the live feed is below".
+    // So the largest element and the first words a visitor read on the front
+    // page were a fabricated find, on a page whose entire pitch is that the
+    // finds are real.
+    //
+    // Asserted on source ORDER, because that is the actual defect: the example
+    // is allowed to exist, and it is allowed to be visible, it just must not
+    // be what the eye lands on first.
+    // `src={rtpcImg}`, not `rtpcImg` — the identifier first appears on the
+    // import line, near the top of the file, so matching the bare name
+    // compares the live feed against an import statement and reports an
+    // ordering failure that does not exist.
+    const feedAt = home.indexOf('<LiveHeroFeed />');
+    const exampleImgAt = home.indexOf('src={rtpcImg}');
+    expect(feedAt, 'LiveHeroFeed not found in Home').toBeGreaterThan(-1);
+    expect(exampleImgAt, 'archived example image not found in Home').toBeGreaterThan(-1);
+    expect(feedAt, 'the archived example is still ahead of the live feed').toBeLessThan(exampleImgAt);
+  });
+
+  it('does not float a fabricated discount figure over the live feed', () => {
+    // A badge anchored top-right said "Example find / 93% OFF". Once the live
+    // feed moved to the top of the card that badge labelled real finds as an
+    // example, and it put a fabricated statistic in the most prominent
+    // position on the page. The example is labelled inline instead, attached
+    // to the thing it labels.
+    expect(home).not.toMatch(/93% OFF<\/p>/);
+    // Whatever discount figures remain must say they are archived.
+    const claims = home.match(/93% off/gi) ?? [];
+    for (const c of claims) {
+      const at = home.toLowerCase().indexOf(c.toLowerCase());
+      const window = home.slice(Math.max(0, at - 120), at + 40);
+      expect(window, `an unlabelled "${c}" near: ${window.slice(-90)}`).toMatch(
+        /example/i
+      );
+    }
+  });
+
   it('labels an archived example as archived', () => {
     // One archived card is still on the page, for the "93% off" hero visual.
     // That is fine — as long as it says so. The failure is a reader being
     // unable to tell an example from a live find, not the example itself.
     if (!/example/i.test(home)) return;
-    expect(home).toMatch(/Archived example/);
+    expect(home).toMatch(/[Aa]rchived example/);
   });
 
   it('no strip on the page is built from a hard-coded array', () => {
