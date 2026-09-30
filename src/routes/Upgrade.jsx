@@ -336,7 +336,7 @@ const Upgrade = () => {
               body: 'Cancel from your Whop account any time, or just ask in the server. You keep access until the end of the period you already paid for, and are not charged again.',
             },
           ].map((item) => (
-            <div key={item.title} className="rounded-xl border border-white/10 bg-charcoal-2/60 p-5">
+            <div key={item.title} className="surface-raised rounded-xl border border-white/10 bg-charcoal-2/60 p-5">
               <p className="text-sm font-semibold text-white">{item.title}</p>
               <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{item.body}</p>
             </div>
@@ -353,7 +353,7 @@ const Upgrade = () => {
           the reading order is: what am I paying for -> the subscription -> this
           is an alternative if you want your own feed instead. */}
       <section className="mx-auto mt-14 max-w-3xl md:mt-16" aria-labelledby="setup-title">
-        <div className="relative overflow-hidden rounded-xl border border-white/10 bg-charcoal-2/50 p-6 sm:p-7">
+        <div className="surface-raised relative overflow-hidden rounded-xl border border-white/10 bg-charcoal-2/50 p-6 sm:p-7">
           <div
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_120%_at_10%_0%,rgba(139,92,246,0.10),transparent_70%)]"
             aria-hidden="true"
@@ -394,7 +394,7 @@ const Upgrade = () => {
 
       {/* What's included in the trial (moved from /trial) */}
       <div className="mx-auto mt-14 max-w-2xl md:mt-16">
-        <div className="relative overflow-hidden rounded-xl border border-brand/20 bg-charcoal p-6 sm:p-8">
+        <div className="surface-raised relative overflow-hidden rounded-xl border border-brand/20 bg-charcoal p-6 sm:p-8">
           <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
           <div
             className="absolute inset-0 bg-[radial-gradient(90%_120%_at_20%_0%,rgba(244,63,94,0.12),transparent_70%)]"

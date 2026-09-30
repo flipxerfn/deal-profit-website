@@ -384,7 +384,7 @@ const Deals = () => {
       ) : feed.deals.length === 0 ? (
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-          className="rounded-xl border border-white/10 bg-charcoal p-10 text-center"
+          className="surface-raised rounded-xl border border-white/10 bg-charcoal p-10 text-center"
         >
           <FaBolt className="mx-auto h-8 w-8 text-brand/50" aria-hidden="true" />
           <p className="mt-3 text-base font-semibold text-white">No deal posts yet.</p>
@@ -453,7 +453,7 @@ const Deals = () => {
       ) : (
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-          className="rounded-xl border border-white/10 bg-charcoal p-10 text-center"
+          className="surface-raised rounded-xl border border-white/10 bg-charcoal p-10 text-center"
         >
           <FaMagnifyingGlass className="mx-auto h-8 w-8 text-brand/40" aria-hidden="true" />
           <p className="mt-3 text-base font-semibold text-white">

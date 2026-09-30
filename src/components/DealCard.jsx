@@ -19,7 +19,13 @@ const DealCard = ({ deal, spotlight = false }) => {
   return (
     <CardHover
       className={`group relative flex flex-col overflow-hidden ${
-        spotlight ? 'ring-1 ring-brand/40 shadow-[0_0_44px_rgba(244,63,94,0.18)]' : ''
+        // The featured card used to carry a 44px brand glow. That was the
+        // depth cue, and it was doing two jobs badly: it was expensive to
+        // repaint, and it meant "raised" was signalled in saturated brand
+        // colour, so elevation competed with the accent for attention.
+        // surface-raised states the same thing with a lit top edge and a
+        // neutral shadow, and leaves the rose to mean one thing.
+        spotlight ? 'surface-raised-strong ring-1 ring-brand/30' : 'surface-raised'
       }`}
     >
       {spotlight && <div aria-hidden="true" className="shine-sweep pointer-events-none absolute inset-0 z-20" />}
@@ -72,7 +78,7 @@ const DealCard = ({ deal, spotlight = false }) => {
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span
               className={`font-extrabold tracking-tight text-brand ${
-                spotlight ? 'text-xl sm:text-2xl drop-shadow-[0_0_14px_rgba(244,63,94,0.45)]' : 'text-xl sm:text-2xl'
+                spotlight ? 'text-xl sm:text-2xl font-extrabold' : 'text-xl sm:text-2xl font-bold'
               }`}
             >
               {deal.displayPrice || `$${deal.price.toFixed(2)}`}

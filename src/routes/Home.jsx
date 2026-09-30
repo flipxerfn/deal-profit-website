@@ -278,7 +278,7 @@ const Home = () => {
             {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
             className="relative"
           >
-            <div className="rounded-2xl border border-white/10 bg-charcoal p-3 shadow-[0_24px_70px_rgba(0,0,0,0.55),0_0_50px_rgba(244,63,94,0.12)]">
+            <div className="surface-raised-strong rounded-2xl border border-white/10 bg-charcoal p-3">
               {/*
                 The live feed LEADS the card. It used to sit underneath a large
                 archived example image, captioned "the live feed is below" — so

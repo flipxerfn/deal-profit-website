@@ -66,7 +66,7 @@ const Navbar = () => {
           <img
             src={dealProfitLogo}
             alt=""
-            className="h-8 w-auto drop-shadow-[0_0_16px_rgba(244,63,94,0.45)]"
+            className="h-8 w-auto"
           />
           {/* The space matters: the accessible name must contain the visible
               text verbatim, and "Deal Profit" is the actual brand name. */}
@@ -92,7 +92,7 @@ const Navbar = () => {
         <div ref={activeLinkRef} className="relative hidden items-center gap-0.5 lg:flex">
           <motion.div
             ref={indicatorRef}
-            className="absolute bottom-0 left-0 h-0.5 rounded-full bg-gradient-to-r from-brand to-glow shadow-[0_0_12px_rgba(244,63,94,0.6)]"
+            className="absolute bottom-0 left-0 h-0.5 rounded-full bg-gradient-to-r from-brand to-glow"
             style={{ transform: 'scaleX(0)', transformOrigin: 'left', opacity: 0 }}
             animate={{ transform: 'scaleX(1)', opacity: 1 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
