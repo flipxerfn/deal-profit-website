@@ -74,4 +74,21 @@ describe('the public endpoint is read-only', () => {
     const handler = worker.slice(worker.indexOf('async function handleSuccess'));
     expect(handler).toMatch(/caveat: CAVEAT/);
   });
+
+  it('does not spread the Worker env', () => {
+    // This shipped a 500 on every request. `{ ...env, loadConfig }` copies only
+    // own enumerable properties, and a Worker's KV bindings live on the env
+    // prototype — so inside kvGet, `env.DEAL_STORE` was undefined and every
+    // call threw. The endpoint returned 500 while every test in this repo
+    // passed, because nothing here mounted the Worker and called it.
+    //
+    // The endpoint is verified live with curl after deploy; this gate stops the
+    // pattern coming back, and the reason it is here at all is that a source
+    // gate was the only thing available at write time.
+    expect(worker, 'spreading env breaks KV binding access').not.toMatch(
+      /\{\s*\.\.\.env\s*[,}]/
+    );
+    // The real env must be reachable from whatever fetchSuccessPosts receives.
+    expect(worker).toMatch(/DISCORD_BOT_TOKEN: env\.DISCORD_BOT_TOKEN/);
+  });
 });
