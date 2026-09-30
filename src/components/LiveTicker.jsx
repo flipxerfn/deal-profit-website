@@ -72,7 +72,20 @@ export default function LiveTicker() {
   // flight.
   if (!ready || items.length < 2) return null;
 
-  const run = !prefersReduced && !paused;
+  // `allowMotion` and `paused` are deliberately separate.
+  //
+  // The first version had a single `run = !prefersReduced && !paused` and used
+  // it to decide whether to apply the animation at all. That looks equivalent
+  // and is not: pausing then REMOVED the animation, which snapped the track
+  // back to translate(0) and restarted the scroll from the beginning every time
+  // a mouse touched the strip. Measured live — hovering at -1833px moved it to
+  // 0. A pause control that jumps the content it is pausing is worse than no
+  // pause control.
+  //
+  // So: the animation is applied whenever motion is permitted, and pausing
+  // freezes it where it is via animation-play-state. Only the reduced-motion
+  // preference removes it.
+  const allowMotion = !prefersReduced;
   const duration = items.length * SECONDS_PER_ITEM;
 
   return (
@@ -131,10 +144,11 @@ export default function LiveTicker() {
             ref={trackRef}
             className="ticker-track flex w-max items-center gap-3"
             style={
-              run
+              allowMotion
                 ? {
                     animation: `ticker-scroll ${duration}s linear infinite`,
-                    // Paused on hover as well as on reduced motion.
+                    // Freezes in place. Removing the animation instead would
+                    // reset the track to x=0 and restart the scroll.
                     animationPlayState: paused ? 'paused' : 'running',
                   }
                 : undefined

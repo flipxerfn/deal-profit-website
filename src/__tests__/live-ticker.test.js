@@ -73,12 +73,35 @@ const home = read('../routes/Home.jsx');
 
 describe('the strip can be stopped', () => {
   it('stops entirely under reduced motion, not just slows down', () => {
-    // `run` is the single gate on the animation, and it has to include the
-    // preference. "Animates slower" is still a failure of the preference.
+    // The preference must gate whether the animation is applied at all.
+    // "Animates slower" is still a failure of the preference.
     expect(ticker).toMatch(/useReducedMotion/);
-    const run = ticker.match(/const run = [^;]+;/);
-    expect(run?.[0], 'run gate not found').toBeTruthy();
-    expect(run[0]).toMatch(/prefersReduced/);
+    const gate = ticker.match(/const allowMotion = [^;]+;/);
+    expect(gate?.[0], 'motion gate not found').toBeTruthy();
+    expect(gate[0]).toMatch(/prefersReduced/);
+  });
+
+  it('pausing freezes the strip in place instead of resetting it', () => {
+    // This is a bug that only a live browser could find, and it is the reason
+    // the motion gate is separate from the pause state.
+    //
+    // The first version used one flag for both: `run = !prefersReduced &&
+    // !paused`, and applied the animation only when it was true. Pausing then
+    // REMOVED the animation, which dropped the transform to none and snapped
+    // the track from -1833px back to 0 — restarting the whole scroll every time
+    // a mouse touched the strip. A pause control that teleports the content it
+    // is pausing is worse than not having one.
+    //
+    // So the animation must stay applied while paused, and the freeze must come
+    // from animation-play-state. Asserted structurally, because there is no DOM
+    // to measure here.
+    const style = ticker.match(/style=\{[\s\S]*?\n\s*\}/);
+    expect(style?.[0], 'inline style block not found').toBeTruthy();
+    expect(style[0], 'the animation is not applied unconditionally when motion is allowed')
+      .toMatch(/allowMotion/);
+    expect(style[0]).toMatch(/animationPlayState: paused \? 'paused' : 'running'/);
+    // The pause flag must NOT gate the animation itself.
+    expect(style[0]).not.toMatch(/allowMotion[^\n]*paused/);
   });
 
   it('has a real pause control, not hover-only', () => {
