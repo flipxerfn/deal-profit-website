@@ -13,7 +13,7 @@ export const refunds = {
   intro:
     `The short version: you can cancel whenever you want, you keep what you paid for, and you are never charged for a trial you cancel. ` +
     `Full details for ${BUSINESS_LEGAL_NAME} are below.`,
-  updated: 'September 28, 2026',
+  updated: 'September 30, 2026',
   sections: [
     {
       id: 'cancel-now',

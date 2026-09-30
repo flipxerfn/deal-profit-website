@@ -16,7 +16,7 @@ export const privacy = {
   intro:
     `This policy explains what ${BUSINESS_LEGAL_NAME} collects, why we collect it, and the choices you have. ` +
     'We collect as little as possible and never sell your personal information.',
-  updated: 'September 28, 2026',
+  updated: 'September 30, 2026',
   sections: [
     {
       id: 'summary',
@@ -106,7 +106,10 @@ export const privacy = {
       body: [
         'We may update this policy as the Service changes. Material updates will be announced in Discord.',
         `Privacy questions and data requests: ${CONTACT_EMAIL}. Community: ${DISCORD_INVITE}.`,
-        `Business address: ${BUSINESS_ADDRESS}. This policy is governed by the laws of ${JURISDICTION}.`,
+        // No street address is published, so the line is dropped rather than
+        // rendered as a dangling "Business address: ." with nothing after it.
+        ...(BUSINESS_ADDRESS ? [`Business address: ${BUSINESS_ADDRESS}.`] : []),
+        `This policy is governed by the laws of ${JURISDICTION}.`,
       ],
     },
   ],

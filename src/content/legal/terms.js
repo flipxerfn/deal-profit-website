@@ -15,7 +15,7 @@ export const terms = {
   intro:
     `These Terms govern your use of ${BUSINESS_LEGAL_NAME} (the "Service") at goosiev.com. ` +
     `By creating an account, purchasing a membership, or otherwise using the Service, you agree to them.`,
-  updated: 'September 28, 2026',
+  updated: 'September 30, 2026',
   sections: [
     {
       id: 'eligibility',
@@ -100,7 +100,10 @@ export const terms = {
       heading: '10. Contact',
       body: [
         `Questions about these terms: ${CONTACT_EMAIL}. Community and support: ${DISCORD_INVITE}.`,
-        `Business address: ${BUSINESS_ADDRESS}. These terms are governed by the laws of ${JURISDICTION}, without regard to conflict-of-law rules.`,
+        // No street address is published, so the line is dropped rather than
+        // rendered as a dangling "Business address: ." with nothing after it.
+        ...(BUSINESS_ADDRESS ? [`Business address: ${BUSINESS_ADDRESS}.`] : []),
+        `These terms are governed by the laws of ${JURISDICTION}, without regard to conflict-of-law rules.`,
       ],
     },
   ],
