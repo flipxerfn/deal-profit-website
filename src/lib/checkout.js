@@ -29,16 +29,17 @@ export async function fetchSubscription() {
 export const WHOP_CHECKOUT_URL = 'https://whop.com/dealprofitco/premium-access-d5-f664/';
 export const DISCORD_INVITE = 'https://discord.gg/dealprofit';
 
-// The one-time Mirror Setup service. Separate product, separate price, and NOT
+// The one-time setup service. Separate product, separate price, and NOT
 // reachable from startCheckout() — a subscription checkout must never be able
 // to land a buyer on a one-time purchase by accident. It is only ever linked
 // deliberately, from the /upgrade page.
 //
-// Kept here rather than inline in the route so the price and the promise stay
-// in one place next to the subscription they sit beside, and so a test can
-// assert the two never get confused.
-export const WHOP_MIRROR_URL = 'https://whop.com/dealprofitco/deal-profit-mirror-setup/';
-export const MIRROR_PRICE_USD = 55;
+// The URL slug still says "mirror" because Whop fixes a product's route at
+// creation and it cannot be changed afterwards. That is the address, not the
+// name: every title, headline, label and line of copy says "Deal Feed Setup",
+// because a buyer who has to ask what a mirror is has already left.
+export const WHOP_SETUP_URL = 'https://whop.com/dealprofitco/deal-profit-mirror-setup/';
+export const SETUP_PRICE_USD = 55;
 
 // Cancelling is Whop's to handle, not ours. Whop is the merchant of record, so
 // only Whop can stop a future charge.

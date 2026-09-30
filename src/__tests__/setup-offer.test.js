@@ -1,3 +1,9 @@
+// Named "Deal Feed Setup", not "Mirror Setup". Mirroring is jargon: a buyer who
+// has to stop to work out what a mirror is has already bounced. The URL slug
+// still contains "mirror" because Whop fixes a product's route at creation and
+// it cannot be changed — so this test asserts the NAME is jargon-free while
+// tolerating the address, and a reader-visible label never says "mirror".
+//
 // A one-time service sitting next to a subscription is the easiest way to
 // accidentally sell someone the wrong thing, and the descriptions are the
 // place that mistake gets made rather than the code.
@@ -22,8 +28,8 @@ import { resolve } from 'node:path';
 import {
   startCheckout,
   WHOP_CHECKOUT_URL,
-  WHOP_MIRROR_URL,
-  MIRROR_PRICE_USD,
+  WHOP_SETUP_URL,
+  SETUP_PRICE_USD,
   DISCORD_INVITE,
 } from '../lib/checkout.js';
 
@@ -34,14 +40,14 @@ const upgradeCode = code(upgrade);
 
 describe('the two offers point at different products', () => {
   it('never points at the same URL', () => {
-    expect(WHOP_MIRROR_URL).not.toBe(WHOP_CHECKOUT_URL);
-    expect(WHOP_MIRROR_URL).toMatch(/deal-profit-mirror-setup/);
+    expect(WHOP_SETUP_URL).not.toBe(WHOP_CHECKOUT_URL);
+    expect(WHOP_SETUP_URL).toMatch(/deal-profit-mirror-setup/);
     expect(WHOP_CHECKOUT_URL).toMatch(/premium-access/);
   });
 
   it('the mirror link is to the product route, not a checkout link', () => {
     // A product page shows both plans. A checkout link would preselect one.
-    expect(WHOP_MIRROR_URL).not.toMatch(/\/checkout\//);
+    expect(WHOP_SETUP_URL).not.toMatch(/\/checkout\//);
   });
 });
 
@@ -65,7 +71,7 @@ describe('startCheckout cannot sell the one-time service', () => {
     const start = src.indexOf('export async function startCheckout');
     const body = src.slice(start, src.indexOf('\n}', start) + 2);
     expect(body, 'startCheckout must not route to the one-time product').not.toMatch(
-      /WHOP_MIRROR_URL|MIRROR_PRICE/
+      /WHOP_SETUP_URL|MIRROR_PRICE/
     );
   });
 
@@ -88,14 +94,14 @@ describe('the page describes the two offers as separate', () => {
   });
 
   it('shows the price from the shared constant, not a hard-coded number', () => {
-    expect(upgrade).toMatch(/Mirror Setup &mdash; \$55 once/);
+    expect(upgrade).toMatch(/Deal Feed Setup &mdash; \$55 once/);
     // The literal is rendered, but the component must not define its own.
-    expect(upgradeCode).not.toMatch(/const\s+MIRROR[A-Z_]*PRICE/);
+    expect(upgradeCode).not.toMatch(/const\s+SETUP_PRICE[A-Z_]*\s*=/);
   });
 
   it('the price constant is what the page says', () => {
-    expect(MIRROR_PRICE_USD).toBe(55);
-    expect(upgrade).toContain(`$${MIRROR_PRICE_USD} once`);
+    expect(SETUP_PRICE_USD).toBe(55);
+    expect(upgrade).toContain(`$${SETUP_PRICE_USD} once`);
   });
 
   it('says one-time, so nobody expects a subscription', () => {
@@ -113,6 +119,19 @@ describe('the page describes the two offers as separate', () => {
     ]) {
       expect(upgradeCode, `promises volume: ${phrase}`).not.toMatch(phrase);
     }
+  });
+
+  it('never calls it a mirror in anything a reader sees', () => {
+    // The name is the pitch. "Mirror" only survives in the URL, which is not
+    // read by anyone deciding whether to buy.
+    expect(upgradeCode, 'the page says "mirror" somewhere visible').not.toMatch(/mirror/i);
+    expect(upgradeCode).toMatch(/Deal Feed Setup/);
+  });
+
+  it('keeps the jargon out of the exported names too', () => {
+    const src = readFileSync(resolve(root, 'src/lib/checkout.js'), 'utf8');
+    const names = [...src.matchAll(/export const (\w+)/g)].map((m) => m[1]);
+    expect(names.filter((n) => /MIRROR/i.test(n)), 'an exported name still says mirror').toEqual([]);
   });
 
   it('leaves the subscriber flow alone', () => {

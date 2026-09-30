@@ -28,7 +28,7 @@ import {
   CardHover,
 } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
-import { startCheckout, WHOP_MIRROR_URL } from '../lib/checkout';
+import { startCheckout, WHOP_SETUP_URL } from '../lib/checkout';
 import PaymentFlow from '../components/PaymentFlow';
 import { UPGRADE_FAQS as FAQS } from '../lib/upgradeContent';
 import { FEED_STATS, pctPostsLinkable } from '../data/siteFacts';
@@ -255,10 +255,14 @@ const Upgrade = () => {
       </motion.div>
 
       {/* One-time service, deliberately not competing with the subscription.
+          Named "Deal Feed Setup" rather than "Mirror Setup": mirroring is
+          jargon, and a buyer who has to stop to work out what a mirror is has
+          already bounced. The URL slug still says mirror because Whop fixes a
+          product's route at creation; nobody reads the address.
           It sits below the plans and after the "what each button does" cards so
           the reading order is: what am I paying for -> the subscription -> this
           is an alternative if you want your own feed instead. */}
-      <section className="mx-auto mt-14 max-w-3xl md:mt-16" aria-labelledby="mirror-title">
+      <section className="mx-auto mt-14 max-w-3xl md:mt-16" aria-labelledby="setup-title">
         <div className="relative overflow-hidden rounded-xl border border-white/10 bg-charcoal-2/50 p-6 sm:p-7">
           <div
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(90%_120%_at_10%_0%,rgba(139,92,246,0.10),transparent_70%)]"
@@ -268,7 +272,7 @@ const Upgrade = () => {
             <p className="text-xs font-semibold uppercase tracking-wider text-glow-3">
               Optional &middot; one-time
             </p>
-            <h2 id="mirror-title" className="mt-1 text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+            <h2 id="setup-title" className="mt-1 text-xl font-extrabold tracking-tight text-white sm:text-2xl">
               Want your own community getting the feed?
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-zinc-400">
@@ -279,12 +283,12 @@ const Upgrade = () => {
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-4">
               <a
-                href={WHOP_MIRROR_URL}
+                href={WHOP_SETUP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={buttonClass({ variant: 'outline', size: 'md' })}
               >
-                Mirror Setup &mdash; $55 once
+                Deal Feed Setup &mdash; $55 once
                 <FaArrowRight className="text-xs" />
               </a>
               <p className="text-xs text-zinc-500">One-time fee. Nothing to cancel.</p>
