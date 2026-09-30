@@ -49,8 +49,6 @@ const TRUST_ITEMS = [
   { icon: FaBolt, label: 'No hype', desc: 'Dead links marked as examples' },
 ];
 
-const TICKER = DEALS;
-
 // Staggered word-by-word reveal for the hero headline line (respects reduced motion).
 const StaggerLine = ({ text, className = '', delay = 0 }) => {
   const prefersReduced = useReducedMotion();

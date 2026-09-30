@@ -38,13 +38,15 @@ export default function LiveHeroFeed() {
         if (!res.ok) throw new Error(String(res.status));
         const data = await res.json();
         const list = Array.isArray(data?.deals) ? data.deals : [];
-        if (!alive.current) return;
+        // `alive` is a plain binding, not a ref — `alive.current` is always
+        // undefined, which made this return early on every run.
+        if (!alive) return;
         // Prefer posts that carry a listing a reader can open.
         const verified = list.filter((d) => isSourceLink(d?.url ?? d?.cta?.href));
         setDeals((verified.length >= VISIBLE ? verified : list).slice(0, 20));
         setLive(list.length > 0);
       } catch {
-        if (alive.current) setDeals(null);
+        if (alive) setDeals(null);
       }
     })();
     return () => {
