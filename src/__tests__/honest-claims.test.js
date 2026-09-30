@@ -52,7 +52,8 @@ describe('the numbers are measurements', () => {
 });
 
 describe('no invented numbers in the rendered copy', () => {
-  const offenders = [];
+  it('finds no member-count, average-savings, volume or review claims', () => {
+    const offenders = [];
   for (const file of walk('src/routes')) {
     if (!/\.jsx$/.test(file)) continue;
     const src = stripComments(read(file));
@@ -73,8 +74,9 @@ describe('no invented numbers in the rendered copy', () => {
         offenders.push(`${file}:${i + 1} volume claim — ${line.trim().slice(0, 90)}`);
       }
     });
-  }
-  expect(offenders).toEqual([]);
+    }
+    expect(offenders).toEqual([]);
+  });
 });
 
 describe('community stats describe the feed, not our size', () => {

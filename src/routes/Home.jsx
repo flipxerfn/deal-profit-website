@@ -22,6 +22,7 @@ import {
   Avatar,
 } from '../components/ui';
 import DealCard from '../components/DealCard';
+import LiveHeroFeed from '../components/LiveHeroFeed';
 import rtpcImg from '../assets/crops/deal1-hero.webp';
 import { HOME_FINDS, WHAT_WE_HUNT, HOW_IT_WORKS, COMMUNITY_STATS, DEALS } from '../data/deals';
 import { FEED_STATS, pctPostsLinkable } from '../data/siteFacts';
@@ -102,77 +103,6 @@ const Counter = ({ value }) => {
   }, [inView, prefersReduced, value]);
 
   return <span ref={ref}>{display}</span>;
-};
-
-// Live "now streaming" ticker strip under the hero card.
-const LiveTicker = () => (
-  <div className="border-t border-white/10 px-2 pb-2 pt-3">
-    <p className="mb-2 flex items-center gap-1.5 px-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
-      <span className="relative flex h-1.5 w-1.5">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-70" />
-        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand" />
-      </span>
-      Recent finds — examples
-    </p>
-    <div className="space-y-1.5">
-      {TICKER.map((deal) => (
-        <div
-          key={deal.id}
-          className="flex items-center gap-3 rounded-lg bg-white/[0.03] px-3 py-2 transition-colors hover:bg-white/[0.06]"
-        >
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold text-white">{deal.title}</p>
-            <p className="text-[11px] text-zinc-500">
-              {deal.categoryLabel} · example post
-            </p>
-          </div>
-          <span className="shrink-0 text-sm font-bold text-brand">
-            {deal.displayPrice || `$${deal.price.toFixed(2)}`}
-          </span>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-// Honest alternative to a fake "caught 40s ago" ticker: send people to the
-// live feed, which posts real finds with a source link and timestamp.
-const CAUGHT = [
-  { deal: 'See the live feed', when: 'real finds, posted as they happen' },
-  { deal: 'Every post links the listing', when: 'open it and check the price yourself' },
-  { deal: 'Retired deals are marked as examples', when: 'no fake urgency, no invented countdowns' },
-];
-
-// Rotating FOMO strip under the hero ticker (static first line under reduced motion).
-const CaughtFeed = () => {
-  const prefersReduced = useReducedMotion();
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    if (prefersReduced) return undefined;
-    const timer = setInterval(() => setIndex((i) => (i + 1) % CAUGHT.length), 4500);
-    return () => clearInterval(timer);
-  }, [prefersReduced]);
-
-  const item = CAUGHT[index];
-  return (
-    <div className="mt-2 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2.5">
-      <AnimatePresence mode="wait">
-        <motion.p
-          key={item.deal}
-          initial={prefersReduced ? false : { opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={prefersReduced ? undefined : { opacity: 0, y: -8 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="flex items-center gap-2 text-xs text-zinc-400"
-        >
-          <FaBolt className="h-3 w-3 shrink-0 text-brand" />
-          <span className="font-semibold text-zinc-300">{item.deal}</span>
-          <span>caught {item.when}</span>
-        </motion.p>
-      </AnimatePresence>
-    </div>
-  );
 };
 
 // Two most relevant approved reviews fetched live (graceful: hidden on failure).
@@ -371,15 +301,13 @@ const Home = () => {
                   <p className="text-xs font-semibold text-brand-2">Example: 93% off</p>
                 </div>
               </div>
-              <div className="mx-2 mb-1 flex items-center justify-between gap-3 border-t border-white/10 px-1 pb-1 pt-3">
+              <div className="mx-2 mb-1 border-t border-white/10 px-1 pb-1 pt-3">
                 <p className="text-xs text-zinc-400">
                   <FaBolt className="mr-1 inline h-3 w-3 text-brand" />
-                  Example of a price error we caught
+                  Archived example — the live feed is below
                 </p>
-                <p className="text-xs font-semibold text-zinc-500">Archived</p>
               </div>
-              <LiveTicker />
-              <CaughtFeed />
+              <LiveHeroFeed />
             </div>
 
             {/* Floating badge */}
