@@ -183,6 +183,96 @@ const Upgrade = () => {
           access to premium features designed to help you catch deals before they disappear.
         </p>
 
+      {/* Free vs Premium comparison with billing interval selector */}
+      <motion.div
+        {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        className="mx-auto mt-14 max-w-[1100px] md:mt-16"
+      >
+        {/* Billing interval selector */}
+        <div className="mb-8 flex items-center justify-center gap-4">
+          <span className="text-sm text-zinc-400">Billing</span>
+          <div className="relative inline-flex items-center gap-1 rounded-lg bg-charcoal p-1">
+            <button
+              type="button"
+              onClick={() => setInterval('month')}
+              className={`relative px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                interval === 'month'
+                  ? 'bg-brand-3 text-white shadow-[0_0_16px_rgba(224,45,74,0.4)]'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setInterval('year')}
+              className={`relative px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                interval === 'year'
+                  ? 'bg-brand-3 text-white shadow-[0_0_16px_rgba(224,45,74,0.4)]'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
+            >
+              Yearly
+              <FaTag className="ml-1 inline text-[10px]" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="card relative overflow-hidden p-6 sm:p-8">
+            <div
+              className="absolute inset-0 bg-gradient-to-br from-zinc-900/50 to-transparent"
+              aria-hidden="true"
+            />
+            <h3 className="relative text-xs font-bold uppercase tracking-wider text-zinc-400">Free</h3>
+            <ul className="relative mt-5 space-y-3">
+              {FREE_FEATURES.map((feature) => (
+                <li key={feature} className="relative flex items-start gap-2.5 text-sm text-zinc-300">
+                  <span className="relative mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded bg-zinc-800 text-zinc-500">
+                    <FaCheck className="h-3.5 w-3.5" />
+                  </span>
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="relative card overflow-hidden border-brand/30 p-6 sm:p-8">
+            <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
+            <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-glow/5" aria-hidden="true" />
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="relative text-xs font-bold uppercase tracking-wider text-brand flex items-center gap-2">
+                <FaCrown className="text-sm" aria-hidden="true" />
+                Premium
+              </h3>
+              {interval === 'year' && (
+                <Badge variant="glow" className="text-xs">
+                  {YEARLY_SAVINGS}
+                </Badge>
+              )}
+            </div>
+            <div className="mb-5 text-center">
+              <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
+                {interval === 'month' ? PRICE_MONTHLY_MO : PRICE_YEARLY_YR}
+              </span>
+              <p className="mt-1 text-sm text-zinc-400">
+                {interval === 'month' ? 'Billed monthly' : 'Billed annually'}
+              </p>
+            </div>
+            <ul className="relative mt-5 space-y-3">
+              {PREMIUM_FEATURES.map((feature) => (
+                <li key={feature} className="relative flex items-start gap-2.5 text-sm text-zinc-200">
+                  <span className="relative mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded bg-brand/20 text-brand shadow-[0_0_8px_rgba(244,63,94,0.3)]">
+                    <FaCheck className="h-3.5 w-3.5" />
+                  </span>
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </motion.div>
+
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
           className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row"
@@ -370,96 +460,6 @@ const Upgrade = () => {
           notifications, more deal opportunities, premium Discord access, and additional alerts for
           price errors, penny deals, and more chances to catch deals before they disappear.
         </p>
-      </motion.div>
-
-      {/* Free vs Premium comparison with billing interval selector */}
-      <motion.div
-        {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-        className="mx-auto mt-14 max-w-[1100px] md:mt-16"
-      >
-        {/* Billing interval selector */}
-        <div className="mb-8 flex items-center justify-center gap-4">
-          <span className="text-sm text-zinc-400">Billing</span>
-          <div className="relative inline-flex items-center gap-1 rounded-lg bg-charcoal p-1">
-            <button
-              type="button"
-              onClick={() => setInterval('month')}
-              className={`relative px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                interval === 'month'
-                  ? 'bg-brand-3 text-white shadow-[0_0_16px_rgba(224,45,74,0.4)]'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              type="button"
-              onClick={() => setInterval('year')}
-              className={`relative px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                interval === 'year'
-                  ? 'bg-brand-3 text-white shadow-[0_0_16px_rgba(224,45,74,0.4)]'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              Yearly
-              <FaTag className="ml-1 inline text-[10px]" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div className="card relative overflow-hidden p-6 sm:p-8">
-            <div
-              className="absolute inset-0 bg-gradient-to-br from-zinc-900/50 to-transparent"
-              aria-hidden="true"
-            />
-            <h3 className="relative text-xs font-bold uppercase tracking-wider text-zinc-400">Free</h3>
-            <ul className="relative mt-5 space-y-3">
-              {FREE_FEATURES.map((feature) => (
-                <li key={feature} className="relative flex items-start gap-2.5 text-sm text-zinc-300">
-                  <span className="relative mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded bg-zinc-800 text-zinc-500">
-                    <FaCheck className="h-3.5 w-3.5" />
-                  </span>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="relative card overflow-hidden border-brand/30 p-6 sm:p-8">
-            <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
-            <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-glow/5" aria-hidden="true" />
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="relative text-xs font-bold uppercase tracking-wider text-brand flex items-center gap-2">
-                <FaCrown className="text-sm" aria-hidden="true" />
-                Premium
-              </h3>
-              {interval === 'year' && (
-                <Badge variant="glow" className="text-xs">
-                  {YEARLY_SAVINGS}
-                </Badge>
-              )}
-            </div>
-            <div className="mb-5 text-center">
-              <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
-                {interval === 'month' ? PRICE_MONTHLY_MO : PRICE_YEARLY_YR}
-              </span>
-              <p className="mt-1 text-sm text-zinc-400">
-                {interval === 'month' ? 'Billed monthly' : 'Billed annually'}
-              </p>
-            </div>
-            <ul className="relative mt-5 space-y-3">
-              {PREMIUM_FEATURES.map((feature) => (
-                <li key={feature} className="relative flex items-start gap-2.5 text-sm text-zinc-200">
-                  <span className="relative mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded bg-brand/20 text-brand shadow-[0_0_8px_rgba(244,63,94,0.3)]">
-                    <FaCheck className="h-3.5 w-3.5" />
-                  </span>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
       </motion.div>
 
       {/* Trust indicators (moved from /trial) */}
