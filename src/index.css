@@ -212,16 +212,37 @@
   .band-full {
     @apply relative w-full overflow-hidden;
   }
-  /* Breakout: lets a band escape a centered max-width parent to span the
-     full viewport (body overflow-x: clip absorbs the vw rounding). */
+  /* Breakout: lets a band escape a centered max-width parent to span the full
+     viewport.
+
+     This used to be width: 100vw with -50vw margins, which overshoots by the
+     scrollbar width — 100vw is the viewport INCLUDING the scrollbar, while the
+     document is laid out in the space excluding it. Every full-bleed band was
+     therefore 8px wider than the area it had to cover, pushing the right-hand
+     edge under the scrollbar and clipping anything positioned near it (the
+     hero's "93% OFF" badge sat exactly there and lost its corner).
+
+     `left: 50%; right: 50%; margin-inline: -50vw` has the same defect. The fix
+     is to not name a viewport width at all: stretch to the parent's content box
+     and let `overflow-x: clip` on body deal with the ancestor padding. So the
+     bleed is now expressed as negative inline margins equal to the padding the
+     centred containers apply, which makes it exact at every breakpoint. */
   .band-bleed {
     position: relative;
-    left: 50%;
-    right: 50%;
-    width: 100vw;
+    width: auto;
     max-width: none;
-    margin-left: -50vw;
-    margin-right: -50vw;
+    margin-inline: calc(-1 * var(--band-gutter, 1rem));
+  }
+  /* The containers are px-4 sm:px-6 lg:px-8, so the bleed mirrors that. */
+  @media (min-width: 640px) {
+    .band-bleed {
+      margin-inline: -1.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .band-bleed {
+      margin-inline: -2rem;
+    }
   }
   .band-full::before {
     content: "";

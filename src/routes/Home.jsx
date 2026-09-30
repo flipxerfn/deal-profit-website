@@ -23,8 +23,9 @@ import {
 } from '../components/ui';
 import DealCard from '../components/DealCard';
 import LiveHeroFeed from '../components/LiveHeroFeed';
+import LatestFinds from '../components/LatestFinds';
 import rtpcImg from '../assets/crops/deal1-hero.webp';
-import { HOME_FINDS, WHAT_WE_HUNT, HOW_IT_WORKS, COMMUNITY_STATS, DEALS } from '../data/deals';
+import { WHAT_WE_HUNT, HOW_IT_WORKS, COMMUNITY_STATS } from '../data/deals';
 import { FEED_STATS, pctPostsLinkable } from '../data/siteFacts';
 
 const medianSavingPct = FEED_STATS.medianSavingPct;
@@ -168,7 +169,6 @@ const Home = () => {
   const prefersReduced = useReducedMotion();
   const howReveal = useScrollReveal();
   const huntReveal = useScrollReveal();
-  const findsReveal = useScrollReveal();
   const socialReveal = useScrollReveal();
 
   return (
@@ -261,7 +261,10 @@ const Home = () => {
                   </span>
                   <div>
                     <p className="font-semibold text-white text-sm">{item.label}</p>
-                    <p className="text-[10px] text-zinc-500">{item.desc}</p>
+                    {/* zinc-500 measures 3.76:1 against the band these sit on,
+                        and 10px is nowhere near the 18.66px that would let 3:1
+                        substitute for 4.5:1. zinc-400 is 7.08:1 there. */}
+                    <p className="text-[11px] text-zinc-400">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -397,45 +400,7 @@ const Home = () => {
       </section>
 
       {/* Latest Finds */}
-      <section className="band-full band-bleed tint-glow relative pb-4" aria-labelledby="finds-title">
-        <motion.div
-          ref={findsReveal.ref}
-          {...getMotionProps(prefersReduced, findsReveal.isVisible ? motionVariants.scrollReveal : { initial: false, animate: { opacity: 1, y: 0 } })}
-          className="mx-auto w-full max-w-[1800px] px-4 py-8 sm:px-6 md:py-12 lg:px-8"
-        >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-brand/20 to-transparent" aria-hidden="true" />
-        <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-brand">Live finds</p>
-            <h2 id="finds-title" className="mt-1 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-              Latest finds
-            </h2>
-          </div>
-          <Link
-            to="/deals"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-400 transition-colors hover:text-brand"
-          >
-            View all deals
-            <FaArrowRight className="text-xs" />
-          </Link>
-        </div>
-
-        <motion.div
-          {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
-          className="grid gap-5 sm:grid-cols-2"
-        >
-          {HOME_FINDS.map((deal) => (
-            <motion.div
-              key={deal.id}
-              className="min-w-0"
-              {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
-            >
-              <DealCard deal={deal} spotlight={deal.id === 'penny-cpu'} />
-            </motion.div>
-          ))}
-        </motion.div>
-        </motion.div>
-      </section>
+      <LatestFinds />
 
       {/* Community Proof */}
       <section className="band-full band-bleed tint-brand relative py-12 md:py-16" aria-labelledby="social-title">

@@ -71,7 +71,7 @@ export default function LiveHeroFeed() {
   return (
     <div className="border-t border-white/10 px-2 pb-2 pt-3">
       <div className="mb-2 flex items-center justify-between gap-2 px-1">
-        <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+        <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
           <span className="relative flex h-1.5 w-1.5">
             {live ? (
               <>
@@ -84,7 +84,7 @@ export default function LiveHeroFeed() {
           </span>
           {live ? 'Caught just now' : 'Examples'}
         </p>
-        {newest && <p className="text-[10px] text-zinc-500">newest {newest}</p>}
+        {newest && <p className="text-[11px] text-zinc-400">newest {newest}</p>}
       </div>
 
       <div className="space-y-1.5">
@@ -126,7 +126,10 @@ export default function LiveHeroFeed() {
       </div>
 
       <div className="mt-2 flex items-center justify-between gap-2 px-1">
-        <p className="text-[10px] text-zinc-600">
+        {/* zinc-600 is 2.35:1 on the card — unreadable at 10px, and this line
+            is the one that tells the reader whether they are looking at real
+            posts. It has to be legible. */}
+        <p className="text-[11px] text-zinc-400">
           {live ? 'Pulled live from Discord' : 'Live feed unreachable'}
         </p>
         <Link
