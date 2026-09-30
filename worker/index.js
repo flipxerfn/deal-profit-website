@@ -1312,13 +1312,15 @@ async function handleSuccess(request, env) {
   if (request.method !== 'GET') {
     return json({ ok: false, error: 'method_not_allowed' }, 405);
   }
-  // Not `{ ...env, loadConfig }`: spreading a Worker env copies only own
-  // enumerable properties, and KV bindings live on the env prototype, so kvGet
-  // saw `env.DEAL_STORE` as undefined and the endpoint 500'd on every request.
-  // Forward through a closure so the real env object is always the one read.
+  // loadConfig must be CLOSED OVER env. Passing the bare function reference
+  // meant fetchSuccessPosts called it with no argument, so `env` was undefined
+  // inside loadConfig and that undefined reached kvGet, which then read
+  // `env.DEAL_STORE` off nothing and threw. 500 on every request.
+  // Spreading env is equally wrong: KV bindings live on the env prototype, not
+  // as own enumerable properties, so a spread loses them.
   const result = await fetchSuccessPosts({
     DISCORD_BOT_TOKEN: env.DISCORD_BOT_TOKEN,
-    loadConfig,
+    loadConfig: () => loadConfig(env),
   });
   return json(
     {

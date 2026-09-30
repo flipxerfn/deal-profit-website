@@ -104,20 +104,28 @@ describe('the public endpoint is read-only', () => {
     expect(handler).toMatch(/caveat: CAVEAT/);
   });
 
-  it('does not spread the Worker env', () => {
-    // This shipped a 500 on every request. `{ ...env, loadConfig }` copies only
-    // own enumerable properties, and a Worker's KV bindings live on the env
-    // prototype — so inside kvGet, `env.DEAL_STORE` was undefined and every
-    // call threw. The endpoint returned 500 while every test in this repo
-    // passed, because nothing here mounted the Worker and called it.
+  it('closes loadConfig over env instead of passing a bare reference', () => {
+    // This shipped a 500 on every request, twice, and the first fix was aimed
+    // at the wrong object.
     //
-    // The endpoint is verified live with curl after deploy; this gate stops the
-    // pattern coming back, and the reason it is here at all is that a source
-    // gate was the only thing available at write time.
-    expect(workerCode, 'spreading env breaks KV binding access').not.toMatch(
+    // `{ ...env, loadConfig }` spreads the Worker env, which copies only own
+    // enumerable properties — KV bindings live on the env prototype, so the
+    // spread loses them. Changing it to a bare `loadConfig` reference was worse
+    // in a quieter way: fetchSuccessPosts then called it with no argument, so
+    // `env` was undefined inside loadConfig, that undefined reached kvGet, and
+    // `env.DEAL_STORE` was read off nothing.
+    //
+    // The working form binds the real env in a closure. A unit test cannot see
+    // a binding that fails to resolve, so the endpoint is verified with curl
+    // after deploy; these gates stop both wrong patterns returning.
+    expect(workerCode, 'spreading env loses KV bindings').not.toMatch(
       /\{\s*\.\.\.env\s*[,}]/
     );
-    // The real env must be reachable from whatever fetchSuccessPosts receives.
-    expect(worker).toMatch(/DISCORD_BOT_TOKEN: env\.DISCORD_BOT_TOKEN/);
+    expect(workerCode, 'loadConfig must be bound to env, not passed bare').toMatch(
+      /loadConfig:\s*\(\)\s*=>\s*loadConfig\(env\)/
+    );
+    expect(workerCode, 'a bare loadConfig reference is the original bug').not.toMatch(
+      /[,{]\s*loadConfig,?\s*\}/
+    );
   });
 });
