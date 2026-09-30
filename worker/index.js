@@ -13,6 +13,7 @@
 import { parseDealMessage } from './parseDeals.js';
 import { toSuccessPosts, fetchSuccessPosts, CAVEAT } from './successPosts.js';
 import { dedupeDeals } from './dedupe.js';
+import { curateDeals } from './curation.js';
 import {
   makeReview,
   reviewSummary,
@@ -413,7 +414,9 @@ async function doSync(env) {
     }
   }
 
-  const deduped = dedupeDeals(deals);
+  // Curation runs after dedupe: dedupe decides what is the same deal twice,
+  // curation decides what belongs in a public feed at all.
+  const deduped = curateDeals(dedupeDeals(deals));
   const duplicatesDropped = deals.length - deduped.length;
 
   deduped.sort((a, b) => new Date(b.postedAt ?? 0) - new Date(a.postedAt ?? 0));
@@ -492,7 +495,8 @@ async function handleDeals(env) {
 
   const merged = (result) => {
     const raw = [...manualDeals, ...(result?.deals ?? [])];
-    const deduped = dedupeDeals(raw);
+    // Same order here: dedupe first, then curation.
+    const deduped = curateDeals(dedupeDeals(raw));
     return {
       ok: true,
       configured: Boolean(result?.configured) || manual.length > 0,

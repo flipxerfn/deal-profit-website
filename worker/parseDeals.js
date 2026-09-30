@@ -5,6 +5,12 @@
 
 const URL_RE = /\bhttps?:\/\/[^\s<>"'`)\]]+/gi;
 const PRICE_RE = /\$[0-9][0-9,.]*/g;
+// "FOR $269.99" / "for $19.99" / "now for $7.50" — the deal bots write the
+// current price this way. Needs a word boundary before FOR so it does not fire
+// on "afford" or a product name containing it, and must not be preceded by a
+// reference marker like "was $40 FOR $7" (which is still $7, so that is fine)
+// — the guard lives in extractPrices.
+const FOR_PRICE_RE = /\bfor\s+\$([0-9][0-9,.]*)/i;
 const STRIKE_RE = /~~\s*\$([0-9][0-9,.]*)\s*~~/;
 const REF_TAG_RE =
   /(?:was|retail|original|msrp|list price|before|regular|r\.?p\.?\b|struck at)\s*[:=]?\s*\$([0-9][0-9,.]*)/i;
@@ -251,6 +257,19 @@ export function extractPrices(raw) {
   const distinct = [...new Set(stated)].sort((a, b) => a - b);
 
   let price = toNum(CUR_TAG_RE.exec(raw)?.[1]);
+  // "PRODUCT FOR $269.99" is how these bots name the current price, and it is
+  // the only phrase in the post that means it. Read before the lowest-number
+  // fallback below, because that fallback picks up "$X off at checkout" coupon
+  // boxes and turns a 46%-off deal into a 98%-off one.
+  if (price == null) {
+    const forMatch = FOR_PRICE_RE.exec(raw);
+    const named = toNum(forMatch?.[1]);
+    // Only trust it when it is a real price, not a coupon, and not the
+    // reference price restated — "was $40 FOR $7" must still yield 7.
+    if (named != null && named !== reference && named > 0) {
+      price = named;
+    }
+  }
   if (price == null) {
     const candidates = distinct.filter((n) => n !== reference);
     price = candidates[0] ?? null;
