@@ -2333,7 +2333,12 @@ export default {
     if (url.pathname === '/api/discord/callback') {
       return handleDiscordCallback(request, env);
     }
-    if (env.ASSETS) return env.ASETS.fetch(request);
+    // The static-asset binding is named ASSETS in wrangler.toml. This read it
+    // as env.ASETS — one letter different — so the condition was never true
+    // and every unmatched path fell through to a 500 instead of being served.
+    // Deep links outside the client router, and any typo'd URL, returned
+    // "error code 1101" rather than the site.
+    if (env.ASSETS) return env.ASSETS.fetch(request);
     return new Response('Not found', { status: 404 });
   },
 
