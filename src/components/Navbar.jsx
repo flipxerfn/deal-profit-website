@@ -1,5 +1,6 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { FaBars, FaTimes, FaCrown } from 'react-icons/fa';
+import { FaMagnifyingGlass } from 'react-icons/fa6';
 import dealProfitLogo from '../assets/deal-profit-logo.png';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +19,11 @@ const LINKS = [
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  // When the visitor taps the header's search icon we open the drawer AND focus
+  // the field, so search is one tap away instead of "open hamburger, then hunt
+  // for the box at the top of the panel". Opening via the hamburger leaves it
+  // unfocused, which is what you want when you actually wanted the menu.
+  const [focusSearch, setFocusSearch] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const prefersReduced = useReducedMotion();
   const { pathname } = useLocation();
@@ -70,8 +76,18 @@ const Navbar = () => {
         </Link>
 
         {/* Search sits left of the nav links so it's in the top-left area on
-            every page, and stays out of the way on phones. */}
-        <SiteSearch className="mr-2 hidden w-56 xl:block" />
+            every page, and stays out of the way on phones.
+
+            This used to be `hidden xl:block`, which left every width from
+            1024px to 1279px with no search bar at all: the navbar copy was
+            hidden, and the drawer copy lives in a panel that is `lg:hidden`.
+            A 1366px laptop in a normal browser window lands squarely in that
+            gap. It now switches on with the nav links at `lg` and stays
+            narrow until there is room to grow. */}
+        <SiteSearch
+          id="site-search-nav"
+          className="mr-2 hidden w-40 min-w-0 lg:block xl:w-56"
+        />
 
         <div ref={activeLinkRef} className="relative hidden items-center gap-0.5 lg:flex">
           <motion.div
@@ -129,7 +145,20 @@ const Navbar = () => {
             </div>
           )}
           <button
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={() => {
+              setFocusSearch(true);
+              setIsOpen(true);
+            }}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 hover:bg-white/5 lg:hidden"
+            aria-label="Search the site"
+          >
+            <FaMagnifyingGlass className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => {
+              setFocusSearch(false);
+              setIsOpen(!isOpen);
+            }}
             className="inline-flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 hover:bg-white/5 lg:hidden"
             aria-label={isOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={isOpen}
@@ -151,8 +180,9 @@ const Navbar = () => {
             className="border-t border-white/5 bg-night/95 backdrop-blur lg:hidden overflow-hidden"
           >
             <div className="mx-auto max-w-[1800px] px-4 py-3 sm:px-6">
-              {/* The desktop search is hidden below xl, so phones get it here. */}
-              <SiteSearch className="mb-3" />
+              {/* Phones get search here, in the panel. It shares the document
+                  with the navbar copy above, so the ids have to differ. */}
+              <SiteSearch id="site-search-drawer" autoFocus={focusSearch} className="mb-3" />
               <a
                 href="/upgrade"
                 className="btn btn-primary w-full mb-3"

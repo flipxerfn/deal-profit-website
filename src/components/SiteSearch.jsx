@@ -7,13 +7,17 @@ import { useReducedMotion } from '../lib/motion';
 
 // Site-wide search, living in the navbar so it is available on every page.
 //
-// Two deliberate choices:
+// Three deliberate choices:
 //  - "/" focuses it and Escape closes it, so it costs no clicks for people who
 //    already know the shortcut (the deals page uses "/" for its own filter, so
 //    we only bind the shortcut when that field isn't focused).
 //  - Results are links, not click handlers, so middle-click and "open in new
 //    tab" behave the way they do everywhere else on the web.
-export default function SiteSearch({ className = '' }) {
+//  - The `id` is a prop because this renders twice at once: once in the navbar
+//    and once inside the mobile drawer. Two hard-coded id="site-search" elements
+//    in the same document is invalid HTML, and it makes the <label for> and
+//    aria-controls point at an ambiguous target.
+export default function SiteSearch({ className = '', id = 'site-search', autoFocus = false }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -96,7 +100,7 @@ export default function SiteSearch({ className = '' }) {
 
   return (
     <div ref={wrapRef} className={`relative ${className}`}>
-      <label className="sr-only" htmlFor="site-search">
+      <label className="sr-only" htmlFor={id}>
         Search the site
       </label>
       <div className="relative">
@@ -105,7 +109,7 @@ export default function SiteSearch({ className = '' }) {
           aria-hidden="true"
         />
         <input
-          id="site-search"
+          id={id}
           ref={inputRef}
           type="search"
           value={query}
@@ -117,9 +121,10 @@ export default function SiteSearch({ className = '' }) {
           onKeyDown={onKeyDown}
           placeholder="Search…"
           autoComplete="off"
+          autoFocus={autoFocus}
           aria-label="Search the site"
           aria-expanded={showPanel}
-          aria-controls="site-search-results"
+          aria-controls={`${id}-results`}
           className="w-full rounded-lg border border-white/10 bg-white/[0.04] py-2 pl-9 pr-8 text-sm text-white placeholder-zinc-500 transition-colors focus:border-brand/50 focus:outline-none focus:ring-2 focus:ring-brand/20"
         />
         {!query && (
@@ -135,7 +140,7 @@ export default function SiteSearch({ className = '' }) {
       <AnimatePresence>
         {showPanel && (
           <motion.div
-            id="site-search-results"
+            id={`${id}-results`}
             role="listbox"
             aria-label="Search results"
             initial={prefersReduced ? false : { opacity: 0, y: -6 }}
