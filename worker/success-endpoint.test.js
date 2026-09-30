@@ -17,6 +17,19 @@ const panel = readFileSync(resolve(root, 'src/routes/admin/AdminSettings.jsx'), 
 const worker = readFileSync(resolve(root, 'worker/index.js'), 'utf8');
 const posts = readFileSync(resolve(root, 'worker/successPosts.js'), 'utf8');
 
+/**
+ * Source with comments removed.
+ *
+ * Both gates below tripped on prose rather than code: the file carries a
+ * comment that contains the literal `{ ...env, loadConfig }` while explaining
+ * why that pattern breaks, so a raw-text scan flagged the fix as the bug. A
+ * gate has to read the code or it enforces nothing.
+ */
+const code = (src) =>
+  src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/<!--[\s\S]*?-->/g, '');
+
+const workerCode = code(worker);
+
 describe('the success channel is settable without a redeploy', () => {
   it('the panel exposes the field', () => {
     expect(panel).toMatch(/Member Success Channel/);
@@ -61,11 +74,27 @@ describe('the public endpoint is read-only', () => {
     // Sliced to the handler's own body, bounded at the next function. Asserting
     // this against the whole file can never pass, since the file legitimately
     // reads the token elsewhere.
-    const start = worker.indexOf('async function handleSuccess');
-    const handler = worker.slice(start, worker.indexOf('async function handleReviewsAdmin', start));
+    const start = workerCode.indexOf('async function handleSuccess');
+    const handler = workerCode.slice(
+      start,
+      workerCode.indexOf('async function handleReviewsAdmin', start)
+    );
     expect(handler.length).toBeGreaterThan(200);
-    expect(handler, 'handler leaks a token').not.toMatch(/token/i);
+    // Reading the binding to hand it to the fetcher is correct and required.
+    // What must never happen is the VALUE reaching the response, so this
+    // inspects the returned payload only.
     expect(handler, 'handler reads a Discord session').not.toMatch(/getDiscordSession/);
+
+    // The success payload is the final return. Enumerate the keys it sends so
+    // a future field cannot slip a secret in without this noticing.
+    const last = handler.lastIndexOf('return json(');
+    const payload = handler.slice(last);
+    const keys = [...payload.matchAll(/(\w+):/g)].map((m) => m[1]);
+    expect(keys, 'payload keys changed, review for secrets').toEqual(
+      expect.arrayContaining(['ok', 'configured', 'posts', 'caveat'])
+    );
+    expect(keys, 'payload must not include a token field').not.toContain('token');
+    expect(payload, 'the raw bot token is echoed').not.toMatch(/DISCORD_BOT_TOKEN/);
   });
 
   it('carries the caveat on every response, including empty ones', () => {
@@ -85,7 +114,7 @@ describe('the public endpoint is read-only', () => {
     // The endpoint is verified live with curl after deploy; this gate stops the
     // pattern coming back, and the reason it is here at all is that a source
     // gate was the only thing available at write time.
-    expect(worker, 'spreading env breaks KV binding access').not.toMatch(
+    expect(workerCode, 'spreading env breaks KV binding access').not.toMatch(
       /\{\s*\.\.\.env\s*[,}]/
     );
     // The real env must be reachable from whatever fetchSuccessPosts receives.
