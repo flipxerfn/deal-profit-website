@@ -126,9 +126,50 @@ const CATEGORY_KEYWORDS = {
 const isJunkLine = (text) => {
   const s = String(text ?? '').trim();
   if (s.length < 4) return true;
+  if (isBannerLine(s)) return true;
   const wordish = (s.match(/[\p{L}\p{N}]/gu) ?? []).length;
   return wordish < Math.max(3, Math.ceil(s.length * 0.4));
 };
+
+// The shape test above cannot tell a product name from an announcement: both
+// are mostly letters. Nine live posts led with "🔥 NEW DEAL" or "🔔 JUST
+// DROPPED", and those reached the front page as though they were the product.
+// A line is an announcement if every word in it is banner vocabulary, which
+// real product names essentially never are — "Marucci Remx Batting Gloves" and
+// "Penny Deals" both survive on the words that are not in the set.
+//
+// Capped at five words so a sentence that merely mentions "deal" is left alone.
+const BANNER_WORDS = new Set([
+  'new', 'deal', 'deals', 'hot', 'flash', 'sale', 'price', 'drop', 'dropped',
+  'cut', 'just', 'ending', 'soon', 'today', 'only', 'found', 'post', 'limited',
+  'time', 'free', 'shipping', 'restocked', 'back', 'in', 'stock', 'alert',
+  'update', 'newest', 'available', 'here', 'checkout', 'link', 'error',
+]);
+
+const isBannerLine = (text) => {
+  // Strip emoji and punctuation first: "🔥 NEW DEAL" is only two words once the
+  // fire is removed, and the emoji is the whole reason it looked word-rich.
+  const core = String(text ?? '')
+    .replace(/[\p{Extended_Pictographic}\p{Emoji_Presentation}\uFE0F\u200D]/gu, ' ')
+    .replace(/[^\p{L}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+  if (!core) return true;
+  const words = core.split(' ');
+  if (words.length > 5) return false;
+  return words.every((w) => BANNER_WORDS.has(w));
+};
+
+// Ad-platform residue that rides along in the description. "$34.51 MR. COFFEE
+// MAKER" is a price glued to a product name, and a trailing "ad" marks the
+// promo block. Neither belongs in a title we show as the product.
+const stripAdArtifacts = (text) =>
+  String(text ?? '')
+    .replace(/^[\s$€£]*\d[\d,]*(?:\.\d{1,2})?\s+(?=[A-Za-z])/, '')
+    .replace(/\s+ad\b\s*$/i, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 
 // First line that reads like a product name, or null if the message has none.
 const firstUsefulLine = (text) => {
@@ -336,8 +377,8 @@ export function parseDealMessage(message, channelId) {
   const para = cleanMarkdown(content).trim() || cleanMarkdown(fieldText).trim();
 
   // Promote the first line that reads like a product name. The bots' separator
-  // symbol, a stray "@everyone" or a URL on its own line are all junk titles
-  // that hide the real one sitting underneath.
+  // symbol, a stray "@everyone", a URL on its own line and a bare "🔥 NEW DEAL"
+  // banner are all junk titles that hide the real one sitting underneath.
   if (isJunkLine(title)) {
     const useful = firstUsefulLine(para) ?? firstUsefulLine(description);
     if (useful) title = useful;
@@ -353,7 +394,11 @@ export function parseDealMessage(message, channelId) {
     title = retailer ? `New deal at ${retailer}` : 'Deal posted to the server';
   }
 
-  title = title.slice(0, 80).replace(/https?:\/\/\S+/gi, '').replace(/[:|>-]\s*$/, '').trim();
+  title = stripAdArtifacts(title)
+    .slice(0, 80)
+    .replace(/https?:\/\/\S+/gi, '')
+    .replace(/[:|>-]\s*$/, '')
+    .trim();
   description = description.slice(0, 200);
 
   const lower = `${title} ${description}`.toLowerCase();
