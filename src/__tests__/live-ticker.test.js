@@ -112,6 +112,25 @@ describe('the strip can be stopped', () => {
     expect(ticker).toMatch(/aria-pressed=\{paused\}/);
   });
 
+  it('is large enough to hit, on desktop and on a phone', () => {
+    // Measured live at 390px wide: the first version rendered 53x21px, which is
+    // under the 24x24px floor in WCAG 2.2 AA 2.5.8 (Target Size, Minimum). A
+    // control you are required to provide should not be smaller than the
+    // minimum that makes a target reliably hittable.
+    const btn = ticker.match(/<button[\s\S]*?<\/button>/);
+    expect(btn?.[0], 'pause button not found').toBeTruthy();
+    expect(btn[0], 'the pause button has no minimum height').toMatch(/min-h-\[(\d+)px\]/);
+    const minH = Number(btn[0].match(/min-h-\[(\d+)px\]/)[1]);
+    expect(minH, `pause button min-height is ${minH}px, needs to be >= 24`).toBeGreaterThanOrEqual(24);
+    // Horizontal padding so the whole control is the target, not just the word.
+    expect(btn[0]).toMatch(/px-(\d+)/);
+  });
+
+  it('shows a visible focus ring, since it is keyboard reachable', () => {
+    const btn = ticker.match(/<button[\s\S]*?<\/button>/);
+    expect(btn[0]).toMatch(/focus-visible:outline/);
+  });
+
   it('pauses on hover as well, for pointer users', () => {
     expect(ticker).toMatch(/onMouseEnter=\{\(\) => setPaused\(true\)\}/);
     expect(ticker).toMatch(/onMouseLeave=\{\(\) => setPaused\(false\)\}/);

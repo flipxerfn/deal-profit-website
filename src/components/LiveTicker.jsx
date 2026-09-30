@@ -104,11 +104,18 @@ export default function LiveTicker() {
               WCAG 2.2 requires a pause control for anything that moves for more
               than five seconds. A strip that only pauses on hover is
               unreachable by keyboard, so the control is a real button.
+
+              Sizing is not decoration. The first version was a 53x21px pill,
+              which is under the 24x24px minimum in WCAG 2.2 AA 2.5.8 (Target
+              Size, Minimum) and all but unusable on a phone. Now 28px tall with
+              32px of horizontal padding: clears the AA floor, stays a workable
+              tap target on mobile, and carries a visible focus ring so a
+              keyboard user can see where they are.
             */}
             <button
               type="button"
               onClick={() => setPaused((p) => !p)}
-              className="rounded border border-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 transition-colors hover:border-white/25 hover:text-zinc-200"
+              className="inline-flex min-h-[28px] items-center rounded-md border border-white/10 px-4 py-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400 transition-colors hover:border-white/25 hover:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
               aria-pressed={paused}
             >
               {paused ? 'Resume' : 'Pause'}
