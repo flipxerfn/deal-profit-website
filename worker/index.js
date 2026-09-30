@@ -480,8 +480,14 @@ async function handleDeals(env) {
   const now = Date.now();
   const manual = await listManualDeals(env);
   const manualDeals = manual.map(toPublicDeal);
+  // The deal feed is public and read-only, and the Whop-hosted storefront
+  // (*.whop.site) fetches it from the browser — a different origin. Allow
+  // that read specifically. This endpoint never sees a session or a card, and
+  // is already world-readable, so there is nothing to protect here; the header
+  // is only so the browser will let the storefront read it.
+  const CORS = { 'Access-Control-Allow-Origin': '*', Vary: 'Origin' };
   const serve = (payload, extra = {}) =>
-    json({ ...payload }, 200, { 'Cache-Control': EDGE_CACHE, ...extra });
+    json({ ...payload }, 200, { 'Cache-Control': EDGE_CACHE, ...CORS, ...extra });
 
   const merged = (result) => {
     const raw = [...manualDeals, ...(result?.deals ?? [])];
@@ -2668,8 +2674,20 @@ export default {
     if (url.pathname.startsWith('/api/reviews')) {
       return handleReviews(request, env);
     }
-    if (request.method === 'GET' && url.pathname.startsWith('/api/deals')) {
-      return handleDeals(env);
+    if (url.pathname.startsWith('/api/deals')) {
+      // Preflight for the Whop storefront, which reads the feed cross-origin.
+      if (request.method === 'OPTIONS') {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Access-Control-Max-Age': '86400',
+            Vary: 'Origin',
+          },
+        });
+      }
+      if (request.method === 'GET') return handleDeals(env);
     }
     if (url.pathname === '/api/stripe/create-checkout') {
       return handleStripeCheckout(request, env);
