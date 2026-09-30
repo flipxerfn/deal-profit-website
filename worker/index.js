@@ -11,6 +11,7 @@
 // (Worker env or the DEAL_STORE Durable Object) and never returned to the browser.
 
 import { parseDealMessage } from './parseDeals.js';
+import { toSuccessPosts, fetchSuccessPosts, CAVEAT } from './successPosts.js';
 import { dedupeDeals } from './dedupe.js';
 import {
   makeReview,
@@ -174,11 +175,17 @@ async function loadConfig(env) {
   return cfg;
 }
 
-async function saveConfig(env, { token, categories }) {
+async function saveConfig(env, { token, categories, successChannelId }) {
   const prev = await loadConfig(env);
   const cfg = {
     token: typeof token === 'string' && token.trim() ? token.trim() : prev.token,
     categories: Array.isArray(categories) ? categories : prev.categories,
+    // Kept across writes when omitted, so saving a token from the admin panel
+    // cannot silently unconfigure the success feed.
+    successChannelId:
+      typeof successChannelId === 'string' && successChannelId.trim()
+        ? successChannelId.trim()
+        : prev.successChannelId ?? '',
     updatedAt: new Date().toISOString(),
   };
   const ok = await kvPut(env, CONFIG_KEY, JSON.stringify(cfg));
@@ -726,6 +733,7 @@ async function handleConfig(request, env) {
         tokenSet: Boolean(effectiveToken),
         tokenSource: cfg.token ? 'panel' : env.DISCORD_BOT_TOKEN ? 'env' : 'none',
         categories: effectiveCategories,
+        successChannelId: cfg.successChannelId ?? '',
         updatedAt: cfg.updatedAt,
       },
     });
@@ -742,9 +750,16 @@ async function handleConfig(request, env) {
       // treat as empty body
     }
     const categories = parseCategories(body.categories ?? '');
+    // Accept a raw snowflake or a pasted URL/ID form. An empty value clears it.
+    const rawChannel = typeof body.successChannelId === 'string' ? body.successChannelId.trim() : '';
+    const scraped = rawChannel.match(/(\d{15,25})/)?.[1] ?? '';
     let cfg;
     try {
-      cfg = await saveConfig(env, { token: body.token, categories });
+      cfg = await saveConfig(env, {
+        token: body.token,
+        categories,
+        successChannelId: scraped,
+      });
     } catch (err) {
       return json({ ok: false, error: sanitizeError(err) }, 500);
     }
@@ -758,6 +773,7 @@ async function handleConfig(request, env) {
         tokenSet: Boolean(cfg.token),
         tokenSource: cfg.token ? 'panel' : 'none',
         categories: cfg.categories,
+        successChannelId: cfg.successChannelId,
         updatedAt: cfg.updatedAt,
       },
     });
@@ -1269,6 +1285,47 @@ async function handleReviews(request, env) {
   }
 
   return json({ ok: false, error: 'method_not_allowed' }, 405);
+}
+
+// Public, read-only feed of member success posts.
+//
+// The server has 350+ members in Discord and 0 paying on Whop, and the channel
+// where members post their wins is invisible to anyone who has not joined. This
+// is that channel, shown to strangers.
+//
+// Cached like the deal feed because it is on the hot path, and unlike the
+// success-post shaping itself it carries no correctness risk: a stale image is
+// a slightly old photo, not a false claim. The claims in this payload — no
+// earnings, no verification, and CAVEAT alongside — are asserted in
+// success-posts.test.js.
+async function handleSuccess(request, env) {
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Max-Age': '86400',
+      },
+    });
+  }
+  if (request.method !== 'GET') {
+    return json({ ok: false, error: 'method_not_allowed' }, 405);
+  }
+  const result = await fetchSuccessPosts({ ...env, loadConfig });
+  return json(
+    {
+      ok: result.ok,
+      configured: result.configured,
+      posts: result.posts,
+      caveat: CAVEAT,
+      // Surface the reason so the UI can say "not configured" honestly rather
+      // than showing an empty box that looks broken.
+      reason: result.reason ?? null,
+    },
+    200,
+    { 'Cache-Control': EDGE_CACHE, 'Access-Control-Allow-Origin': '*', Vary: 'Origin' }
+  );
 }
 
 async function handleReviewsAdmin(request, env, id) {
@@ -2673,6 +2730,9 @@ export default {
     }
     if (url.pathname.startsWith('/api/reviews')) {
       return handleReviews(request, env);
+    }
+    if (url.pathname.startsWith('/api/success')) {
+      return handleSuccess(request, env);
     }
     if (url.pathname.startsWith('/api/deals')) {
       // Preflight for the Whop storefront, which reads the feed cross-origin.

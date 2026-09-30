@@ -24,6 +24,7 @@ import {
 import DealCard from '../components/DealCard';
 import LiveHeroFeed from '../components/LiveHeroFeed';
 import LatestFinds from '../components/LatestFinds';
+import MemberSuccess from '../components/MemberSuccess';
 import rtpcImg from '../assets/crops/deal1-hero.webp';
 import { WHAT_WE_HUNT, HOW_IT_WORKS, COMMUNITY_STATS } from '../data/deals';
 import { FEED_STATS, pctPostsLinkable } from '../data/siteFacts';
@@ -401,6 +402,8 @@ const Home = () => {
 
       {/* Latest Finds */}
       <LatestFinds />
+
+      <MemberSuccess />
 
       {/* Community Proof */}
       <section className="band-full band-bleed tint-brand relative py-12 md:py-16" aria-labelledby="social-title">

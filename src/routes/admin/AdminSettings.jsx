@@ -6,11 +6,13 @@ import {
   FaTriangleExclamation,
   FaSpinner,
   FaClock,
+  FaTrophy,
 } from 'react-icons/fa6';
 
 const AdminSettings = () => {
   const [token, setToken] = useState('');
   const [categories, setCategories] = useState('');
+  const [successChannel, setSuccessChannel] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [tokenSet, setTokenSet] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -25,6 +27,7 @@ const AdminSettings = () => {
       if (body?.config) {
         setTokenSet(body.config.tokenSet === true || body.config.tokenSource === 'panel');
         setCategories((body.config.categories ?? []).join('\n'));
+        setSuccessChannel(body.config.successChannelId ?? '');
         if (body.config.updatedAt) {
           setLastSaved(body.config.updatedAt);
         }
@@ -47,12 +50,16 @@ const AdminSettings = () => {
       const res = await fetch('/api/admin/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ token, categories }),
+        // successChannelId is always sent, including when blank, because an
+        // empty value is the documented way to clear it. Omitting it would
+        // silently keep the previous channel.
+        body: JSON.stringify({ token, categories, successChannelId: successChannel }),
       });
       const body = res.ok ? await res.json().catch(() => null) : null;
       if (res.ok && body?.config) {
         setTokenSet(body.config.tokenSet === true);
         setCategories((body.config.categories ?? []).join('\n'));
+        setSuccessChannel(body.config.successChannelId ?? '');
         setToken('');
         setLastSaved(body.config.updatedAt);
         setMsg('Discord configuration saved successfully.');
@@ -161,6 +168,27 @@ const AdminSettings = () => {
             <p className="mt-1.5 text-xs text-zinc-500">
               One snowflake ID per line, or comma-separated. Deal text channels are auto-discovered
               inside these categories.
+            </p>
+          </div>
+
+          {/* Success channel */}
+          <div>
+            <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+              <FaTrophy className="text-brand" />
+              Member Success Channel
+            </label>
+            <input
+              type="text"
+              value={successChannel}
+              onChange={(e) => setSuccessChannel(e.target.value)}
+              placeholder="Paste the channel ID or a channel link"
+              className="input w-full font-mono text-sm"
+              aria-label="Member success channel ID"
+            />
+            <p className="mt-1.5 text-xs text-zinc-500">
+              The channel where members post their own finds. Posts here appear on the site's front
+              page as the &quot;What members actually caught&quot; band, with the image leading. Paste
+              the ID or the whole channel link; leave blank to turn the band off.
             </p>
           </div>
 
