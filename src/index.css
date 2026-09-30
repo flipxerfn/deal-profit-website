@@ -336,6 +336,25 @@
   .spotlight-settle {
     animation: spotlight-settle 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
+
+  /* Continuous strip of recent finds. The track holds two copies of the item
+     list, so translating by exactly -50% lands the second copy where the first
+     began and the loop has no seam. Duration is set inline from the item count
+     so the perceived speed stays constant whatever the feed contains. */
+  @keyframes ticker-scroll {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(-50%, 0, 0); }
+  }
+
+  /* Belt and braces alongside the JS check. Someone reaching prefers-reduced
+     motion at the OS level, or a stylesheet that loads before the component,
+     still gets a static strip rather than a moving one. */
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track {
+      animation: none !important;
+      transform: none !important;
+    }
+  }
   .sticker {
     @apply inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-brand to-glow px-2 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-[0_0_16px_rgba(244,63,94,0.5)] rotate-3 whitespace-nowrap;
   }

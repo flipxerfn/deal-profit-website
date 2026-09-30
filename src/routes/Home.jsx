@@ -23,6 +23,7 @@ import {
 } from '../components/ui';
 import DealCard from '../components/DealCard';
 import LiveHeroFeed from '../components/LiveHeroFeed';
+import LiveTicker from '../components/LiveTicker';
 import LatestFinds from '../components/LatestFinds';
 import MemberSuccess from '../components/MemberSuccess';
 import rtpcImg from '../assets/crops/deal1-hero.webp';
@@ -330,6 +331,12 @@ const Home = () => {
             </motion.div>
           </motion.div>
           </div>
+          {/* The one piece of motion on the page driven by data rather than a
+              timer: a continuous strip of genuinely recent finds. The hero
+              cards above rotate on a fixed interval and repeat, which reads as
+              a slideshow after the first minute. This shows the thing that is
+              actually true — new finds arrive constantly, and they are new. */}
+          <LiveTicker />
         </div>
       </section>
 
