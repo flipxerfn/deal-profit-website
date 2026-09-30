@@ -9,7 +9,6 @@ import {
   FaPlug,
   FaRightFromBracket,
   FaServer,
-  FaStopwatch,
   FaTag,
   FaTriangleExclamation,
 } from 'react-icons/fa6';
@@ -17,7 +16,7 @@ import dealProfitLogo from '../assets/deal-profit-logo.png';
 import AdminSettings from './admin/AdminSettings';
 import AdminDeals from './admin/AdminDeals';
 import AdminReviews from './admin/AdminReviews';
-import AdminTrials from './admin/AdminTrials';
+
 
 const timefmt = (iso) => {
   if (!iso) return 'Never';
@@ -252,7 +251,6 @@ const Admin = () => {
             { id: 'settings', label: 'Settings', icon: <FaGear className="text-xs" /> },
             { id: 'deals', label: 'Manual deals', icon: <FaInbox className="text-xs" /> },
             { id: 'reviews', label: 'Reviews', icon: <FaComment className="text-xs" /> },
-            { id: 'trials', label: 'Trials', icon: <FaStopwatch className="text-xs" /> },
           ].map((t) => (
             <button
               key={t.id}
@@ -346,7 +344,6 @@ const Admin = () => {
         {tab === 'settings' && <AdminSettings />}
         {tab === 'deals' && <AdminDeals />}
         {tab === 'reviews' && <AdminReviews />}
-        {tab === 'trials' && <AdminTrials />}
 
         <p className="mt-8 text-xs text-zinc-600">
           Sessions expire after 8 hours. The Discord bot token and admin credentials never leave

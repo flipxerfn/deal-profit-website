@@ -32,14 +32,8 @@ import {
   sessionCookie,
   verifySession,
 } from './auth.js';
-import Stripe from 'stripe';
 
 const DISCORD_API = 'https://discord.com/api/v10';
-const STRIPE_API = 'https://api.stripe.com/v1';
-// Monthly $25, yearly $200 (save $100/yr)
-const PRICE_MONTHLY_CENTS = 2500;
-const PRICE_YEARLY_CENTS = 20000;
-const SUBSCRIPTION_PRICE_ID = 'price_deal_profit_monthly'; // Will be created in Stripe dashboard
 // The premium role — keyed by exact ID (name lookups can't be trusted to
 // match: the role is spelled "deals-profit"). ID is authoritative.
 const PREMIUM_ROLE_ID = '1513212681438498857';
@@ -889,7 +883,6 @@ async function handleDealsAdmin(request, env, id) {
   return json({ ok: false, error: 'method_not_allowed' }, 405);
 }
 
-const TRIAL_PERIOD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 function readTrialDiscordId(body) {
   const id = String(body?.discord_id ?? '').trim();
@@ -900,88 +893,8 @@ const TRIAL_ID_HINT =
   'Enter a Discord user ID (17-25 digits). Enable Developer Mode in Discord (Settings → Advanced), right-click the user → Copy User ID.';
 
 // Admin grants the free 7-day trial after approving a #trials ticket.
-async function handleGrantTrial(request, env) {
-  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
-  const session = await getSession(request, env);
-  if (!session) return json({ ok: false, authenticated: false, error: 'unauthorized' }, 401);
-
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    // fall through to id validation
-  }
-  const discordId = readTrialDiscordId(body);
-  if (!discordId) return json({ ok: false, error: 'invalid_discord_id', message: TRIAL_ID_HINT }, 400);
-
-  const store = await getSubscriptionStore(env);
-  const now = Date.now();
-
-  const existingRes = await store.fetch(
-    'https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(discordId)
-  );
-  const existing = existingRes.ok ? (await existingRes.json())?.subscription ?? null : null;
-  if (
-    existing &&
-    (existing.status === 'active' || existing.status === 'trialing') &&
-    (existing.current_period_end ?? 0) > now
-  ) {
-    return json(
-      { ok: false, error: 'already_has_access', status: existing.status, current_period_end: existing.current_period_end },
-      409
-    );
-  }
-
-  const upsertRes = await store.fetch('https://store.internal/subscriptions/upsert', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      user_id: discordId,
-      discord_id: discordId,
-      status: 'trialing',
-      current_period_end: now + TRIAL_PERIOD_MS,
-    }),
-  });
-  if (!upsertRes.ok) return json({ ok: false, error: 'trial_upsert_failed' }, 500);
-  const { subscription } = await upsertRes.json();
-
-  // Best-effort role grant — the trial record stands even if Discord rejects the call
-  const role = await grantPremiumRole(env, discordId);
-  await postToLogsChannel(
-    env,
-    `🎟️ <@${discordId}> granted a **manual 7-day trial** by admin — first $25 charge <t:${Math.floor((subscription?.current_period_end ?? now + TRIAL_PERIOD_MS) / 1000)}:D>`
-  );
-  return json({ ok: true, subscription, role: { ok: role.ok, error: role.error ?? null } });
-}
 
 // Admin manually revokes access (trial abuse / early cut-off).
-async function handleRevokeTrial(request, env) {
-  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
-  const session = await getSession(request, env);
-  if (!session) return json({ ok: false, authenticated: false, error: 'unauthorized' }, 401);
-
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    // fall through to id validation
-  }
-  const discordId = readTrialDiscordId(body);
-  if (!discordId) return json({ ok: false, error: 'invalid_discord_id', message: TRIAL_ID_HINT }, 400);
-
-  const store = await getSubscriptionStore(env);
-  const revokeRes = await store.fetch('https://store.internal/subscriptions/revoke', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id: discordId }),
-  });
-  if (!revokeRes.ok) return json({ ok: false, error: 'revoke_failed' }, 500);
-  const { subscription } = await revokeRes.json();
-  if (!subscription) return json({ ok: false, error: 'not_found' }, 404);
-
-  const role = await revokePremiumRole(env, discordId);
-  return json({ ok: true, subscription, role: { ok: role.ok, error: role.error ?? null } });
-}
 
 // Content API — read/write editable site content (stored in KV, synced from git)
 async function handleContent(request, env) {
@@ -1247,8 +1160,6 @@ const adminRoutes = {
   '/api/admin/sync': handleSync,
   '/api/admin/config': handleConfig,
   '/api/admin/channels': handleChannelList,
-  '/api/admin/grant-trial': handleGrantTrial,
-  '/api/admin/revoke-trial': handleRevokeTrial,
   '/api/admin/interaction-debug': async (request, env) => {
     const session = await getSession(request, env);
     if (!session) return json({ ok: false, error: 'unauthorized' }, 401);
@@ -1470,14 +1381,6 @@ async function handleReviewsAdmin(request, env, id) {
 
 // ---- Stripe helpers -----------------------------------------------------------
 
-function getStripe(env) {
-  if (!env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY not configured');
-  // Workers have no Node http/crypto — use fetch + WebCrypto
-  return new Stripe(env.STRIPE_SECRET_KEY, {
-    httpClient: Stripe.createFetchHttpClient(),
-  });
-}
-
 // Support multiple webhook signing secrets (comma-separated), e.g. when both a
 // "snapshot" and a "thin" Stripe destination point at this endpoint.
 function webhookSecrets(env) {
@@ -1498,19 +1401,6 @@ function subscriptionPeriodEndMs(sub) {
 }
 
 // Stripe "thin" events only carry { id, object } — re-fetch the full resource.
-async function resolveCheckoutSession(stripe, event) {
-  const cs = event.data?.object ?? {};
-  if (cs.customer || cs.subscription || cs.payment_status) return cs;
-  if (!cs.id) return cs;
-  return stripe.checkout.sessions.retrieve(cs.id, { expand: ['subscription'] });
-}
-
-async function resolveSubscription(stripe, event) {
-  const sub = event.data?.object ?? {};
-  if (sub.items || sub.current_period_end || sub.status) return sub;
-  if (!sub.id) return sub;
-  return stripe.subscriptions.retrieve(sub.id);
-}
 
 async function getSubscriptionStore(env) {
   if (!env.DEAL_STORE) throw new Error('DEAL_STORE binding not available');
@@ -1518,180 +1408,11 @@ async function getSubscriptionStore(env) {
   return env.DEAL_STORE.get(id);
 }
 
-const TRIAL_DAYS = 7;
-
-async function createCheckoutSession(env, userId, origin, { trial = false, interval = 'month' } = {}) {
-  const stripe = getStripe(env);
-  const store = await getSubscriptionStore(env);
-
-  // Get or create Stripe customer
-  let subscription = await store.fetch('https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(userId));
-  let customerId;
-  if (subscription.ok) {
-    const data = await subscription.json();
-    if (data.subscription?.stripe_customer_id) {
-      customerId = data.subscription.stripe_customer_id;
-    }
-  }
-
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      metadata: { user_id: userId }
-    });
-    customerId = customer.id;
-    // Update subscription record with customer ID (user_id IS the discord id,
-    // so record the link at the same time)
-    await store.fetch('https://store.internal/subscriptions/upsert', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: userId,
-        stripe_customer_id: customerId,
-        discord_id: /^\d{17,25}$/.test(String(userId)) ? String(userId) : null,
-      })
-    });
-  }
-
-  const isYearly = interval === 'year';
-  const unitAmount = isYearly ? PRICE_YEARLY_CENTS : PRICE_MONTHLY_CENTS;
-  const recurrenceInterval = isYearly ? 'year' : 'month';
-  const productDescription = isYearly
-    ? 'Yearly subscription for premium deal alerts and Discord access — best value'
-    : 'Monthly subscription for premium deal alerts and Discord access';
-
-  const session = await stripe.checkout.sessions.create({
-    customer: customerId,
-    mode: 'subscription',
-    line_items: [{
-      price_data: {
-        currency: 'usd',
-        product_data: {
-          name: 'Deal Profit Premium',
-          description: productDescription
-        },
-        unit_amount: unitAmount,
-        recurring: { interval: recurrenceInterval }
-      },
-      quantity: 1
-    }],
-    success_url: 'https://discord.gg/dealprofit',
-    cancel_url: `${origin}/upgrade?canceled=true`,
-    metadata: { user_id: userId },
-    subscription_data: {
-      metadata: { user_id: userId },
-      // Free 7-day trial: card on file, first $25 charge happens automatically
-      // on day 7 unless the subscription is canceled before then
-      ...(trial ? { trial_period_days: TRIAL_DAYS } : {}),
-    }
-  });
-
-  return { sessionId: session.id, url: session.url };
-}
 
 // Cancel (or resume) the caller's own subscription: cancel-at-period-end via
 // Stripe so access lasts until the paid-through date. The #logs notice and the
 // persisted cancel flag come from the subscription.updated webhook, which
 // Stripe fires for portal cancels too — single source of truth.
-async function handleStripeCancel(request, env) {
-  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
-
-  const user = await getDiscordSession(request, env);
-  if (!user) return json({ ok: false, error: 'discord_required' }, 401);
-
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    // no body — default to cancel
-  }
-  const resume = body?.resume === true;
-
-  const store = await getSubscriptionStore(env);
-  const recRes = await store.fetch(
-    'https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(user.id)
-  );
-  const record = recRes.ok ? (await recRes.json()).subscription : null;
-  const customerId = record?.stripe_customer_id ?? null;
-  let subscriptionId = record?.stripe_subscription_id ?? null;
-
-  if (!subscriptionId && !customerId) {
-    return json({ ok: false, error: 'no_subscription' }, 400);
-  }
-
-  try {
-    const stripe = getStripe(env);
-    if (!subscriptionId) {
-      const list = await stripe.subscriptions.list({ customer: customerId, limit: 10 });
-      const live =
-        list.data.find((s) => s.status === 'active' || s.status === 'trialing') ?? list.data[0];
-      if (!live) return json({ ok: false, error: 'subscription_not_found' }, 404);
-      subscriptionId = live.id;
-    }
-
-    const updated = await stripe.subscriptions.update(subscriptionId, {
-      cancel_at_period_end: !resume,
-    });
-
-    // Keep the record's billing fields fresh (the cancel flag itself is
-    // persisted by the webhook so we don't race its #logs notification)
-    await upsertSubscriptionRecord(store, {
-      user_id: record?.user_id ?? user.id,
-      stripe_subscription_id: updated.id,
-      status: updated.status,
-      current_period_end: subscriptionPeriodEndMs(updated),
-    });
-
-    return json({
-      ok: true,
-      status: updated.status,
-      cancel_at_period_end: !!updated.cancel_at_period_end,
-      current_period_end: subscriptionPeriodEndMs(updated),
-    });
-  } catch (err) {
-    console.error('[stripe] cancel/resume failed:', err);
-    return json({ ok: false, error: sanitizeError(err) }, 500);
-  }
-}
-
-async function handleStripeCheckout(request, env) {
-  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
-
-  // Discord OAuth is this site's login — checkout requires a linked identity
-  const user = await getDiscordSession(request, env);
-  if (!user) {
-    return json({ ok: false, error: 'discord_required' }, 401);
-  }
-
-  const origin = new URL(request.url).origin;
-  let body = {};
-  try {
-    body = await request.json();
-  } catch {
-    // no body — plain subscription
-  }
-  try {
-    const result = await createCheckoutSession(env, user.id, origin, {
-      trial: body?.trial === true,
-      interval: body?.interval === 'year' ? 'year' : 'month',
-    });
-    return json({ ok: true, ...result });
-  } catch (err) {
-    return json({ ok: false, error: sanitizeError(err) }, 500);
-  }
-}
-
-async function upsertSubscriptionRecord(store, fields) {
-  const res = await store.fetch('https://store.internal/subscriptions/upsert', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(fields),
-  });
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '');
-    throw new Error(`subscription_upsert_failed: ${detail}`);
-  }
-  return res.json();
-}
 
 // ---- Discord #logs channel notifications --------------------------------------
 // Every trial start and paid subscription posts a message to the guild's
@@ -1758,218 +1479,7 @@ async function getLogsChannel(env) {
   }
 }
 
-function logsTrialMessage(userId, periodEndMs) {
-  const when = periodEndMs ? ` — first $25 charge <t:${Math.floor(periodEndMs / 1000)}:D>` : '';
-  return `🎟️ <@${userId}> started a **7-day free trial**${when}`;
-}
-
-function logsPurchaseMessage(userId, periodEndMs) {
-  const when = periodEndMs ? ` — renews <t:${Math.floor(periodEndMs / 1000)}:D>` : '';
-  return `👑 <@${userId}> subscribed to **Deal Profit Premium** — $25/mo${when}`;
-}
-
-function logsCancelMessage(userId, periodEndMs, status) {
-  const kind = status === 'trialing' ? 'trial' : 'subscription';
-  const when = periodEndMs ? ` — access until <t:${Math.floor(periodEndMs / 1000)}:D>` : '';
-  return `🛑 <@${userId}> canceled their **${kind}**${when}`;
-}
-
-function logsResumeMessage(userId) {
-  return `✅ <@${userId}> resumed their **subscription**`;
-}
-
 // Grant the premium Discord role once the subscription is (or becomes) paid.
-async function maybeGrantPremiumRole(env, store, userId, status) {
-  if (status !== 'active' && status !== 'trialing') return;
-  try {
-    const res = await store.fetch(
-      'https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(userId)
-    );
-    const data = await res.json();
-    const record = data.subscription;
-    const discordId =
-      record?.discord_id ??
-      (/^\d{17,25}$/.test(String(userId)) ? String(userId) : null);
-    if (!discordId) {
-      console.warn('[stripe] no discord id linked for user', userId);
-      return;
-    }
-    const role = await grantPremiumRole(env, discordId);
-    if (!role.ok) console.error('[stripe] grantPremiumRole failed:', role);
-    else console.log('[stripe] premium role granted to', discordId);
-  } catch (err) {
-    console.error('[stripe] grantPremiumRole error:', err);
-  }
-}
-
-async function revokeForSubscription(env, store, userId) {
-  try {
-    const res = await store.fetch(
-      'https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(userId)
-    );
-    const data = await res.json();
-    const discordId =
-      data.subscription?.discord_id ??
-      (/^\d{17,25}$/.test(String(userId)) ? String(userId) : null);
-    if (!discordId) return;
-    const role = await revokePremiumRole(env, discordId);
-    if (!role.ok) console.error('[stripe] revokePremiumRole failed:', role);
-  } catch (err) {
-    console.error('[stripe] revokePremiumRole error:', err);
-  }
-}
-
-async function userForSubscription(store, sub) {
-  if (sub.metadata?.user_id) return String(sub.metadata.user_id);
-  const res = await store.fetch(
-    'https://store.internal/subscriptions/by-stripe?stripe_subscription_id=' +
-      encodeURIComponent(sub.id)
-  );
-  if (res.ok) {
-    const data = await res.json();
-    if (data.subscription?.user_id) return String(data.subscription.user_id);
-  }
-  return null;
-}
-
-async function handleStripeWebhook(request, env) {
-  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
-
-  const secrets = webhookSecrets(env);
-  if (secrets.length === 0) {
-    return json({ ok: false, error: 'webhook_not_configured' }, 500);
-  }
-
-  const sig = request.headers.get('stripe-signature');
-  if (!sig) {
-    return json({ ok: false, error: 'missing_signature' }, 400);
-  }
-
-  const body = await request.text();
-  const stripe = getStripe(env);
-  const cryptoProvider = Stripe.createSubtleCryptoProvider();
-
-  let event = null;
-  for (const secret of secrets) {
-    try {
-      event = await stripe.webhooks.constructEventAsync(body, sig, secret, undefined, cryptoProvider);
-      break;
-    } catch {
-      // wrong secret (multiple Stripe destinations) — try the next one
-    }
-  }
-  if (!event) {
-    return json({ ok: false, error: 'invalid_signature' }, 400);
-  }
-
-  const store = await getSubscriptionStore(env);
-
-  try {
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        const cs = await resolveCheckoutSession(stripe, event);
-        let sub = cs.subscription;
-        if (sub && typeof sub !== 'object') {
-          sub = await stripe.subscriptions.retrieve(sub);
-        }
-        if (!sub) break; // one-time payment — nothing to manage
-
-        const userId = cs.metadata?.user_id ?? sub.metadata?.user_id;
-        if (!userId) {
-          console.warn('[stripe] checkout completed without user_id metadata');
-          break;
-        }
-
-        await upsertSubscriptionRecord(store, {
-          user_id: String(userId),
-          stripe_customer_id: typeof cs.customer === 'string' ? cs.customer : cs.customer?.id ?? null,
-          stripe_subscription_id: sub.id,
-          discord_id: /^\d{17,25}$/.test(String(userId)) ? String(userId) : null,
-          status: sub.status,
-          current_period_end: subscriptionPeriodEndMs(sub),
-          cancel_at_period_end: !!sub.cancel_at_period_end,
-        });
-        await maybeGrantPremiumRole(env, store, String(userId), sub.status);
-
-        // #logs channel: trial starts and new paid subscriptions
-        const periodEnd = subscriptionPeriodEndMs(sub);
-        await postToLogsChannel(
-          env,
-          sub.status === 'trialing'
-            ? logsTrialMessage(String(userId), periodEnd)
-            : logsPurchaseMessage(String(userId), periodEnd)
-        );
-        break;
-      }
-      case 'customer.subscription.updated': {
-        const sub = await resolveSubscription(stripe, event);
-        const userId = await userForSubscription(store, sub);
-        if (!userId) break;
-
-        // Read the stored cancel flag first so we only post a #logs notice on
-        // the actual transition (this event also fires for unrelated updates,
-        // and it covers cancels made in the Stripe portal too).
-        let hadCancelFlag = false;
-        try {
-          const rec = await store.fetch(
-            'https://store.internal/subscriptions/get?user_id=' + encodeURIComponent(userId)
-          );
-          if (rec.ok) hadCancelFlag = !!(await rec.json()).subscription?.cancel_at_period_end;
-        } catch {
-          // treat as no prior flag
-        }
-
-        await upsertSubscriptionRecord(store, {
-          user_id: userId,
-          stripe_subscription_id: sub.id,
-          status: sub.status,
-          current_period_end: subscriptionPeriodEndMs(sub),
-          cancel_at_period_end: !!sub.cancel_at_period_end,
-        });
-        if (!!sub.cancel_at_period_end && !hadCancelFlag) {
-          await postToLogsChannel(
-            env,
-            logsCancelMessage(String(userId), subscriptionPeriodEndMs(sub), sub.status)
-          );
-        } else if (!sub.cancel_at_period_end && hadCancelFlag) {
-          await postToLogsChannel(env, logsResumeMessage(String(userId)));
-        }
-        if (sub.status === 'active' || sub.status === 'trialing') {
-          await maybeGrantPremiumRole(env, store, userId, sub.status);
-        } else if (sub.status === 'canceled' || sub.status === 'incomplete_expired') {
-          await store.fetch('https://store.internal/subscriptions/revoke', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId }),
-          });
-          await revokeForSubscription(env, store, userId);
-        }
-        break;
-      }
-      case 'customer.subscription.deleted': {
-        const sub = await resolveSubscription(stripe, event);
-        const userId = await userForSubscription(store, sub);
-        if (!userId) break;
-
-        await store.fetch('https://store.internal/subscriptions/revoke', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: userId }),
-        });
-        await revokeForSubscription(env, store, userId);
-        break;
-      }
-      default:
-        // Other events (invoice.*, payment events, …) — nothing to do
-        break;
-    }
-  } catch (err) {
-    console.error('Stripe webhook error:', err);
-    return json({ ok: false, error: 'webhook_processing_failed' }, 500);
-  }
-
-  return json({ ok: true });
-}
 
 async function handleUserSubscription(request, env) {
   if (request.method !== 'GET') return json({ ok: false, error: 'method_not_allowed' }, 405);
@@ -2256,16 +1766,16 @@ async function discordRoleRequest(method, guildId, userId, roleId, token, retrie
   return { ok: false, error: 'max_retries_exceeded' };
 }
 
-async function grantPremiumRole(env, discordId) {
-  const { token } = await resolveDiscordConfig(env);
-  if (!token) return { ok: false, error: 'no_bot_token' };
-  const guildId = await getGuildId(env);
-  if (!guildId) return { ok: false, error: 'no_guild' };
-  const roleId = await getRoleId(env, guildId);
-  if (!roleId) return { ok: false, error: 'role_not_found' };
-  return discordRoleRequest('PUT', guildId, discordId, roleId, token);
-}
-
+// Nothing in this Worker grants the premium role.
+//
+// Whop is the merchant of record, and Whop's own Discord integration grants the
+// role when a member completes a purchase and removes it when the subscription
+// ends. There is deliberately no `grantPremiumRole` here any more: a helper
+// that hands out paid access, sitting in a Worker on an account that has already
+// been flagged once, is a liability waiting to be wired to something.
+//
+// This revoke survives only for the scheduled expiry sweep, which tidies
+// subscription records this Worker wrote before the move to Whop.
 async function revokePremiumRole(env, discordId) {
   const { token } = await resolveDiscordConfig(env);
   if (!token) return { ok: false, error: 'no_bot_token' };
@@ -2278,8 +1788,7 @@ async function revokePremiumRole(env, discordId) {
 
 // Does this Discord user currently hold the premium role?
 // Returns true / false, or null when it can't be determined (no bot token,
-// network hiccup) so callers can fall back to the Stripe record instead of
-// guessing. Cached briefly so page loads don't hammer the Discord API.
+// network hiccup) so callers can report "unknown" rather than guessing. Cached briefly so page loads don't hammer the Discord API.
 const ROLE_CACHE_PREFIX = 'rolecache:';
 const ROLE_CACHE_TTL_MS = 60_000;
 
@@ -2808,15 +2317,6 @@ export default {
         });
       }
       if (request.method === 'GET') return handleDeals(env);
-    }
-    if (url.pathname === '/api/stripe/create-checkout') {
-      return handleStripeCheckout(request, env);
-    }
-    if (url.pathname === '/api/stripe/cancel') {
-      return handleStripeCancel(request, env);
-    }
-    if (url.pathname === '/api/stripe/webhook') {
-      return handleStripeWebhook(request, env);
     }
     if (url.pathname === '/api/user/subscription') {
       return handleUserSubscription(request, env);
