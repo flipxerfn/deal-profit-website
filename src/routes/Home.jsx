@@ -299,7 +299,7 @@ const Home = () => {
           {/* Premium deal card + live ticker */}
           <motion.div
             {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-            className="relative"
+            className="relative min-w-0"
           >
             <div className="surface-raised-strong rounded-2xl border border-white/10 bg-charcoal p-3">
               {/*

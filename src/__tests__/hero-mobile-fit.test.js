@@ -82,6 +82,23 @@ describe('the hero fits a phone', () => {
       firstTag[0],
       `the first element inside the hero grid is "${firstTag[0]}" — the column itself needs min-w-0, not some later element`
     ).toContain('min-w-0');
+
+    // BOTH children, not just the first.
+    //
+    // At mobile the grid is a single column, so both children share one track
+    // and whichever is widest sets it for both. Fixing only the left column
+    // therefore changed nothing: the hero card was 553px on a 375px screen and
+    // the track followed it. This cost two rounds — the first commit fixed the
+    // wrong child, the second fixed one of two.
+    // Anchored on the card itself rather than on "the next motion.div" —
+    // the first version scanned forward and matched the CTA row inside the
+    // left column, which passed while the real grid child had no min-w-0.
+    const card = home.match(/className="([^"]*)"\s*>\s*\n\s*<div className="surface-raised-strong/);
+    expect(card?.[1], 'the motion.div wrapping the hero card was not found').toBeTruthy();
+    expect(
+      card[1],
+      'the hero card is the widest grid child and needs min-w-0, or it sets the track for both columns'
+    ).toMatch(/min-w-0/);
   });
 
   it('trust indicators may shrink inside the two-column grid', () => {
