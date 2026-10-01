@@ -47,7 +47,7 @@ export default function ProofCatches() {
         // site claims 99% of posts link to a live listing; showing an unlinkable
         // one here would quietly contradict that.
         const usable = list.filter((d) => isSourceLink(d?.url ?? d?.cta?.href));
-        const catches = topCatches(measurableCatches(usable), SHOW);
+        const catches = topCatches(usable, SHOW);
         setState({ ready: true, catches, stats: discountStats(usable) });
       } catch {
         if (alive) setState({ ready: true, catches: [], stats: null });

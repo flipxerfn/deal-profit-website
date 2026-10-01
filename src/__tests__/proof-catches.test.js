@@ -34,7 +34,7 @@ const src = readFileSync(resolve(import.meta.dirname, '../components/ProofCatche
   .replace(/^\s*\/\/.*$/gm, '');
 
 // The library, so the maths is tested rather than reimplemented in the test.
-import { measurableCatches, discountStats } from '../lib/proof.js';
+import { measurableCatches, discountStats, topCatches } from '../lib/proof.js';
 
 const deal = (over = {}) => ({
   id: 'd1',
@@ -106,6 +106,40 @@ describe('the headline numbers are measured from the feed', () => {
     // because a band that says "we caught nothing" is worse than no band.
     expect(discountStats([])).toBeNull();
     expect(discountStats(null)).toBeNull();
+  });
+});
+
+describe('the band leads with the best catches, not the worst', () => {
+  // This shipped broken and only a screenshot caught it. topCatches sorted
+  // ascending by discount and then took the first N, so the band headed with
+  // 10%-off listings under the heading "What a catch actually looks like" —
+  // actively arguing against itself, since a visitor shown three 10% rows
+  // concludes the feed is weak. The stat line above it read a 67% median, so
+  // the page contradicted itself within one card.
+  it('orders by discount, biggest first', () => {
+    const catches = measurableCatches([
+      deal({ id: 'weak', price: 90, referencePrice: 100 }),   // 10%
+      deal({ id: 'best', price: 1, referencePrice: 100 }),    // 99%
+      deal({ id: 'mid', price: 25, referencePrice: 100 }),    // 75%
+    ]);
+    expect(topCatches(catches, 3).map((c) => c.id)).toEqual(['best', 'mid', 'weak']);
+  });
+
+  it('takes the requested number from the top of that order', () => {
+    const catches = measurableCatches(
+      Array.from({ length: 20 }, (_, i) =>
+        deal({ id: `d${i}`, price: 100 - i * 5, referencePrice: 100 })
+      )
+    );
+    const top = topCatches(catches, 6);
+    expect(top).toHaveLength(6);
+    expect(top[0].discountPct).toBeGreaterThan(top[5].discountPct);
+    expect(top[0].discountPct).toBeGreaterThanOrEqual(95);
+  });
+
+  it('returns nothing for an empty or invalid input', () => {
+    expect(topCatches([], 6)).toEqual([]);
+    expect(topCatches(null, 6)).toEqual([]);
   });
 });
 

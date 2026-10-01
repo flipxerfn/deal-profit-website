@@ -71,12 +71,19 @@ export function discountStats(deals) {
 /**
  * The biggest catches, best discount first.
  *
- * @param {Array<object>} catches output of measurableCatches
+ * Sorted DESCENDING. The first version sorted ascending and then took the
+ * first N, which is the worst possible set of rows for this component: the
+ * band shipped heading with 10%-off listings under the title "What a catch
+ * actually looks like", directly below a stat line reading a 67% median. The
+ * page contradicted itself inside one card.
+ *
+ * @param {Array<object>} deals raw feed entries
  * @param {number} howMany
  */
-export function topCatches(catches, howMany = 6) {
-  if (!Array.isArray(catches)) return [];
-  return [...catches]
-    .sort((a, b) => a.discountPct - b.discountPct)
+export function topCatches(deals, howMany = 6) {
+  const measured = measurableCatches(deals);
+  if (!Number.isFinite(howMany) || howMany <= 0) return [];
+  return [...measured]
+    .sort((a, b) => b.discountPct - a.discountPct)
     .slice(0, howMany);
 }
