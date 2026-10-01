@@ -1,10 +1,9 @@
 import rtpcImg from '../assets/crops/deal1-hero.webp';
 import headphonesImg from '../assets/crops/deal2-card.webp';
 import discord1Cropped from '../assets/crops/discord1-cropped.webp';
-import { FEED_STATS, pctPostsLinkable } from './siteFacts';
+import { FEED_STATS } from './siteFacts';
 
 const MEDIAN_SAVING = FEED_STATS.medianSavingPct;
-const PCT_LINKABLE = pctPostsLinkable;
 
 // Must stay in sync with CATEGORY_LABELS / CATEGORY_KEYWORDS in
 // worker/parseDeals.js. A category the worker emits but the chip list lacks is
@@ -104,10 +103,16 @@ export const HOW_IT_WORKS = [
 
 // Figures are measured from the live feed, not estimated — see siteFacts.js for
 // how each was derived and why invented ones were removed.
-export const COMMUNITY_STATS = [
+// A function of the measured linkable percentage, not a constant.
+//
+// This array carried `${PCT_LINKABLE}%`, derived from a snapshot that counted
+// 9 Discord channel links as links to a listing. Making it a function means the
+// measured value has to be passed in, so it cannot be rendered with a stale
+// number the way a baked-in constant always eventually is.
+export const COMMUNITY_STATS = (pctLinkable) => [
   { value: '200', label: 'Finds in the feed', icon: 'bolt' },
   { value: `${MEDIAN_SAVING}%`, label: 'Median saving on a posted find', icon: 'percent' },
-  { value: `${PCT_LINKABLE}%`, label: 'Link straight to the listing', icon: 'shield' },
+  { value: pctLinkable, label: 'Link straight to the listing', icon: 'shield' },
   { value: '24/7', label: 'Monitoring', icon: 'bell' },
 ];
 

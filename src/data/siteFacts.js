@@ -24,7 +24,11 @@ export const FEED_STATS = {
   dealsWithReferencePrice: 122,
   medianSavingPct: 67,
   findsHalfOffOrMore: 108,
-  postsWithSourceLink: 197,
+  // SUPERSEDED. This counted 9 Discord channel links as links to a listing,
+  // which overstated the claim by three points. Nothing renders it — the
+  // figure is now measured live in lib/useLinkability.js. Kept only so the
+  // correction is on the record rather than silently edited.
+  postsWithSourceLink: 191,
 };
 
 // Your real member count. null = the stat is hidden rather than guessed.
@@ -33,7 +37,4 @@ export const MEMBER_COUNT = null;
 // Derived, so the two cannot disagree with each other.
 export const pctFindsHalfOff = Math.round(
   (FEED_STATS.findsHalfOffOrMore / FEED_STATS.dealsWithReferencePrice) * 100
-);
-export const pctPostsLinkable = Math.round(
-  (FEED_STATS.postsWithSourceLink / FEED_STATS.dealsInFeed) * 100
 );

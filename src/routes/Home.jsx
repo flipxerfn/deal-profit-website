@@ -33,6 +33,7 @@ import { FEED_STATS, pctPostsLinkable } from '../data/siteFacts';
 
 const medianSavingPct = FEED_STATS.medianSavingPct;
 import { useReducedMotion, motionVariants, getMotionProps, useScrollReveal } from '../lib/motion';
+import { useLinkability } from '../lib/useLinkability';
 
 const HUNT_ICONS = [FaBolt, FaCoins, FaPercent, FaBell];
 
@@ -46,8 +47,18 @@ const STAT_ICONS = {
 // Claims here are measured, not aspirational. "Every deal manually reviewed"
 // and "10,000+ deal hunters" were both untrue and both the kind of thing a
 // reviewer screenshots.
-const TRUST_ITEMS = [
-  { icon: FaShieldAlt, label: 'Verifiable', desc: `${pctPostsLinkable}% link to the listing` },
+// `pctLinkable` is injected from useLinkability() rather than imported as a
+// constant. The old figure was 197/200 written into a data file on a fixed
+// date; 9 of those 197 are Discord channel links, not listings, so the claim
+// overstated by three points AND could never be re-checked. It is measured from
+// the feed now, using the same rule the deal cards use, and renders nothing if
+// the feed cannot be read — a cached fallback is how a claim goes stale.
+const TRUST_ITEMS = (pctLinkable) => [
+  {
+    icon: FaShieldAlt,
+    label: 'Verifiable',
+    desc: pctLinkable ? `${pctLinkable}% link to the listing` : 'Measured from the live feed',
+  },
   { icon: FaCoins, label: 'Real savings', desc: `${medianSavingPct}% median off, measured` },
   { icon: FaBell, label: 'Fast posts', desc: 'Shared as they are caught' },
   { icon: FaBolt, label: 'No hype', desc: 'Dead links marked as examples' },

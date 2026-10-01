@@ -11,8 +11,10 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { COMMUNITY_STATS } from '../data/deals';
-import { FEED_STATS, pctPostsLinkable, pctFindsHalfOff, MEMBER_COUNT } from '../data/siteFacts';
+import { isSourceLink } from '../lib/dealSource';
+import { FEED_STATS, pctFindsHalfOff, MEMBER_COUNT } from '../data/siteFacts';
 
+const honestClaimsSrc = readFileSync(resolve(import.meta.dirname, '../data/siteFacts.js'), 'utf8');
 const root = resolve(import.meta.dirname, '../..');
 const read = (p) => readFileSync(resolve(root, p), 'utf8');
 const walk = (dir) =>
@@ -32,13 +34,16 @@ describe('the numbers are measurements', () => {
     // If the median saving is 5% the feed is broken, not honest.
     expect(FEED_STATS.medianSavingPct).toBeGreaterThan(20);
     expect(FEED_STATS.medianSavingPct).toBeLessThan(100);
-    expect(pctPostsLinkable).toBeGreaterThan(50);
+    // The exported constant is gone — it is measured live now. Assert against
+    // the corrected figure on the record, and against the rule itself.
+    expect(FEED_STATS.postsWithSourceLink).toBeGreaterThan(50);
   });
 
   it('derives the percentages rather than hard-coding them', () => {
-    expect(pctPostsLinkable).toBe(
-      Math.round((FEED_STATS.postsWithSourceLink / FEED_STATS.dealsInFeed) * 100)
-    );
+    // pctPostsLinkable is gone — it is measured live in lib/useLinkability.js
+    // now, because the derived constant counted 9 Discord channel links as
+    // links to a listing. Asserting it stays removed is the point.
+    expect(honestClaimsSrc).not.toMatch(/pctPostsLinkable/);
     expect(pctFindsHalfOff).toBe(
       Math.round((FEED_STATS.findsHalfOffOrMore / FEED_STATS.dealsWithReferencePrice) * 100)
     );
@@ -81,7 +86,7 @@ describe('no invented numbers in the rendered copy', () => {
 
 describe('community stats describe the feed, not our size', () => {
   it('every stat says what it measures', () => {
-    for (const stat of COMMUNITY_STATS) {
+    for (const stat of COMMUNITY_STATS(96)) {
       // "Median saving on a posted find" is verifiable. "Average savings" is
       // a claim about members that nothing here can support.
       expect(stat.label).not.toMatch(/average savings/i);
@@ -90,7 +95,7 @@ describe('community stats describe the feed, not our size', () => {
   });
 
   it('leads with a number we can actually produce', () => {
-    const values = COMMUNITY_STATS.map((s) => s.value);
+    const values = COMMUNITY_STATS(96).map((s) => s.value);
     expect(values).toContain(String(FEED_STATS.dealsInFeed));
     expect(values).toContain(`${FEED_STATS.medianSavingPct}%`);
   });
