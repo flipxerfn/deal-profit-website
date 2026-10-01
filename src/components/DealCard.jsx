@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { FaBolt } from 'react-icons/fa6';
 import { FaArrowRight, FaExternalLinkAlt, FaCheckCircle } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
@@ -5,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Card, CardHover, Badge } from './ui';
 import { useReducedMotion } from '../lib/motion';
 import { hostOf, isSourceLink, timeAgo } from '../lib/dealSource';
+import { isNonProductImage } from '../lib/imageQuality';
 
 const dealOff = (deal) =>
   deal.referencePrice ? Math.round((1 - deal.price / deal.referencePrice) * 100) : null;
@@ -15,6 +17,20 @@ const DealCard = ({ deal, spotlight = false }) => {
   const sourceHost = hostOf(deal.url ?? deal.cta?.href);
   const verifiable = isSourceLink(deal.url ?? deal.cta?.href);
   const caught = timeAgo(deal.postedAt);
+
+  // Some feed images are not product photos. 28 of the 178 live images are
+  // byte-for-byte 1920x1290 full-page Amazon captures — browser chrome,
+  // seller list, breadcrumbs, and on some a third party's delivery address and
+  // a FLIP.com watermark. Scaled into a 16:9 card they read as a slice of
+  // grey text, which is a large part of why the grid looked plain.
+  //
+  // Rejected here rather than in the Worker because the host does not
+  // discriminate — 65 genuine product photos come from the same Discord CDN —
+  // and dimensions cannot be known server-side without fetching and decoding
+  // every image on every request. naturalWidth is free: the browser already
+  // loaded it to display it.
+  const [hideImage, setHideImage] = useState(false);
+  const showImage = Boolean(deal.image) && !hideImage;
 
   return (
     <CardHover
@@ -30,7 +46,7 @@ const DealCard = ({ deal, spotlight = false }) => {
     >
       {spotlight && <div aria-hidden="true" className="shine-sweep pointer-events-none absolute inset-0 z-20" />}
       <div className="relative aspect-[16/9] overflow-hidden bg-charcoal-2">
-        {deal.image ? (
+        {showImage ? (
           <div className={`h-full w-full ${spotlight ? 'spotlight-settle' : ''}`}>
             <motion.img
               src={deal.image}
@@ -41,6 +57,12 @@ const DealCard = ({ deal, spotlight = false }) => {
               style={{ objectPosition: deal.imagePosition ?? 'center' }}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
               whileHover={prefersReduced ? {} : { scale: 1.03 }}
+              onLoad={(e) => {
+                const el = e.currentTarget;
+                if (isNonProductImage(el.naturalWidth, el.naturalHeight)) {
+                  setHideImage(true);
+                }
+              }}
             />
           </div>
         ) : (
