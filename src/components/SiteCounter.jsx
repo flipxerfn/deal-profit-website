@@ -1,70 +1,65 @@
+// Corner badge: evidence the feed is working, not a census of traffic.
+//
+// This used to read "96 visitors · 2 online", pinned to the bottom-left of
+// every page — including the pages asking for $25. Both numbers hurt:
+//
+//   "96 visitors" is a lifetime count of distinct first-party identifiers. It
+//   is accurate, and on a site with roughly 75 unique visitors the accurate
+//   headline is "small".
+//
+//   "2 online" is a live sample that is near-zero most of the time by the
+//   nature of live samples. It cannot read as anything but dead.
+//
+// Together they are negative social proof in the exact spot where the reader
+// is deciding whether to pay you.
+//
+// What belongs here is evidence the product works. The feed measures 200 finds
+// at a 67% median off, and it is computed from the same live endpoint the rest
+// of the page uses, so it cannot drift out of date the way a hardcoded
+// snapshot does.
+//
+// Still non-interactive and still out of the tab order: it is a status readout,
+// and a tab stop for information nobody can act on is just noise for keyboard
+// users.
 import { useEffect, useState } from 'react';
+import { FaBolt } from 'react-icons/fa6';
+import { measurableCatches, discountStats } from '../lib/proof';
 
-// Live site counter, bottom-left: total unique visitors + online now.
-// - Total counts each browser once, ever (first-party localStorage id)
-// - "Online" is server-side: visitors who pinged within the last 5 minutes
+const ENDPOINT = '/api/deals';
 
-const REFRESH_MS = 30000;
-
-function getVisitorId() {
-  try {
-    let vid = localStorage.getItem('dp_vid');
-    if (!vid) {
-      vid =
-        typeof crypto !== 'undefined' && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-      localStorage.setItem('dp_vid', vid);
-    }
-    return vid;
-  } catch {
-    // Storage blocked (privacy mode) — don't count, don't render
-    return null;
-  }
-}
-
-const SiteCounter = () => {
+export default function SiteCounter() {
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    const vid = getVisitorId();
-    if (!vid) return undefined;
     let alive = true;
+    (async () => {
+      try {
+        const res = await fetch(ENDPOINT, { headers: { Accept: 'application/json' } });
+        if (!res.ok) throw new Error(String(res.status));
+        const data = await res.json();
+        const list = Array.isArray(data?.deals) ? data.deals : [];
+        if (!alive) return;
 
-    const apply = (data) => {
-      if (alive && data && typeof data.total === 'number') {
-        setStats({ total: data.total, online: data.online ?? 0 });
+        // Only catches with a genuine reference price can carry a discount, so
+        // the median is measured over that subset and labelled as such.
+        const measured = discountStats(list);
+        if (!measured || measured.total < 5) {
+          // Too little to say anything true. Rendering "0 finds" would be the
+          // same self-own as the old counter.
+          setStats(null);
+          return;
+        }
+        setStats({
+          finds: list.length,
+          median: Math.round(measured.median),
+          halfOff: measured.atLeast50,
+        });
+      } catch {
+        if (alive) setStats(null);
       }
-    };
-
-    // Count this visit (keepalive so it survives instant redirects to Stripe)
-    fetch('/api/stats', {
-      method: 'POST',
-      keepalive: true,
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ vid }),
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then(apply)
-      .catch(() => {
-        // offline — retry on the regular refresh below
-      });
-
-    // Refresh the online count periodically and on tab focus
-    const refresh = () => {
-      fetch('/api/stats', { headers: { Accept: 'application/json' } })
-        .then((res) => (res.ok ? res.json() : null))
-        .then(apply)
-        .catch(() => {});
-    };
-    const timer = setInterval(refresh, REFRESH_MS);
-    const onFocus = () => refresh();
-    window.addEventListener('focus', onFocus);
-
+    })();
     return () => {
       alive = false;
-      clearInterval(timer);
-      window.removeEventListener('focus', onFocus);
     };
   }, []);
 
@@ -72,24 +67,22 @@ const SiteCounter = () => {
 
   return (
     <div
-      className="pointer-events-none fixed bottom-3 left-3 z-40 flex select-none items-center gap-2.5 rounded-full border border-white/10 bg-charcoal/85 px-3.5 py-1.5 text-[11px] font-medium text-zinc-400 shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur"
-      aria-label={`${stats.total} total visitors, ${stats.online} online now`}
+      className="surface-raised pointer-events-none fixed bottom-3 left-3 z-40 flex select-none items-center gap-2.5 rounded-full border border-white/10 bg-charcoal/90 px-3.5 py-1.5 text-[11px] font-medium text-zinc-300 backdrop-blur"
+      aria-label={`${stats.finds} finds posted, median saving ${stats.median} percent`}
     >
-      <span>
-        <span className="text-zinc-500">👁</span>{' '}
-        <span className="font-bold text-zinc-200">{stats.total.toLocaleString()}</span>{' '}
-        visitors
+      <span className="flex items-center gap-1.5">
+        <FaBolt className="h-2.5 w-2.5 text-brand" aria-hidden="true" />
+        <span className="font-bold tabular-nums text-white">
+          {stats.finds.toLocaleString()}
+        </span>{' '}
+        finds posted
       </span>
       <span className="h-3 w-px bg-white/10" aria-hidden="true" />
-      <span className="flex items-center gap-1.5">
-        <span className="relative flex h-2 w-2" aria-hidden="true">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-        </span>
-        <span className="font-bold text-emerald-300">{stats.online}</span> online
+      <span>
+        median{' '}
+        <span className="font-bold tabular-nums text-brand-2">{stats.median}%</span>{' '}
+        off
       </span>
     </div>
   );
-};
-
-export default SiteCounter;
+}
