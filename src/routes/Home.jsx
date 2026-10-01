@@ -29,7 +29,7 @@ import MemberSuccess from '../components/MemberSuccess';
 import ProofCatches from '../components/ProofCatches';
 import rtpcImg from '../assets/crops/deal1-hero.webp';
 import { WHAT_WE_HUNT, HOW_IT_WORKS, COMMUNITY_STATS } from '../data/deals';
-import { FEED_STATS, pctPostsLinkable } from '../data/siteFacts';
+import { FEED_STATS } from '../data/siteFacts';
 
 const medianSavingPct = FEED_STATS.medianSavingPct;
 import { useReducedMotion, motionVariants, getMotionProps, useScrollReveal } from '../lib/motion';
@@ -180,6 +180,7 @@ const ReviewPreview = () => {
 };
 
 const Home = () => {
+  const linkability = useLinkability();
   const prefersReduced = useReducedMotion();
   const howReveal = useScrollReveal();
   const huntReveal = useScrollReveal();
@@ -268,7 +269,7 @@ const Home = () => {
               {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
               className="mt-10 grid grid-cols-2 gap-x-4 gap-y-3 text-xs text-zinc-400 sm:flex sm:flex-wrap sm:items-center sm:gap-6 sm:text-sm"
             >
-              {TRUST_ITEMS.map((item) => (
+              {TRUST_ITEMS(linkability?.pct).map((item) => (
                 <div key={item.label} className="flex items-center gap-2 shrink-0">
                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10 text-brand shadow-[0_0_12px_rgba(244,63,94,0.2)] shrink-0">
                     <item.icon className="h-3.5 w-3.5" />

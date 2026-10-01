@@ -218,8 +218,27 @@ describe('spotlight honesty', () => {
 describe('mobile trust indicators', () => {
   it('keeps trust labels visible on phones instead of showing bare icons', () => {
     const home = read('src/routes/Home.jsx');
-    const trust = home.match(/\{\/\* Trust indicators[\s\S]*?TRUST_ITEMS\.map\([\s\S]*?\n\s{12}<\/motion\.div>/)?.[0] ?? '';
-    expect(trust).toContain('grid-cols-2');
-    expect(trust).not.toContain('hidden sm:block');
+    const lines = home.split('\n');
+
+    // Locate the trust row by its own content rather than by matching a whole
+    // JSX block. Two earlier versions anchored a regex on the TRUST_ITEMS call
+    // and a closing </motion.div> at a fixed indent, so a refactor that changed
+    // the call from TRUST_ITEMS.map to TRUST_ITEMS(x).map made the match empty
+    // and the gate reported a layout failure that did not exist — while a real
+    // layout regression could equally have slipped past it.
+    // Anchor on the actual call, not on the comment above it that mentions the
+    // same name — an earlier version matched that comment and inspected the
+    // wrong part of the file entirely.
+    const start = lines.findIndex((l) => /TRUST_ITEMS\([^)]*\)\.map\(/.test(l));
+    expect(start, 'trust indicators not found in Home.jsx').toBeGreaterThan(-1);
+
+    // The container is a few lines above the call, so scan upwards for the
+    // grid the items sit in.
+    const container = lines
+      .slice(Math.max(0, start - 6), start + 2)
+      .join('\n');
+    expect(container).toContain('grid-cols-2');
+    // And the labels are never reduced to bare icons on a phone.
+    expect(container).not.toContain('hidden sm:block');
   });
 });

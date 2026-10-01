@@ -31,7 +31,8 @@ import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion'
 import { startCheckout, WHOP_SETUP_URL } from '../lib/checkout';
 import PaymentFlow from '../components/PaymentFlow';
 import { UPGRADE_FAQS as FAQS } from '../lib/upgradeContent';
-import { FEED_STATS, pctPostsLinkable } from '../data/siteFacts';
+import { FEED_STATS } from '../data/siteFacts';
+import { useLinkability } from '../lib/useLinkability';
 
 const medianSavingPct = FEED_STATS.medianSavingPct;
 
@@ -118,14 +119,21 @@ const TRIAL_INCLUDES = [
   'No card needed — nothing to cancel, nothing to be charged',
 ];
 
-const TRUST_ITEMS = [
-  { icon: FaShieldAlt, label: 'Verifiable', desc: `${pctPostsLinkable}% link to the listing` },
+// Measured live. The old figure was a constant counting 9 Discord channel
+// links as links to a listing — see lib/useLinkability.js.
+const TRUST_ITEMS = (pctLinkable) => [
+  {
+    icon: FaShieldAlt,
+    label: 'Verifiable',
+    desc: pctLinkable ? `${pctLinkable}% link to the listing` : 'Measured from the live feed',
+  },
   { icon: FaCoins, label: 'Real savings', desc: `${medianSavingPct}% median off, measured` },
   { icon: FaBell, label: 'Fast posts', desc: 'Shared as they are caught' },
 ];
 
 
 const Upgrade = () => {
+  const linkability = useLinkability();
   const prefersReduced = useReducedMotion();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [trialLoading, setTrialLoading] = useState(false);
@@ -467,7 +475,7 @@ const Upgrade = () => {
         {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
         className="mx-auto mt-16 grid max-w-[1300px] gap-4 sm:grid-cols-3 md:mt-20"
       >
-        {TRUST_ITEMS.map((item) => (
+        {TRUST_ITEMS(linkability?.pct).map((item) => (
           <motion.div
             key={item.label}
             {...getMotionProps(prefersReduced, motionVariants.staggerItem)}

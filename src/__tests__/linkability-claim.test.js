@@ -62,6 +62,56 @@ describe('the linkability claim is measured, not remembered', () => {
   });
 });
 
+describe('every consumer actually calls the factory', () => {
+  // The failure this exists for: TRUST_ITEMS was converted from an array into a
+  // function of the measured value, and the call site was left as
+  // TRUST_ITTS.map(...). That is syntactically valid, so `vite build` passed and
+  // 442 tests passed — and the home page would have thrown on first render,
+  // because Array.prototype.map does not exist on a function.
+  //
+  // Nothing in the suite caught it because every gate read files rather than
+  // rendering. This one checks the call sites directly.
+  const pages = ['Home', 'Upgrade', 'Discord'];
+  for (const page of pages) {
+    it(`${page}.jsx passes the measured value and declares the hook`, () => {
+      const src = readFileSync(
+        resolve(import.meta.dirname, `../routes/${page}.jsx`),
+        'utf8'
+      );
+      // Declared in the component body.
+      expect(src, `${page} does not call useLinkability()`).toMatch(
+        /const linkability = useLinkability\(/
+      );
+      // And passed where the factory is consumed.
+      expect(src, `${page} does not pass linkability into the factory`).toMatch(
+        /\(linkability\?\.pct\)\.map\(/
+      );
+      // No remaining call of a factory without arguments.
+      expect(src).not.toMatch(/^\s*\{?(TRUST_ITEMS|STATS)\.map\(/m);
+    });
+  }
+
+  it('no route still imports the removed constant', () => {
+    // Removing an export with consumers still importing it fails the build
+    // loudly, which is good. What is not loud is a consumer that keeps working
+    // from a stale copy of the number.
+    // Explicit paths. The first version built them by concatenating
+    // '../routes/' onto an already-relative '../data/deals.js', which resolved
+    // to a file that does not exist — so the read threw and the assertion
+    // reported the wrong thing entirely.
+    const files = [
+      '../routes/Home.jsx',
+      '../routes/Upgrade.jsx',
+      '../routes/Discord.jsx',
+      '../data/deals.js',
+    ];
+    for (const f of files) {
+      const src = readFileSync(resolve(import.meta.dirname, f), 'utf8');
+      expect(src, `${f} still references pctPostsLinkable`).not.toMatch(/pctPostsLinkable/);
+    }
+  });
+});
+
 describe('it cannot be stated when there is nothing to measure', () => {
   it('shows nothing rather than a stale figure', () => {
     // Falling back to a cached number when the fetch fails is exactly how a

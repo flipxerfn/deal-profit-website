@@ -4,7 +4,8 @@ import { buttonClass, StatCard, Avatar, CTASection } from '../components/ui';
 import discord1Cropped from '../assets/crops/discord1-cropped.webp';
 import discord2Cropped from '../assets/crops/discord2-cropped.webp';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
-import { FEED_STATS, pctPostsLinkable } from '../data/siteFacts';
+import { FEED_STATS } from '../data/siteFacts';
+import { useLinkability } from '../lib/useLinkability';
 
 const BENEFITS = [
   {
@@ -25,9 +26,15 @@ const BENEFITS = [
 ];
 
 // Measured from the live feed, not estimated — see data/siteFacts.js.
-const STATS = [
+// Measured live. The old figure was a constant counting 9 Discord channel
+// links as links to a listing — see lib/useLinkability.js.
+const STATS = (pctLinkable) => [
   { icon: FaBolt, value: String(FEED_STATS.dealsInFeed), label: 'Finds in feed' },
-  { icon: FaShieldAlt, value: `${pctPostsLinkable}%`, label: 'Linkable' },
+  {
+    icon: FaShieldAlt,
+    value: pctLinkable ?? '--',
+    label: 'Link straight to the listing',
+  },
   { icon: FaCoins, value: `${FEED_STATS.medianSavingPct}%`, label: 'Median off' },
   { icon: FaComments, value: '24/7', label: 'Monitoring' },
 ];
@@ -63,6 +70,7 @@ const ScreenshotCard = ({ image, alt, title, stat, note }) => (
 );
 
 const Discord = () => {
+  const linkability = useLinkability();
   const prefersReduced = useReducedMotion();
 
   return (
@@ -95,7 +103,7 @@ const Discord = () => {
         {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
         className="mx-auto mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
-        {STATS.map((stat) => (
+        {STATS(linkability?.pct).map((stat) => (
           <motion.div key={stat.label} {...getMotionProps(prefersReduced, motionVariants.staggerItem)}>
             <StatCard icon={stat.icon} value={stat.value} label={stat.label} className="h-full" />
           </motion.div>
