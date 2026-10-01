@@ -29,6 +29,7 @@
 // UI, removing or breaking the component would silently strip the one thing
 // that makes publishing member posts defensible, and the feed would keep
 // working while making the same claim with nothing to qualify it.
+import { stripDiscordPings } from './parseDeals.js';
 export const CAVEAT =
   'Results are not typical and are not a promise of any income. These are ' +
   'individual posts from members. Judge each find on its own merits.';
@@ -129,7 +130,12 @@ export function toSuccessPosts(messages, { limit = 9, now = Date.now() } = {}) {
     if (!m || typeof m !== 'object') continue;
     if (m.author?.bot) continue;
 
-    const text = String(m.content ?? '').trim();
+    // Same unterminated-mention problem as deal titles, and the same shared
+    // fix. The live API was serving 'thank you <@1361808798402216017' in a
+    // public caption because this path never got the treatment deal titles
+    // did. Importing the helper rather than copying the regex is the point:
+    // the two paths had already drifted once.
+    const text = stripDiscordPings(String(m.content ?? '')).trim();
     const images = imageUrls(m);
     if (!text && images.length === 0) continue;
     if (!looksLikeSuccess(text, { hasImage: images.length > 0 })) continue;

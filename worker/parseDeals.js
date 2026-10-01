@@ -199,7 +199,7 @@ const stripAdArtifacts = (text) =>
  * some bots use, and the whitespace these leave behind. Applied to the title
  * AND the description: a ping in the description is equally visible on the card.
  */
-const stripDiscordPings = (text) =>
+export const stripDiscordPings = (text) =>
   String(text ?? '')
     .replace(/<@[!&]?\d{10,25}>?/g, ' ')
     .replace(/:[a-z0-9_]{2,32}:/gi, ' ')
