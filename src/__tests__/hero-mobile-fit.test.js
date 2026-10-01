@@ -17,8 +17,23 @@
 // clientWidth — which is how this was finally located: 220 elements overhanging
 // on live, zero after the fix.
 //
-// The cause
-// ---------
+// The cause — and the wrong fix I shipped first
+// --------------------------------------------
+// The COLUMN, not the items. The hero grid's left child was a bare <div> with
+// no min-w-0, and a grid item defaults to min-width: auto, so it resolves to
+// its content's intrinsic width and refuses to shrink. Everything inside it
+// inherited that width.
+//
+// The first attempt removed `shrink-0` from the trust indicators and shipped
+// it. That made things WORSE — the column went from 494px to 627px, because
+// without shrink-0 those items grew to max-content — and the gate I wrote for
+// it passed while the actual bug was still live and deployed. A gate aimed at
+// a plausible-looking cause is worse than no gate, because it reports success.
+//
+// The 220-overhanging count only dropped to zero once the column got min-w-0.
+//
+// An earlier tell
+// ----------------
 // Each trust indicator carried `shrink-0`. Inside a `grid-cols-2` that is
 // meaningless — grid tracks size to content, and shrink has nothing to shrink
 // against — but it still pins the item at its intrinsic width. Two items at
@@ -33,14 +48,46 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const home = readFileSync(resolve(import.meta.dirname, '../routes/Home.jsx'), 'utf8')
+const homeRaw = readFileSync(resolve(import.meta.dirname, '../routes/Home.jsx'), 'utf8');
+
+// Comments are stripped before any structural match, as everywhere else in
+// this suite. The first version of the column gate did not, and the gate
+// PASSED with min-w-0 removed: the explanatory comment sits between the grid
+// and its column, so a bounded regex skipped past both and matched something
+// further down. A gate that cannot reach the thing it is checking is the
+// failure mode this whole file exists to prevent, occurring inside it.
+const home = homeRaw
   .replace(/\/\*[\s\S]*?\*\//g, '')
   .replace(/^\s*\/\/.*$/gm, '');
 
 describe('the hero fits a phone', () => {
+  it('the hero grid COLUMN can shrink', () => {
+    // The actual defect. A grid item defaults to min-width: auto, so this bare
+    // <div> sized to its content's intrinsic width (627px in a 375px
+    // viewport) and every child inherited it.
+    // The FIRST tag after the grid opening must be the column, carrying min-w-0.
+    //
+    // Two looser versions of this gate both passed with the defect in place.
+    // One scanned forward for any <div className="..."> and found a DIFFERENT
+    // element — the trust label's own min-w-0 wrapper — which made the gate
+    // green while the column had no class at all. The other matched the column
+    // only when it happened to have a class, so removing the class entirely
+    // skipped past it rather than failing.
+    const after = home.split('lg:grid-cols-[1fr_0.9fr]')[1];
+    expect(after, 'hero grid not found').toBeTruthy();
+
+    const firstTag = after.match(/<([a-z]+)(\s[^>]*?)?>/);
+    expect(firstTag?.[0], 'no element found after the hero grid').toBeTruthy();
+    expect(
+      firstTag[0],
+      `the first element inside the hero grid is "${firstTag[0]}" — the column itself needs min-w-0, not some later element`
+    ).toContain('min-w-0');
+  });
+
   it('trust indicators may shrink inside the two-column grid', () => {
-    // The exact defect. `shrink-0` pinned each item at 239px, two of them
-    // plus the gap made 494px, and the whole hero column took that width.
+    // Necessary but NOT sufficient — this is what the first attempt fixed, and
+    // the bug survived it. Kept because shrink-0 on a grid item is still
+    // wrong, but the gate above is the one that matters.
     const grid = home.match(/TRUST_ITEMS\([^)]*\)\.map\(([\s\S]*?)\)\)\}/);
     expect(grid?.[0], 'trust item markup not found').toBeTruthy();
 

@@ -211,7 +211,18 @@ const Home = () => {
 
         <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8">
           <div className="relative grid items-center gap-10 lg:grid-cols-[1fr_0.9fr] lg:gap-16">
-          <div>
+          {/* min-w-0 on the COLUMN, not just on the items inside it. A grid
+              item defaults to min-width:auto, so it sizes to its content's
+              intrinsic width and refuses to shrink — and every child inherits
+              that. Measured at 390px: the column resolved to 627px inside a
+              375px viewport, and body clips it, so "GLITCH FINDS" and half the
+              hero paragraph were simply gone with no scrollbar to find them by.
+
+              The first attempt fixed the trust items' shrink-0 instead, which
+              made it WORSE — 494px became 627px, because without shrink-0 the
+              items grew to max-content. The item was never the cause; the
+              column was. */}
+          <div className="min-w-0">
             <motion.div
               {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
               className="mb-5 inline-flex flex-wrap items-center gap-2"
