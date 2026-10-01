@@ -11,12 +11,29 @@ const css = fs.readFileSync(
 );
 
 describe('visual refresh design system', () => {
-  it.each([
-    ['--color-ember', '#fb923c'],
-    ['--color-ice', '#22d3ee'],
-    ['--color-lime', '#a3e635'],
-  ])('defines token %s as %s', (token, value) => {
-    expect(css).toContain(`${token}: ${value}`);
+  it('keeps the ice token, the one cold accent still earning its place', () => {
+    expect(css).toContain('--color-ice: #22d3ee');
+  });
+
+  // Ember and lime were retired deliberately. Measured on the deployed hero,
+  // four hue families were competing with the brand accent, and neither of these
+  // two ever carried meaning — they were defined, reachable, and unused as an
+  // accent. A token in @theme is an invitation, and two of those invitations
+  // were being declined on every page.
+  //
+  // Retiring them broke two utilities on the way out — card-lift's
+  // `hover:border-ember/40` and text-shine's `via-ember` — which is the proof
+  // they were load-bearing after all, just load-bearing on nothing.
+  //
+  // This asserts they stay gone rather than being quietly reintroduced.
+  it.each(['--color-ember', '--color-lime'])('has retired token %s', (token) => {
+    expect(css, `${token} is retired; a defined token is an invitation`).not.toMatch(
+      new RegExp(`${token}:`)
+    );
+  });
+
+  it('uses no ember or lime utility anywhere in the stylesheet', () => {
+    expect(css).not.toMatch(/\b(bg|text|border|from|via|to|ring)-(ember|lime)/);
   });
 
   it.each(['.band-full', '.card-lift', '.text-shine', '.ring-conic'])(

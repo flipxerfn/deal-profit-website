@@ -28,7 +28,7 @@ const SpotlightDeal = ({ deal }) => {
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/50 to-transparent" />
 
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div aria-hidden="true" className="grid-pattern absolute inset-0 opacity-[0.25]" />
+        <div aria-hidden="true" className="grid-pattern absolute inset-0 opacity-[0.12]" />
       </div>
 
       {/* Capped and centred: without this the copy and the image drift apart

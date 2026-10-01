@@ -98,6 +98,15 @@ export default function LiveHeroFeed() {
               transition={{ duration: 0.28, ease: 'easeOut', delay: i * 0.03 }}
               className="flex items-center gap-3 rounded-lg bg-white/[0.03] px-3 py-2 transition-colors hover:bg-white/[0.06]"
             >
+              {/* A consistent mark so the eye tracks a column instead of
+                  reading each row. The comparison site anchors its list the
+                  same way; ours was text-only, which is why a wall of it read
+                  as noise rather than as a list. One hue — the square is the
+                  brand at low opacity, not a fourth accent. */}
+              <span
+                aria-hidden="true"
+                className="h-2.5 w-2.5 shrink-0 rounded-[3px] bg-brand/25 ring-1 ring-inset ring-brand/40"
+              />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-semibold text-white">{deal.title}</p>
                 <p className="flex items-center gap-1.5 text-[11px] text-zinc-500">

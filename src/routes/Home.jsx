@@ -192,7 +192,6 @@ const Home = () => {
       <section className="band-full band-bleed tint-brand relative pb-16 pt-12 md:pb-20 md:pt-16" aria-labelledby="hero-title">
         {/* Background: glows, animated orbs, subtle grid */}
         <div className="radial-glow-hero pointer-events-none absolute inset-0" aria-hidden="true" />
-        <div className="grid-pattern pointer-events-none absolute inset-0 opacity-[0.35]" aria-hidden="true" />
         <motion.div
           {...getMotionProps(prefersReduced, {
             animate: { x: [0, 34, 0], y: [0, 20, 0] },
@@ -228,7 +227,7 @@ const Home = () => {
             <motion.h1
               id="hero-title"
               {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-              className="text-shadow-glow text-3xl font-extrabold leading-[1.15] tracking-tight text-white sm:text-4xl md:text-[44px] lg:text-5xl xl:text-6xl"
+              className="text-shadow-glow text-3xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-4xl md:text-[52px] lg:text-[60px] xl:text-[68px] 2xl:text-[76px]"
             >
               <StaggerLine text="Catch the deals" delay={0.08} />
               <br />

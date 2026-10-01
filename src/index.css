@@ -36,12 +36,13 @@
   --color-glow-2: #a855f7;
   --color-glow-3: #c084fc;
 
-  --color-ember: #fb923c;
-  --color-ember-2: #fdba74;
+  /* Two accents, deliberately. Rose is the brand. The ice tone exists for the
+     one place a cold counter-reads-as-data colour helps. Ember and lime are
+     gone: they were defined, reachable, and never carried meaning — and a
+     token in @theme is an invitation. Four hue families on one page meant none
+     of them said anything. */
   --color-ice: #22d3ee;
   --color-ice-2: #67e8f9;
-  --color-lime: #a3e635;
-  --color-lime-2: #bef264;
 
   /* Secondary text.
      --color-muted was #71717a on a #15151d card — 3.8:1, below the WCAG AA
@@ -73,11 +74,20 @@
     overflow-x: clip;
   }
 
-  /* Layered ambient washes + a faint grid give the dark surface depth instead
-     of a flat void. This lives on a fixed pseudo-element rather than as
-     `background-attachment: fixed` on body — attachment:fixed forces a
-     repaint on every scroll frame (very visible jank on mobile Safari),
-     whereas a fixed-position layer is composited once and never repaints. */
+  /* Flat background, with a single wash behind the hero.
+
+     This used to layer three radial gradients (rose, violet, cyan) plus a
+     56px grid over the whole viewport. Measured on the deployed hero, that put
+     four hue families on screen competing with the brand accent, and a
+     mid-grey as the single most common pixel in the fold.
+
+     The comparison site spends one colour on its background and reserves a
+     second for the accent. That is the whole trick, and it is why a page with
+     200 heterogeneous deals on it can still look calm.
+
+     Still a fixed pseudo-element rather than background-attachment: fixed,
+     which forces a repaint on every scroll frame — very visible jank on
+     mobile Safari — whereas a fixed layer composites once. */
   body::before {
     content: "";
     position: fixed;
@@ -85,12 +95,7 @@
     z-index: -1;
     pointer-events: none;
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(244, 63, 94, 0.1), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(139, 92, 246, 0.07), transparent),
-      radial-gradient(ellipse 70% 50% at 0% 100%, rgba(34, 211, 238, 0.05), transparent),
-      linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
-    background-size: 100% 100%, 100% 100%, 100% 100%, 56px 56px, 56px 56px;
+      radial-gradient(ellipse 70% 45% at 50% -10%, rgba(244, 63, 94, 0.09), transparent);
     will-change: transform;
   }
 
@@ -290,13 +295,17 @@
   }
 
   /* Lift-on-hover for cards: transform + shadow only (no layout cost). */
+  /* Hover now uses the brand rather than the retired ember token. Ember was
+     the only consumer of that colour and removing the token broke this utility
+     at build time — which is the argument for retiring a token properly rather
+     than leaving a defined-but-unused one as a trap. */
   .card-lift {
-    @apply transition-all duration-300 hover:-translate-y-1 hover:border-ember/40 hover:shadow-[0_16px_56px_rgba(0,0,0,0.6),0_0_48px_rgba(251,146,60,0.12)];
+    @apply transition-all duration-300 hover:-translate-y-1 hover:border-brand/40 hover:shadow-[0_16px_56px_rgba(0,0,0,0.6),0_0_48px_rgba(244,63,94,0.12)];
   }
 
   /* Animated gradient sweep for display text. Static under reduced motion. */
   .text-shine {
-    @apply bg-gradient-to-r from-brand via-ember to-glow bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-brand via-brand-2 to-glow bg-clip-text text-transparent;
     background-size: 200% auto;
     animation: text-shine 6s linear infinite;
   }

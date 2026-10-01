@@ -158,8 +158,23 @@ describe('ambient background performance', () => {
     const before = css.match(/body::before\s*\{([\s\S]*?)\n\s*\}/)?.[1] ?? '';
     expect(before).toContain('position: fixed');
     expect(before).toMatch(/z-index:\s*-1/);
-    // The layered washes and the faint grid both live on that layer.
-    expect(before.match(/gradient/g)?.length ?? 0).toBeGreaterThanOrEqual(5);
+    // This used to require FIVE or more gradients on the layer — three radial
+    // washes plus a two-axis grid. Measured on the deployed hero that put four
+    // hue families on screen competing with the brand accent, and made a
+    // mid-grey the single most common pixel in the fold.
+    //
+    // Replaced, not deleted. A gate pinning a number that was deliberately
+    // moved is worse than no gate: it protects the old decision by accident,
+    // because deleting it removes the only thing that noticed when the
+    // background quietly grew back.
+    //
+    // One wash, no grid. The upper bound is the real gate — a lower bound
+    // alone would pass on the old five-layer version.
+    const gradients = before.match(/gradient/g)?.length ?? 0;
+    expect(gradients, `background has ${gradients} gradients, expected exactly 1`)
+      .toBe(1);
+    // And the grid overlay stays out of the global layer entirely.
+    expect(before).not.toMatch(/linear-gradient\(/);
   });
 });
 
