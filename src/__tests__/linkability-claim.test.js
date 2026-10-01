@@ -27,7 +27,7 @@
 // This computes it instead, using the same rule the cards use, so the claim and
 // the cards cannot disagree.
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const facts = readFileSync(resolve(import.meta.dirname, '../data/siteFacts.js'), 'utf8');
@@ -90,6 +90,43 @@ describe('every consumer actually calls the factory', () => {
       expect(src).not.toMatch(/^\s*\{?(TRUST_ITEMS|STATS)\.map\(/m);
     });
   }
+
+  it('no factory anywhere in src is still called as an array', () => {
+    // This is the bug that took the home page down.
+    //
+    // The constant removal was checked by grepping for the constant's NAME.
+    // Three of the four consumers were found that way. The fourth,
+    // COMMUNITY_STATS, was imported by Home.jsx on a line the grep had not
+    // matched, and it crashed the home page with "Yg.map is not a function"
+    // — minified, so the error named nothing recognisable.
+    //
+    // `vite build` passed. All 446 tests passed. Nothing in the suite rendered
+    // a page. The failure was only visible in a browser.
+    //
+    // So this walks the whole source tree rather than a hand-picked list, and
+    // looks for the calling shape rather than the imported name.
+    const root = resolve(import.meta.dirname, '../..');
+    const offenders = [];
+    const walk = (dir) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const p = `${dir}/${entry.name}`;
+        if (entry.isDirectory()) {
+          if (entry.name !== 'node_modules' && entry.name !== 'dist' && !entry.name.startsWith('.')) {
+            walk(p);
+          }
+        } else if (/\.(jsx?|mjs)$/.test(entry.name) && !/\.test\.[jt]sx?$/.test(entry.name)) {
+          const body = readFileSync(p, 'utf8');
+          const m = body.match(/\b(TRUST_ITEMS|STATS|COMMUNITY_STATS)\.map\(/);
+          if (m) offenders.push(`${p.replace(`${root}/`, '')}: ${m[1]}`);
+        }
+      }
+    };
+    walk(`${root}/src`);
+    expect(
+      offenders,
+      `factories called as arrays (crashes the page at render): ${offenders.join(', ')}`
+    ).toEqual([]);
+  });
 
   it('no route still imports the removed constant', () => {
     // Removing an export with consumers still importing it fails the build

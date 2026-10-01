@@ -463,7 +463,7 @@ const Home = () => {
           {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
           className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
-          {COMMUNITY_STATS.map((stat) => {
+          {COMMUNITY_STATS(linkability?.pct).map((stat) => {
             const Icon = STAT_ICONS[stat.icon] ?? FaUsers;
             return (
               <motion.div key={stat.label} {...getMotionProps(prefersReduced, motionVariants.staggerItem)}>
