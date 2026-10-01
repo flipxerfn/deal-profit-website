@@ -269,11 +269,11 @@ const Home = () => {
               className="mt-10 grid grid-cols-2 gap-x-4 gap-y-3 text-xs text-zinc-400 sm:flex sm:flex-wrap sm:items-center sm:gap-6 sm:text-sm"
             >
               {TRUST_ITEMS(linkability?.pct).map((item) => (
-                <div key={item.label} className="flex items-center gap-2 shrink-0">
+                <div key={item.label} className="flex min-w-0 items-center gap-2">
                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10 text-brand shadow-[0_0_12px_rgba(244,63,94,0.2)] shrink-0">
                     <item.icon className="h-3.5 w-3.5" />
                   </span>
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-semibold text-white text-sm">{item.label}</p>
                     {/* zinc-500 measures 3.76:1 against the band these sit on,
                         and 10px is nowhere near the 18.66px that would let 3:1
