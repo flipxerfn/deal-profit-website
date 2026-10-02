@@ -79,7 +79,7 @@ export default function MemberSuccess() {
               What members actually caught
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
-              Posts from our Discord, shared with permission. Open the server to post
+              Posts from our Discord, shared by members. Open the server to post
               yours — the trial is free and no card is involved.
             </p>
           </div>

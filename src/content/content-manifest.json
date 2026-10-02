@@ -38,7 +38,7 @@
             "title": {
               "type": "string",
               "label": "Section Title",
-              "default": "From find to profit in three steps"
+              "default": "From find to catch in three steps"
             },
             "description": {
               "type": "string",
@@ -120,7 +120,7 @@
             "title": {
               "type": "string",
               "label": "Section Title",
-              "default": "Trusted by thousands of deal hunters"
+              "default": "What the feed actually shows"
             },
             "description": {
               "type": "string",

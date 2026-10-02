@@ -390,7 +390,7 @@ const Home = () => {
         <SectionHeader
           align="center"
           eyebrow="How it works"
-          title="From find to profit in three steps"
+          title="From find to catch in three steps"
           description="No paid bot subscriptions, no resellers farming referrals. Just fast, verified deal alerts."
         />
         <motion.div
