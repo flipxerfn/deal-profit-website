@@ -9,6 +9,7 @@ const Deals = lazy(() => import('./routes/Deals'));
 const Reviews = lazy(() => import('./routes/Reviews'));
 const Discord = lazy(() => import('./routes/Discord'));
 const Upgrade = lazy(() => import('./routes/Upgrade'));
+const SetupRequest = lazy(() => import('./routes/SetupRequest'));
 const Terms = lazy(() => import('./routes/Terms'));
 const Privacy = lazy(() => import('./routes/Privacy'));
 const Refunds = lazy(() => import('./routes/Refunds'));
@@ -41,6 +42,7 @@ function App() {
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/discord" element={<Discord />} />
             <Route path="/upgrade" element={<Upgrade />} />
+            <Route path="/setup-request" element={<SetupRequest />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/refunds" element={<Refunds />} />

@@ -9,16 +9,20 @@ import { useAuth } from '../lib/useAuth';
 import DiscordLogin from './DiscordLogin';
 import SiteSearch from './SiteSearch';
 
-// Four, not five. "/discord" used to be a nav item and it was ambiguous —
-// a first-timer could not tell whether it joined the server or read a page
-// about it, and it overlapped what "Deals" already covers. The page stays and
-// is still linked from the footer and the homepage; it just is not a peer of
-// "Deals" in the header any more.
+// "/discord" was cut from this list earlier because a first-timer could not
+// tell whether it joined the server or read a page about it, and it overlapped
+// what "Deals" already covers. The page is still reachable from the footer.
+//
+// "/setup" is here because it is a purchase-gated service, not another view of
+// the same thing: you buy Deal Feed Setup on Whop, then land here to hand over
+// your server. Someone who just paid needs to find it, so it belongs beside
+// "Upgrade" rather than buried in the footer with the legal links.
 const LINKS = [
   { to: '/', label: 'Home' },
   { to: '/deals', label: 'Deals' },
   { to: '/reviews', label: 'Reviews' },
   { to: '/upgrade', label: 'Upgrade' },
+  { to: '/setup-request', label: 'Deal Feed Setup' },
 ];
 
 const Navbar = () => {
