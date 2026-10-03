@@ -28,7 +28,7 @@ import {
   CardHover,
 } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
-import { startCheckout, WHOP_SETUP_URL } from '../lib/checkout';
+import { startCheckout, WHOP_SETUP_URL, DISCORD_INVITE } from '../lib/checkout';
 import PaymentFlow from '../components/PaymentFlow';
 import { UPGRADE_FAQS as FAQS } from '../lib/upgradeContent';
 import { FEED_STATS } from '../data/siteFacts';
@@ -190,6 +190,156 @@ const Upgrade = () => {
           Free deals are just the beginning. Upgrade for faster alerts, more deal opportunities, and
           access to premium features designed to help you catch deals before they disappear.
         </p>
+
+        {/* Three ways in.
+            This block exists because two people arrived here from a TikTok video,
+            could not tell what to do next, and left. The page used to open on a
+            Free-vs-Premium comparison table, which is a decision — but a visitor
+            off a video has not decided anything yet. They need the choice stated
+            plainly, cheapest and least committal first.
+
+            Discord is now genuinely the easiest way in, not a consolation prize:
+            the Whop trial takes a card, so for someone who just saw a $57 laptop
+            and has no intention of typing card details, Discord is the only
+            frictionless option and it should be read that way. */}
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariations.fadeInUp)}
+          className="mx-auto mt-12 max-w-[1100px]"
+          aria-labelledby="start-title"
+        >
+          <h2
+            id="start-title"
+            className="text-center text-sm font-bold uppercase tracking-wider text-zinc-400"
+          >
+            Start here — pick one
+          </h2>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {/* 1. Discord — free, no card. Recommended for TikTok traffic. */}
+            <div className="card relative overflow-hidden border-brand/40 p-6">
+              <div
+                className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand to-transparent"
+                aria-hidden="true"
+              />
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-brand">
+                  <FaDiscord className="text-base" aria-hidden="true" />
+                  Join Discord
+                </h3>
+                <Badge variant="glow" className="text-[10px]">
+                  Free
+                </Badge>
+              </div>
+              <p className="mt-3 text-2xl font-extrabold tracking-tight text-white">
+                Free, no card
+              </p>
+              <ul className="mt-4 space-y-2 text-sm text-zinc-300">
+                <li className="flex items-start gap-2">
+                  <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
+                  The live deal feed, as it lands
+                </li>
+                <li className="flex items-start gap-2">
+                  <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
+                  Public channels and other members' finds
+                </li>
+                <li className="flex items-start gap-2">
+                  <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
+                  Nothing to cancel, ever
+                </li>
+              </ul>
+              <a
+                href={DISCORD_INVITE}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonClass({ variant: 'primary', size: 'lg' })}
+              >
+                <FaDiscord className="text-sm" aria-hidden="true" />
+                Join Discord here
+              </a>
+            </div>
+
+            {/* 2. Free trial — the middle path, and the one the video should push. */}
+            <div className="card relative overflow-hidden border-white/15 p-6">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-300">
+                  <FaCrown className="text-base text-brand-2" aria-hidden="true" />
+                  Free Trial
+                </h3>
+                <Badge variant="outline" className="text-[10px]">
+                  7 days
+                </Badge>
+              </div>
+              <p className="mt-3 text-2xl font-extrabold tracking-tight text-white">$0 for a week</p>
+              <ul className="mt-4 space-y-2 text-sm text-zinc-300">
+                <li className="flex items-start gap-2">
+                  <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
+                  Everything in the member channels
+                </li>
+                <li className="flex items-start gap-2">
+                  <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
+                  Faster alerts than the free feed
+                </li>
+                <li className="flex items-start gap-2">
+                  <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
+                  Card on file, so cancel before day 7 and you pay nothing
+                </li>
+              </ul>
+              <button
+                type="button"
+                onClick={handleTrial}
+                disabled={trialLoading}
+                className={buttonClass({ variant: 'outline', size: 'lg' })}
+              >
+                <FaCrown className="text-sm" aria-hidden="true" />
+                {trialLoading ? 'Opening Whop…' : 'Start Free Trial'}
+              </button>
+            </div>
+
+            {/* 3. Paid — for someone already sold. */}
+            <div className="card relative overflow-hidden border-white/15 p-6">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-300">
+                  <FaBolt className="text-base text-brand-2" aria-hidden="true" />
+                  Subscribe
+                </h3>
+                <Badge variant="outline" className="text-[10px]">
+                  No trial
+                </Badge>
+              </div>
+              <p className="mt-3 text-2xl font-extrabold tracking-tight text-white">
+                {interval === 'month' ? PRICE_MONTHLY_MO : PRICE_YEARLY_YR}
+              </p>
+              <ul className="mt-4 space-y-2 text-sm text-zinc-300">
+                <li className="flex items-start gap-2">
+                  <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
+                  Full member access from the first minute
+                </li>
+                <li className="flex items-start gap-2">
+                  <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
+                  {interval === 'month' ? 'Billed monthly' : 'Billed annually'}
+                </li>
+                <li className="flex items-start gap-2">
+                  <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
+                  Cancel any time from your Whop account
+                </li>
+              </ul>
+              <button
+                type="button"
+                onClick={handleUpgrade}
+                disabled={upgradeLoading}
+                className={buttonClass({ variant: 'primary', size: 'lg' })}
+              >
+                <FaCrown className="text-sm" aria-hidden="true" />
+                {upgradeLoading ? 'Opening Whop…' : `Subscribe ${interval === 'month' ? 'Monthly' : 'Yearly'}`}
+              </button>
+            </div>
+          </div>
+
+          <p className="mx-auto mt-5 max-w-2xl text-center text-xs text-zinc-500">
+            All three go through the same checkout on Whop. The Discord is free and stays free —
+            the trial and the subscription are the paid tiers.
+          </p>
+        </motion.div>
 
       {/* Free vs Premium comparison with billing interval selector */}
       <motion.div
