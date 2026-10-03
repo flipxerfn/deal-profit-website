@@ -203,7 +203,7 @@ const Upgrade = () => {
             and has no intention of typing card details, Discord is the only
             frictionless option and it should be read that way. */}
         <motion.div
-          {...getMotionProps(prefersReduced, motionVariations.fadeInUp)}
+          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
           className="mx-auto mt-12 max-w-[1100px]"
           aria-labelledby="start-title"
         >
@@ -286,7 +286,7 @@ const Upgrade = () => {
               </ul>
               <button
                 type="button"
-                onClick={handleTrial}
+                onClick={handleStartTrial}
                 disabled={trialLoading}
                 className={buttonClass({ variant: 'outline', size: 'lg' })}
               >
@@ -326,11 +326,10 @@ const Upgrade = () => {
               <button
                 type="button"
                 onClick={handleUpgrade}
-                disabled={upgradeLoading}
                 className={buttonClass({ variant: 'primary', size: 'lg' })}
               >
                 <FaCrown className="text-sm" aria-hidden="true" />
-                {upgradeLoading ? 'Opening Whop…' : `Subscribe ${interval === 'month' ? 'Monthly' : 'Yearly'}`}
+                Subscribe {interval === 'month' ? 'Monthly' : 'Yearly'}
               </button>
             </div>
           </div>
