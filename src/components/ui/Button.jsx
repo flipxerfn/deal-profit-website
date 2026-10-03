@@ -1,6 +1,11 @@
 import { clsx } from 'clsx';
 
-const base = 'inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 font-semibold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-night disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] whitespace-nowrap';
+// `relative` + `overflow-hidden` back the .btn-shine pseudo-element: a single
+// diagonal highlight that crosses on hover and parks off-stage at rest. It is
+// a background-position transition on a pseudo-element, so it costs a paint and
+// never a layout. `active:scale-[0.98]` already existed — buttons were already
+// pressing, they just had no shine.
+const base = 'btn-shine relative overflow-hidden inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 font-semibold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-night disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] whitespace-nowrap';
 
 const variants = {
   // brand-3 (#e02d4a) gives white text 4.52:1 and the hover shade 5.48:1.

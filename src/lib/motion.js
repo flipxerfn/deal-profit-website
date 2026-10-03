@@ -158,6 +158,72 @@ export const motionVariants = {
     animate: { width: 'auto' },
     transition: { duration: 0.3, ease: 'easeOut' },
   },
+
+  /* Hero: "a deal just landed".
+     One container drives the whole entrance so the order is guaranteed rather
+     than emergent from a dozen independent fadeInUps racing each other.
+     The beats, over ~1.2s:
+
+       0.00  the three category badges arrive
+       0.14  the headline resolves word by word, out of blur
+       0.40  the paragraph and buttons
+       0.55  the deal card slides up and glows
+       0.75  the trust row, one by one
+
+     Every child animates transform or opacity. Nothing animates a dimension,
+     so the sequence cannot reflow the hero or push the mobile column wider. */
+  heroSequence: {
+    animate: {
+      transition: {
+        delayChildren: 0.05,
+        staggerChildren: 0.11,
+      },
+    },
+  },
+
+  // Word reveal with a blur-to-sharp finish. filter is a paint property, so
+  // it stays off the layout path.
+  heroWord: {
+    initial: { opacity: 0, y: '0.42em', filter: 'blur(8px)' },
+    animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+  },
+
+  // The deal card: rises into place and pulses its own glow once on arrival,
+  // so the eye is told which object is the catch.
+  heroCard: {
+    initial: { opacity: 0, y: 34, scale: 0.985 },
+    animate: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      boxShadow: [
+        '0 0 0 0px rgba(244, 63, 94, 0)',
+        '0 0 34px 2px rgba(244, 63, 94, 0.34)',
+        '0 0 0 0px rgba(244, 63, 94, 0)',
+      ],
+    },
+    transition: {
+      duration: 0.72,
+      ease: [0.22, 1, 0.36, 1],
+      boxShadow: { duration: 1.5, times: [0, 0.22, 1] },
+    },
+  },
+
+  // Trust-row items. A touch further out than the headline so they read as a
+  // separate, quieter beat rather than competing with it.
+  heroTrust: {
+    initial: { opacity: 0, y: 14 },
+    animate: { opacity: 1, y: 0 },
+    transition: { type: 'spring', stiffness: 240, damping: 28, mass: 0.8 },
+  },
+
+  // Section-level fade for the paragraph and CTA pair.
+  heroBody: {
+    initial: { opacity: 0, y: 18 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+  },
 };
 
 export function getMotionProps(prefersReduced, variants) {

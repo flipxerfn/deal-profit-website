@@ -65,19 +65,64 @@ const TRUST_ITEMS = (pctLinkable) => [
 ];
 
 // Staggered word-by-word reveal for the hero headline line (respects reduced motion).
+/* 4. A price that drops.
+   The archived example used to read "$39.99 / 93% off" as static text on a
+   card labelled "not a live find". Animating the number lands the idea that
+   something just happened here, which is the entire claim of the site.
+
+   It counts DOWN from the retail price to the caught price, because that is
+   the direction money moves and it is the direction the eye expects. It ends
+   in white rather than the brand colour, so the value is legible at rest.
+
+   The percentage sits next to it rather than inside it because a number that
+   is still moving and a number that has settled should not share a glyph. */
+const PriceDrop = ({ from, to, decimals = 2, duration = 1100 }) => {
+  const prefersReduced = useReducedMotion();
+  const [shown, setShown] = useState(from);
+
+  useEffect(() => {
+    if (prefersReduced) {
+      setShown(to);
+      return undefined;
+    }
+    let raf;
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      // easeOutCubic — fast off the line, settling gently, like a needle.
+      const eased = 1 - Math.pow(1 - t, 3);
+      setShown(from + (to - from) * eased);
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [from, to, duration, prefersReduced]);
+
+  return (
+    <span className="tabular-nums price-land">
+      ${shown.toFixed(decimals)}
+    </span>
+  );
+};
+
 const StaggerLine = ({ text, className = '', delay = 0 }) => {
   const prefersReduced = useReducedMotion();
   if (prefersReduced) return <span className={className}>{text}</span>;
   const words = text.split(' ');
+  // When the line is a clipped gradient, each word has to carry the gradient
+  // itself. The parent span gets background-clip:text, but its children are
+  // separate inline boxes with their own background — so they inherit the
+  // transparent text colour and paint nothing, and the whole line disappears.
+  const isGradient = /text-gradient/.test(className);
   return (
     <span className={className}>
       {words.map((word, i) => (
         <motion.span
           key={`${word}-${i}`}
-          className="inline-block will-change-transform"
-          initial={{ opacity: 0, y: '0.45em' }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: delay + i * 0.06, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          className={isGradient ? 'inline-block will-change-transform text-gradient-brand' : 'inline-block will-change-transform'}
+          initial={{ opacity: 0, y: '0.45em', filter: 'blur(8px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ delay: delay + i * 0.06, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
           {word}
           {i < words.length - 1 ? '\u00A0' : ''}
@@ -190,27 +235,22 @@ const Home = () => {
     <>
       {/* Hero Section */}
       <section className="band-full band-bleed tint-brand relative pb-16 pt-12 md:pb-20 md:pt-16" aria-labelledby="hero-title">
-        {/* Background: glows, animated orbs, subtle grid */}
+        {/* Background: one drifting field plus a sweeping beam.
+
+            These replace two blur orbs that each translated on their own 16s
+            and 18s loop. Two independent loops read as incidental wobble; one
+            shared field plus a single pass reads as a screen that is awake.
+            Both are transform-only and both are silenced by the global
+            prefers-reduced-motion rule in index.css. */}
         <div className="radial-glow-hero pointer-events-none absolute inset-0" aria-hidden="true" />
-        <motion.div
-          {...getMotionProps(prefersReduced, {
-            animate: { x: [0, 34, 0], y: [0, 20, 0] },
-            transition: { duration: 16, repeat: Infinity, ease: 'easeInOut' },
-          })}
-          className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand/10 blur-[90px]"
-          aria-hidden="true"
-        />
-        <motion.div
-          {...getMotionProps(prefersReduced, {
-            animate: { x: [0, -28, 0], y: [0, -16, 0] },
-            transition: { duration: 18, repeat: Infinity, ease: 'easeInOut' },
-          })}
-          className="pointer-events-none absolute -bottom-24 right-0 h-80 w-80 rounded-full bg-glow/10 blur-[100px]"
-          aria-hidden="true"
-        />
+        <div className="hero-drift" aria-hidden="true" />
+        <div className="hero-beam" aria-hidden="true" />
 
         <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8">
-          <div className="relative grid items-center gap-10 lg:grid-cols-[1fr_0.9fr] lg:gap-16">
+          <motion.div
+            {...getMotionProps(prefersReduced, motionVariants.heroSequence)}
+            className="relative grid items-center gap-10 lg:grid-cols-[1fr_0.9fr] lg:gap-16"
+          >
           {/* min-w-0 on the COLUMN, not just on the items inside it. A grid
               item defaults to min-width:auto, so it sizes to its content's
               intrinsic width and refuses to shrink — and every child inherits
@@ -224,7 +264,7 @@ const Home = () => {
               column was. */}
           <div className="min-w-0">
             <motion.div
-              {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+              {...getMotionProps(prefersReduced, motionVariants.heroWord)}
               className="mb-5 inline-flex flex-wrap items-center gap-2"
             >
               {['Price Errors', 'Penny Deals', 'Glitch Finds'].map((tag) => (
@@ -237,7 +277,7 @@ const Home = () => {
 
             <motion.h1
               id="hero-title"
-              {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+              {...getMotionProps(prefersReduced, motionVariants.heroWord)}
               className="text-shadow-glow text-3xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-4xl md:text-[52px] lg:text-[60px] xl:text-[68px] 2xl:text-[76px]"
             >
               <StaggerLine text="Catch the deals" delay={0.08} />
@@ -246,7 +286,7 @@ const Home = () => {
             </motion.h1>
 
             <motion.p
-              {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+              {...getMotionProps(prefersReduced, motionVariants.heroBody)}
               className="mt-5 max-w-xl text-sm leading-relaxed text-zinc-400 sm:text-base md:text-lg"
             >
               Price errors, penny deals and hidden discounts flagged the second they go live — plus
@@ -255,7 +295,7 @@ const Home = () => {
             </motion.p>
 
             <motion.div
-              {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+              {...getMotionProps(prefersReduced, motionVariants.heroBody)}
               className="mt-8 flex flex-wrap gap-4"
             >
               <Link to="/deals" className={buttonClass({ variant: 'primary', size: 'lg' })}>
@@ -274,13 +314,25 @@ const Home = () => {
                 visible, since a bare icon carries no meaning) and a single
                 wrapping row from sm up. */}
             <motion.div
-              {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+              {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
               className="mt-10 grid grid-cols-2 gap-x-4 gap-y-3 text-xs text-zinc-400 sm:flex sm:flex-wrap sm:items-center sm:gap-6 sm:text-sm"
             >
               {TRUST_ITEMS(linkability?.pct).map((item) => (
-                <div key={item.label} className="flex min-w-0 items-center gap-2">
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10 text-brand shadow-[0_0_12px_rgba(244,63,94,0.2)] shrink-0">
+                <motion.div
+                  key={item.label}
+                  {...getMotionProps(prefersReduced, motionVariants.heroTrust)}
+                  className="flex min-w-0 items-center gap-2"
+                >
+                  <span className="relative inline-flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10 text-brand shadow-[0_0_12px_rgba(244,63,94,0.2)] shrink-0">
                     <item.icon className="h-3.5 w-3.5" />
+                    {/* A breathing dot beside the icon, not instead of it. The
+                        icon still names the claim; the dot marks it as measured
+                        off the live feed rather than asserted. Adding it here
+                        rather than swapping the icon keeps the meaning, and
+                        keeps the row legible if the colour is lost. */}
+                    {/measured/i.test(item.desc) && (
+                      <span className="pulse-live absolute -right-0.5 -top-0.5" aria-hidden="true" />
+                    )}
                   </span>
                   <div className="min-w-0">
                     <p className="font-semibold text-white text-sm">{item.label}</p>
@@ -289,14 +341,14 @@ const Home = () => {
                         substitute for 4.5:1. zinc-400 is 7.08:1 there. */}
                     <p className="text-[11px] text-zinc-400">{item.desc}</p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </motion.div>
           </div>
 
           {/* Premium deal card + live ticker */}
           <motion.div
-            {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+            {...getMotionProps(prefersReduced, motionVariants.heroCard)}
             className="relative min-w-0"
           >
             <div className="surface-raised-strong rounded-2xl border border-white/10 bg-charcoal p-3">
@@ -337,6 +389,9 @@ const Home = () => {
                   <Badge variant="brand" className="shadow-[0_0_12px_rgba(244,63,94,0.4)]">Price error</Badge>
                   <Badge variant="outline" className="border-black/30 bg-black/50 text-zinc-200 backdrop-blur-sm">Tech</Badge>
                 </div>
+                {/* 7. The scan sweep. Over the archived example, not the live
+                    feed — the live feed is real and must not look synthetic. */}
+                <div className="scan-sweep" aria-hidden="true" />
               </div>
               <div className="flex flex-wrap items-end justify-between gap-3 px-3 pb-2 pt-4">
                 <div>
@@ -346,8 +401,12 @@ const Home = () => {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-extrabold tracking-tight text-brand">$39.99</p>
-                  <p className="text-xs font-semibold text-brand-2">Archived example: 93% off</p>
+                  <p className="text-2xl font-extrabold tracking-tight">
+                    <PriceDrop from={599.99} to={39.99} />
+                  </p>
+                  <p className="text-xs font-semibold text-brand-2">
+                    <span className="badge-tick inline-block">Archived example: 93% off</span>
+                  </p>
                 </div>
               </div>
             </div>
@@ -368,7 +427,7 @@ const Home = () => {
               labelling.
             */}
           </motion.div>
-          </div>
+          </motion.div>
           {/* The one piece of motion on the page driven by data rather than a
               timer: a continuous strip of genuinely recent finds. The hero
               cards above rotate on a fixed interval and repeat, which reads as

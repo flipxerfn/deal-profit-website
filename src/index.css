@@ -460,4 +460,248 @@
   .hairline-gradient {
     background-image: linear-gradient(90deg, transparent, rgba(244, 63, 94, 0.5), rgba(139, 92, 246, 0.5), transparent);
   }
+
+  /* ── Hero: the "a deal just landed" sequence ──────────────────────────────
+     Every rule here animates transform or opacity only, except the two
+     background-position ones (.text-gradient-brand, .hero-drift) which
+     repaint without touching layout. Nothing animates a dimension, so there
+     is no layout thrash and nothing can push a neighbour out of place at
+     390px.
+
+     All of it is cosmetic and all of it is suppressed by the global
+     prefers-reduced-motion block above, so the page is static and complete
+     for anyone who has asked for that. */
+
+  /* 2. The breathing field behind the hero.
+     Replaces the two drifting blur orbs. This is one oversized layer that
+     translates and rotates slowly enough to read as weather rather than
+     motion. transform only. */
+  .hero-drift {
+    position: absolute;
+    inset: -30%;
+    pointer-events: none;
+    background:
+      radial-gradient(45% 45% at 25% 30%, rgba(244, 63, 94, 0.22), transparent 70%),
+      radial-gradient(40% 40% at 72% 60%, rgba(139, 92, 246, 0.18), transparent 70%),
+      radial-gradient(38% 38% at 55% 85%, rgba(251, 146, 60, 0.10), transparent 70%);
+    will-change: transform;
+    animation: hero-drift 18s ease-in-out infinite alternate;
+  }
+
+  @keyframes hero-drift {
+    0% {
+      transform: translate3d(-3%, -2%, 0) rotate(-4deg) scale(1);
+    }
+    100% {
+      transform: translate3d(4%, 3%, 0) rotate(5deg) scale(1.14);
+    }
+  }
+
+  /* The thin brand beam that sweeps the hero edge. A rotated bar travelling
+     across the section — transform only, no repaint of the gradient. */
+  .hero-beam {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 2px;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(244, 63, 94, 0.85) 35%,
+      rgba(139, 92, 246, 0.7) 65%,
+      transparent
+    );
+    box-shadow: 0 0 24px 2px rgba(244, 63, 94, 0.35);
+    will-change: transform, opacity;
+    animation: hero-beam 9s ease-in-out infinite;
+  }
+
+  @keyframes hero-beam {
+    0% {
+      transform: translate3d(-4%, 0, 0);
+      opacity: 0;
+    }
+    12% {
+      opacity: 1;
+    }
+    88% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate3d(104vw, 0, 0);
+      opacity: 0;
+    }
+  }
+
+  /* 3. The accent line travels. background-position only — paints, never
+     lays out. 3s loop, deliberately slow enough to read as a sheen rather
+     than a strobe. */
+  .text-gradient-brand {
+    background-size: 200% 100%;
+    animation: gradient-travel 3s linear infinite;
+  }
+
+  @keyframes gradient-travel {
+    0% {
+      background-position: 0% center;
+    }
+    100% {
+      background-position: 200% center;
+    }
+  }
+
+  /* 7. The scan line. Sells "we are actively checking" and is the only
+     thing on the page that suggests the feed is alive. Sits over the
+     archived example image. */
+  .scan-sweep {
+    position: absolute;
+    inset-inline: 0;
+    height: 34%;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(244, 63, 94, 0.30) 55%,
+      rgba(255, 107, 138, 0.75) 92%,
+      transparent
+    );
+    will-change: transform, opacity;
+    animation: scan-sweep 5.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  }
+
+  @keyframes scan-sweep {
+    0% {
+      transform: translate3d(0, -40%, 0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate3d(0, 340%, 0);
+      opacity: 0;
+    }
+  }
+
+  /* 4. The price landing. The number arrives in the brand colour and burns
+     to white as it settles — a price that has just changed hands. */
+  .price-land {
+    animation: price-land 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes price-land {
+    0% {
+      color: #ff6b8a;
+      text-shadow: 0 0 26px rgba(244, 63, 94, 0.75);
+      transform: translate3d(0, 6px, 0) scale(0.96);
+    }
+    60% {
+      color: #ffffff;
+      transform: translate3d(0, 0, 0) scale(1.02);
+    }
+    100% {
+      color: #ffffff;
+      text-shadow: 0 0 22px rgba(244, 63, 94, 0.35);
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
+
+  /* The tick on the badge: two quick offset jumps, like a needle settling.
+     Kept under 400ms and low amplitude so it reads as a tick, not a glitch. */
+  .badge-tick {
+    animation: badge-tick 0.34s steps(2, end) 1 both;
+  }
+
+  @keyframes badge-tick {
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+    40% {
+      transform: translate3d(-2px, 1px, 0);
+    }
+    70% {
+      transform: translate3d(1px, -1px, 0);
+    }
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  /* 6. Button shine. A single diagonal highlight that crosses on hover,
+     then parks out of sight. Background-position on a pseudo-element, so no
+     layout is involved. */
+  .btn-shine::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(
+      100deg,
+      transparent 38%,
+      rgba(255, 255, 255, 0.22) 50%,
+      transparent 62%
+    );
+    background-size: 260% 100%;
+    background-position: 130% 0;
+    transition: background-position 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .btn-shine:hover::after,
+  .btn-shine:focus-visible::after {
+    background-position: -130% 0;
+  }
+
+  /* Card lift + border glow, extending card-hover rather than replacing it. */
+  .card-glow {
+    transition:
+      transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.32s ease,
+      box-shadow 0.32s ease;
+  }
+
+  .card-glow:hover,
+  .card-glow:focus-within {
+    transform: translate3d(0, -4px, 0);
+    border-color: rgba(244, 63, 94, 0.42);
+    box-shadow:
+      0 0 0 1px rgba(244, 63, 94, 0.12),
+      0 18px 40px -22px rgba(244, 63, 94, 0.45);
+  }
+
+  /* The live dot on the trust row. Breathes while the feed is measured, so
+     "measured from the live feed" is visibly a live claim. */
+  .pulse-live {
+    position: relative;
+    display: inline-flex;
+    height: 6px;
+    width: 6px;
+    flex: none;
+  }
+
+  .pulse-live::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: #ff6b8a;
+    animation: pulse-live 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-live {
+    0% {
+      transform: scale(1);
+      opacity: 0.9;
+    }
+    70%,
+    100% {
+      transform: scale(2.6);
+      opacity: 0;
+    }
+  }
 }

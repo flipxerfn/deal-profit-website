@@ -111,7 +111,13 @@ describe('the hero fits a phone', () => {
     // The OUTER item only. The icon span inside keeps shrink-0 and should —
     // an icon that squashes looks broken. The first div after the map callback
     // is the item wrapper, which is the one that was pinned.
-    const item = grid[0].match(/<div key=\{item\.label\} className="([^"]*)"/);
+    // The wrapper is a motion.div now — it became a child of the hero entrance
+    // stagger so the four items arrive one after another. The props span
+    // several lines, so match the element and then pull its className.
+    const itemEl = grid[0].match(
+      /<(?:motion\.)?div\s+key=\{item\.label\}[\s\S]*?className="([^"]*)"/
+    );
+    const item = itemEl ? [itemEl[0], itemEl[1]] : undefined;
     expect(item?.[1], 'trust item wrapper not found').toBeTruthy();
     expect(item[1], 'trust item wrapper carries shrink-0, which pins it in a grid')
       .not.toMatch(/shrink-0/);
