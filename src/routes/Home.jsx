@@ -243,8 +243,9 @@ const Home = () => {
             Both are transform-only and both are silenced by the global
             prefers-reduced-motion rule in index.css. */}
         <div className="radial-glow-hero pointer-events-none absolute inset-0" aria-hidden="true" />
+        <div className="hero-turn" aria-hidden="true" />
         <div className="hero-drift" aria-hidden="true" />
-        <div className="hero-beam" aria-hidden="true" />
+        <div className="hero-sweep" aria-hidden="true" />
 
         <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8">
           <motion.div

@@ -497,41 +497,76 @@
     }
   }
 
-  /* The thin brand beam that sweeps the hero edge. A rotated bar travelling
-     across the section — transform only, no repaint of the gradient. */
-  .hero-beam {
+  /* A wide, soft sweep of light crossing the hero.
+
+     This replaced a 2px brand-coloured line that travelled the full height of
+     the section. It was technically what the brief asked for and it looked
+     like a scratch on the screen — a hard 2px edge at 85% opacity with its
+     own glow, crossing the headline. Light has no edge; a line does. So this
+     is 200px wide, blurred, and held down around 12% opacity, which reads as
+     the room brightening rather than an object moving through it. */
+  .hero-sweep {
     position: absolute;
-    top: 0;
-    bottom: 0;
+    top: -20%;
+    bottom: -20%;
     left: 0;
-    width: 2px;
+    width: 200px;
     pointer-events: none;
     background: linear-gradient(
-      180deg,
-      transparent,
-      rgba(244, 63, 94, 0.85) 35%,
-      rgba(139, 92, 246, 0.7) 65%,
-      transparent
+      100deg,
+      transparent 0%,
+      rgba(244, 63, 94, 0.10) 42%,
+      rgba(255, 140, 170, 0.20) 50%,
+      rgba(139, 92, 246, 0.10) 58%,
+      transparent 100%
     );
-    box-shadow: 0 0 24px 2px rgba(244, 63, 94, 0.35);
+    filter: blur(28px);
     will-change: transform, opacity;
-    animation: hero-beam 9s ease-in-out infinite;
+    animation: hero-sweep 11s cubic-bezier(0.45, 0, 0.55, 1) infinite;
   }
 
-  @keyframes hero-beam {
+  @keyframes hero-sweep {
     0% {
-      transform: translate3d(-4%, 0, 0);
+      transform: translate3d(-30%, 0, 0) rotate(8deg);
       opacity: 0;
     }
-    12% {
+    15% {
       opacity: 1;
     }
-    88% {
+    85% {
       opacity: 1;
     }
     100% {
-      transform: translate3d(104vw, 0, 0);
+      transform: translate3d(112%, 0, 0) rotate(8deg);
       opacity: 0;
+    }
+  }
+
+  /* The field actually turning. A conic sheen that rotates, layered over the
+     drifting radial. Two slow motions on different axes read as depth — the
+     light is coming from somewhere and going somewhere. */
+  .hero-turn {
+    position: absolute;
+    inset: -40%;
+    pointer-events: none;
+    background: conic-gradient(
+      from 0deg at 50% 50%,
+      transparent 0deg,
+      rgba(244, 63, 94, 0.10) 60deg,
+      transparent 140deg,
+      rgba(139, 92, 246, 0.09) 220deg,
+      transparent 300deg
+    );
+    will-change: transform;
+    animation: hero-turn 26s linear infinite;
+  }
+
+  @keyframes hero-turn {
+    0% {
+      transform: rotate(0deg) scale(1);
+    }
+    100% {
+      transform: rotate(360deg) scale(1);
     }
   }
 
