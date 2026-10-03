@@ -28,7 +28,7 @@ const STEPS = [
   {
     number: 2,
     title: 'Trial or Subscribe',
-    description: 'Try it free in Discord, or subscribe straight to premium',
+    description: '7-day trial or subscribe straight to premium, on Whop',
     icon: FaCrown,
     complete: false,
   },
@@ -334,7 +334,12 @@ const PaymentFlow = () => {
                         <span className="text-2xl font-extrabold">{s.number}</span>
                       )}
                     </div>
-                    <div className="mt-4 w-48 text-center">
+                    {/* w-48 with no max-w/min-w-0 pinned this block at 192px inside a flex
+                        item, which pushed the stepper 10px past a 390px
+                        viewport. A fixed width next to a fixed-width icon is
+                        the same class of bug as the hero column: the child,
+                        not the parent, was refusing to shrink. */}
+                    <div className="mt-4 w-full max-w-48 text-center">
                       <p className="font-bold text-white">{s.title}</p>
                       <p className="mt-1 text-xs text-zinc-500">{s.description}</p>
                     </div>

@@ -30,6 +30,7 @@ import {
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 import { startCheckout, WHOP_SETUP_URL, DISCORD_INVITE } from '../lib/checkout';
 import PaymentFlow from '../components/PaymentFlow';
+import LinkDiscordToWhop from '../components/LinkDiscordToWhop';
 import { UPGRADE_FAQS as FAQS } from '../lib/upgradeContent';
 import { FEED_STATS } from '../data/siteFacts';
 import { useLinkability } from '../lib/useLinkability';
@@ -486,7 +487,7 @@ const Upgrade = () => {
             },
             {
               title: 'What happens after you pay',
-              body: 'You get a confirmation email, our bot invites you to the server and gives you the Premium role, and the member channels open up. Usually within a minute.',
+              body: 'You get a confirmation email from Whop. Your role is granted by the Whop bot, and it only knows which Discord account to give it to once you have linked that account to Whop — see the step above. Once linked, the role lands within a minute and the member channels open up.',
             },
             {
               title: 'How to cancel',
@@ -498,6 +499,16 @@ const Upgrade = () => {
               <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{item.body}</p>
             </div>
           ))}
+        </motion.div>
+
+        {/* The panel that says what to actually do about it. The four cards
+            above explain that linking is required; this one does the linking,
+            with the settings link rather than a description of the path. */}
+        <motion.div
+          {...getMotionProps(prefersReduced, motionVariants.scrollReveal)}
+          className="mx-auto mt-8 max-w-[1100px]"
+        >
+          <LinkDiscordToWhop />
         </motion.div>
       </motion.div>
 
