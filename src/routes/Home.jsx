@@ -448,6 +448,7 @@ const Home = () => {
         <SectionHeader
           align="center"
           eyebrow="How it works"
+          titleId="how-title"
           title="From find to catch in three steps"
           description="No paid bot subscriptions, no resellers farming referrals. Just fast, verified deal alerts."
         />
@@ -489,6 +490,7 @@ const Home = () => {
         <SectionHeader
           align="center"
           eyebrow="What we hunt"
+          titleId="hunt-title"
           title="The four pillars of the hunt"
           description="Every post is verified and shared with the community before the retailer notices."
         />
@@ -523,6 +525,7 @@ const Home = () => {
         <SectionHeader
           align="center"
           eyebrow="Community proof"
+          titleId="social-title"
           title="What members actually see"
           description="Real feedback from people hunting price errors, penny finds and glitch deals with Deal Profit."
         />
