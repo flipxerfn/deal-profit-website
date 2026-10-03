@@ -9,11 +9,15 @@ import { useAuth } from '../lib/useAuth';
 import DiscordLogin from './DiscordLogin';
 import SiteSearch from './SiteSearch';
 
+// Four, not five. "/discord" used to be a nav item and it was ambiguous —
+// a first-timer could not tell whether it joined the server or read a page
+// about it, and it overlapped what "Deals" already covers. The page stays and
+// is still linked from the footer and the homepage; it just is not a peer of
+// "Deals" in the header any more.
 const LINKS = [
   { to: '/', label: 'Home' },
   { to: '/deals', label: 'Deals' },
   { to: '/reviews', label: 'Reviews' },
-  { to: '/discord', label: 'Discord' },
   { to: '/upgrade', label: 'Upgrade' },
 ];
 

@@ -262,14 +262,12 @@ const Home = () => {
                 Explore Deals
                 <FaArrowRight className="text-sm" />
               </Link>
-              <a
-                href="https://discord.gg/dealprofit"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/upgrade"
                 className={buttonClass({ variant: 'outline', size: 'lg' })}
               >
                 Start Free Trial
-              </a>
+              </Link>
             </motion.div>
 
             {/* Trust indicators — a 2-up grid on phones (labels always
@@ -517,15 +515,13 @@ const Home = () => {
               Join Discord
               <FaArrowRight className="text-sm" />
             </a>
-            <a
-              href="https://discord.gg/dealprofit"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to="/upgrade"
               className={buttonClass({ variant: 'outline', size: 'lg' })}
             >
               <FaCrown className="text-[13px]" />
               Start Free Trial
-            </a>
+            </Link>
           </>
         }
       />

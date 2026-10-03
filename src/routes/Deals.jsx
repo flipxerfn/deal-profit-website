@@ -12,6 +12,7 @@ import DealCard from '../components/DealCard';
 import SpotlightDeal from '../components/SpotlightDeal';
 import DiscordLogin from '../components/DiscordLogin';
 import { useAuth } from '../lib/useAuth';
+import { DISCORD_INVITE } from '../lib/checkout';
 import { Button, Input, Select, Badge, SkeletonCard } from '../components/ui';
 import { CATEGORIES, DEALS as DEMO_DEALS } from '../data/deals';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
@@ -217,6 +218,29 @@ const Deals = () => {
           {feed.source === 'discord'
             ? 'Pulled straight from the Deal Profit Discord — price errors, penny deals and profitable listings, filtered and sorted your way.'
             : 'Real finds from the Deal Profit community — price errors, penny deals and profitable listings, filtered and sorted your way.'}
+        </p>
+
+        {/* Accuracy caveat. It sits directly under the page description, before
+            any price is on screen, because it is not a disclaimer about the site
+            — it is a fact about the data.
+
+            The feed is automated. Bots post whatever a retailer listing said at
+            the moment it was scraped, and prices move: an item sells out, a
+            "price error" is corrected within minutes, a reference price is
+            sometimes wrong at the source. A batch measured earlier had a $9,268
+            reference price on a headset and a $2,952 one on a Wii Remote, so
+            the discount percentage on a row can be fiction even when the link
+            is real. The Terms already say we cannot guarantee a price is
+            available or honoured; this is that same truth in the place someone
+            actually reads prices, rather than three clicks away. */}
+        <p className="mt-4 flex max-w-3xl items-start gap-2 rounded-lg border border-amber-400/15 bg-amber-400/[0.04] px-3.5 py-2.5 text-xs leading-relaxed text-amber-100/80">
+          <FaTriangleExclamation className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-300/80" aria-hidden="true" />
+          <span>
+            <strong className="font-semibold text-amber-200/90">Check the price before you buy.</strong>{' '}
+            These come from an automated feed, so a listed price or a reference price is sometimes
+            wrong or already outdated, and a deal can sell out or be corrected within minutes. Every
+            one links straight to the listing — click through and confirm the price is real.
+          </span>
         </p>
       </motion.header>
 
@@ -435,18 +459,31 @@ const Deals = () => {
                 <FaLock className="h-5 w-5" aria-hidden="true" />
               </div>
               <h2 className="mt-4 text-xl font-extrabold text-white">
-                {hiddenCount} more {hiddenCount === 1 ? 'deal' : 'deals'} in the full feed
+                Log in to see the other {hiddenCount} {hiddenCount === 1 ? 'deal' : 'deals'}
               </h2>
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-zinc-400">
-                Sign in with Discord to see every find as it is caught, plus the member-only
-                channels in our server. No card needed.
+                You are looking at the first {signedIn ? '' : 'few'} of the feed. Signing in with
+                Discord unlocks the rest of it as each find lands, plus the member-only channels.
+                It is free and takes about ten seconds — no card, nothing to cancel.
               </p>
               <DiscordLogin
-                label="Sign in with Discord"
+                label="Log in with Discord to unlock the rest"
                 size="lg"
                 onClick={signIn}
                 className="mt-6"
               />
+              <p className="mx-auto mt-4 max-w-md text-xs leading-relaxed text-zinc-500">
+                Not ready?{' '}
+                <a
+                  href={DISCORD_INVITE}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand hover:underline"
+                >
+                  Join the Discord instead
+                </a>{' '}
+                — free, no account needed.
+              </p>
             </motion.div>
           )}
         </>
