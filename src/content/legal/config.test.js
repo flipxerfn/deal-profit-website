@@ -119,11 +119,14 @@ describe('the documents name a real jurisdiction and contact', () => {
 
 describe('the policy still describes the real payment model', () => {
   // The PDFs generated from these documents get attached to chargebacks, so
-  // they have to describe what actually happens: trial in Discord, no card,
-  // cancel from Whop. Stale copy here is what loses a dispute.
-  it('says the trial involves no card', () => {
+  // they have to describe what actually happens: a 7-day trial on Whop with a
+  // card on file, and cancel from Whop. Stale copy here is what loses a dispute.
+  it('describes the trial as card-backed, not card-free', () => {
     const text = allText(refunds).join(' ');
-    expect(text).toMatch(/no card/i);
+    expect(text).toMatch(/7 days/);
+    expect(text).toMatch(/card/i);
+    // The old model promised no card at all. That must not come back.
+    expect(text).not.toMatch(/no card/i);
   });
 
   it('says cancellation happens from the Whop account', () => {

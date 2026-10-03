@@ -5,7 +5,7 @@ export const UPGRADE_FAQS = [
   {
     title: 'How does the free trial work?',
     content:
-      'Click any trial button and you land in our Discord server, where the member channels are. Try it there. No card is taken for the trial, so there is nothing to cancel and no charge to forget about. Subscribe on Whop when you are ready.',
+      'Click any trial button and you land on our checkout page at Whop, where a 7-day free trial starts. A card is required so the trial can become a subscription if you let it run. Cancel from your Whop account any time before the trial ends and you pay nothing.',
   },
   {
     title: 'Can I cancel anytime?',
@@ -15,7 +15,7 @@ export const UPGRADE_FAQS = [
   {
     title: 'Do I need a card to try it?',
     content:
-      'No. The trial lives in our Discord server, so there is no card and no auto-charge to forget about. If you decide you want the member channels permanently, subscribe on Whop then.',
+      'Yes. The 7-day trial runs through Whop, which takes a card so the trial can turn into a subscription on its own. If you cancel before the trial ends you are not charged. The Discord community stays free and open either way.',
   },
   {
     title: 'Who holds my payment details?',

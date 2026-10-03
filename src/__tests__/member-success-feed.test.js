@@ -98,8 +98,11 @@ describe('the feed makes no claim it cannot support', () => {
     expect(comp).not.toMatch(/What members (actually )?(earned|made|profit)/i);
   });
 
-  it('says the trial needs no card, matching how it actually works', () => {
-    expect(comp).toMatch(/no card is involved/i);
+  it('does not claim the trial needs no card', () => {
+    // The feed header used to say "the trial is free and no card is involved".
+    // The trial moved to Whop and takes a card, so that sentence is now false.
+    // The Discord itself is still free, which is what the copy should say.
+    expect(comp).not.toMatch(/no card is involved/i);
   });
 });
 

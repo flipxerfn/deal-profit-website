@@ -116,7 +116,7 @@ const TRIAL_INCLUDES = [
   'Instant access to the member deal channels',
   'Price error and penny deal alerts',
   'Reselling opportunities from the community',
-  'No card needed — nothing to cancel, nothing to be charged',
+  'Card on file for the trial — cancel before it ends and you pay nothing',
 ];
 
 // Measured live. The old figure was a constant counting 9 Discord channel
@@ -306,17 +306,17 @@ const Upgrade = () => {
             className={buttonClass({ variant: 'outline', size: 'lg' })}
           >
             <FaDiscord className="text-sm" />
-            {trialLoading ? 'Opening Discord...' : 'Start Free Trial'}
+            {trialLoading ? 'Opening Whop...' : 'Start Free Trial'}
           </button>
         </motion.div>
         <motion.p
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
           className="mt-6 text-sm text-zinc-400"
         >
-          The free trial happens in <strong className="text-white">Discord</strong> — join the server,{' '}
-          try the member channels, and if you like it subscribe for{' '}
-          <strong className="text-white">{interval === 'month' ? '$25/mo' : '$200/yr'}</strong>. No
-          card for the trial, so there is nothing to cancel and nothing to be charged.
+          The free trial starts on <strong className="text-white">Whop</strong> — 7 days free,
+          then {interval === 'month' ? '$25/mo' : '$200/yr'} unless you cancel. A card is
+          required to start it, and you can cancel from your Whop account at any time
+          before the trial ends.
         </motion.p>
 
         {/* The part people actually get wrong: clicking a button on a site
@@ -329,7 +329,7 @@ const Upgrade = () => {
           {[
             {
               title: 'What the trial button does',
-              body: 'Opens our Discord server. There you can read the member channels as long as you like. No card is taken and nothing is charged — ever, unless you choose to subscribe.',
+              body: 'Opens our checkout page on Whop and starts a 7-day free trial. Whop asks for a card so the trial can roll into a subscription. Cancel from your Whop account before the trial ends and you are never charged.',
             },
             {
               title: 'What the upgrade button does',
@@ -528,7 +528,7 @@ const Upgrade = () => {
               className={buttonClass({ variant: 'outline', size: 'lg' })}
             >
               <FaCrown className="text-sm" />
-              {trialLoading ? 'Opening Discord…' : 'Start Free Trial'}
+              {trialLoading ? 'Opening Whop…' : 'Start Free Trial'}
             </button>
           </>
         }

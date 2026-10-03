@@ -41,10 +41,14 @@ describe('no Stripe in the browser', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('still routes purchases to Whop and trials to Discord', () => {
+  it('routes both purchases and trials to Whop', () => {
+    // Purchases and the free trial now both happen on Whop. The trial used to
+    // go to the Discord invite because no card was taken; it takes one now, so
+    // there is no reason for two paths.
     expect(checkout).toContain('WHOP_CHECKOUT_URL');
     expect(checkout).toContain('DISCORD_INVITE');
-    expect(checkout).toMatch(/trial \? DISCORD_INVITE : WHOP_CHECKOUT_URL/);
+    expect(checkout).not.toMatch(/trial \? DISCORD_INVITE/);
+    expect(checkout).toMatch(/window\.location\.href = WHOP_CHECKOUT_URL/);
   });
 });
 

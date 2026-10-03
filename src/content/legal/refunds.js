@@ -11,7 +11,7 @@ export const refunds = {
   title: 'Refund & Cancellation Policy',
   eyebrow: 'Legal',
   intro:
-    `The short version: you can cancel whenever you want, you keep what you paid for, and you are never charged for a trial you cancel. ` +
+    `The short version: you can cancel whenever you want, you keep what you paid for, and a trial you cancel before it ends costs nothing. ` +
     `Full details for ${BUSINESS_LEGAL_NAME} are below.`,
   updated: 'September 30, 2026',
   sections: [
@@ -28,8 +28,9 @@ export const refunds = {
       id: 'trial',
       heading: '2. Free trial',
       body: [
-        'The free trial happens in our Discord server, not through a checkout. No card is involved at any point, so there is no charge to be made, no payment method on file, and nothing for you to cancel.',
-        'If you decide to subscribe, that is a separate, deliberate step where you choose a plan and pay on Whop. We will never start a paid subscription for you, and we will never charge a card that you have not personally used to buy a plan.',
+        'The free trial starts on Whop, our payment provider, and runs for 7 days. Whop asks for a card so the trial can carry on as a subscription without a second step.',
+        'If you cancel before the trial ends, it does not convert — no charge is made and nothing is owed. If you leave it running, the plan you selected begins on the normal billing date at its standard rate.',
+        'We will email you before the trial converts, so it should never come as a surprise. You can also cancel at any time from your Whop account as described above.',
       ],
     },
     {

@@ -437,11 +437,11 @@ const PaymentFlow = () => {
                     <span className="mb-3 inline-block rounded-full border border-zinc-700 px-3 py-1 text-xs font-bold uppercase tracking-wider text-zinc-400">
                       Optional
                     </span>
-                    <h2 className="text-xl font-extrabold text-white">Try It Free in Discord</h2>
+                    <h2 className="text-xl font-extrabold text-white">Try It Free for 7 Days</h2>
                     <p className="mt-2 text-zinc-400 max-w-md mx-auto">
-                      Join the server and use the member channels as long as you like. No card is
-                      taken, so there's nothing to cancel and nothing to be charged. Subscribe for{' '}
-                      <strong className="text-white">$25/month</strong> when you want to keep it.
+                      The trial runs on Whop, so a card is on file for the week. Cancel from your
+                      Whop account before it ends and you pay nothing. After that it is{' '}
+                      <strong className="text-white">$25/month</strong>, cancel any time.
                     </p>
                     {subscription?.status === 'trialing' && subscription.current_period_end && (
                       <p className="mt-3 text-sm text-emerald-300">
@@ -478,16 +478,17 @@ const PaymentFlow = () => {
                         </p>
                       )}
                       <p className="text-xs text-zinc-500">
-                        No card needed for the trial —{' '}
+                        The 7-day trial runs on Whop with a card on file — cancel before it ends
+                        and you pay nothing. Want to look around first?{' '}
                         <a
                           href={DISCORD_INVITE}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-brand hover:underline"
                         >
-                          join our Discord
+                          Join our Discord
                         </a>{' '}
-                        and try the premium channels first.
+                        and read the public channels at no cost.
                       </p>
                       <p className="text-sm text-zinc-500">
                         Already have a trial or subscription?{' '}

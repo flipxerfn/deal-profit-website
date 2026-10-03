@@ -34,9 +34,10 @@ describe('legal pages', () => {
     // Prices live in config.js so the pages and checkout can't drift; assert
     // the values themselves, plus that the docs use them.
     //
-    // There is deliberately no TRIAL_DAYS any more: the trial is a Discord
-    // visit with no card and no clock, so a trial-length constant would only
-    // invite copy that implies a charge.
+    // The trial is 7 days on Whop with a card on file. The pages hardcode "7
+    // days" rather than reading a constant, because the trial length is set in
+    // the Whop dashboard, not here — so this comment is the tripwire: if the
+    // trial ever moves or changes length, update this note with the copy.
     const config = fs.readFileSync(path.join(dir, 'config.js'), 'utf8');
     expect(config).toContain("PRICE_MONTHLY = '$25'");
     expect(config).toContain("PRICE_YEARLY = '$200'");

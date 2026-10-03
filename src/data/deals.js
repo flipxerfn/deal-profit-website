@@ -87,7 +87,7 @@ export const HOW_IT_WORKS = [
   {
     step: '01',
     title: 'Join the community',
-    text: 'Hop into the Deal Profit Discord and grab the free trial to unlock member-only channels.',
+    text: 'Join the Deal Profit Discord for the finds as they land, or start a 7-day trial on Whop to unlock the member-only channels.',
   },
   {
     step: '02',

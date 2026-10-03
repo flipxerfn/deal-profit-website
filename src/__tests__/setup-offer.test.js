@@ -60,10 +60,11 @@ describe('startCheckout cannot sell the one-time service', () => {
     const start = src.indexOf('export async function startCheckout');
     const body = src.slice(start, src.indexOf('\n}', start) + 2);
     const hrefs = [...body.matchAll(/window\.location\.href\s*=\s*([^;]+);/g)].map((m) => m[1]);
-    // trial -> Discord invite, paid -> Whop checkout. That is all it does, in
-    // one ternary, so a third destination has nowhere to hide.
+    // The trial and the paid plan both go to Whop checkout now. The Discord
+    // invite used to be the trial destination; a card is now taken, so there
+    // is one destination, and a third one still has nowhere to hide.
     expect(hrefs).toHaveLength(1);
-    expect(hrefs[0].trim()).toMatch(/^trial\s*\?\s*DISCORD_INVITE\s*:\s*WHOP_CHECKOUT_URL$/);
+    expect(hrefs[0].trim()).toBe('WHOP_CHECKOUT_URL');
   });
 
   it('never references the mirror URL from the checkout dispatcher', () => {
@@ -75,7 +76,7 @@ describe('startCheckout cannot sell the one-time service', () => {
     );
   });
 
-  it('the Discord trial never leads to the mirror product either', () => {
+  it('the Discord invite never leads to the mirror product either', () => {
     // A free trial that then offers a $55 one-time is a bait and switch.
     expect(DISCORD_INVITE).not.toMatch(/whop\.com/);
   });

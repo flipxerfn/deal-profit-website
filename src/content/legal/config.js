@@ -22,5 +22,8 @@ export const SERVICE_NAME = 'Deal Profit';
 export const PREMIUM_ROLE = 'deals-profit';
 export const PRICE_MONTHLY = '$25';
 export const PRICE_YEARLY = '$200';
-// There is no timed card trial any more: the trial lives in Discord and is not
-// billed, so a TRIAL_DAYS value would only invite copy that promises a charge.
+// There is deliberately no TRIAL_DAYS constant. The trial is 7 days, but that
+// number is configured in the Whop dashboard, not here, so a constant in this
+// file would drift the moment it is changed there. The legal pages state "7
+// days" in prose on purpose; legal-pages.test.js is the reminder to revisit
+// that text if the Whop trial length ever changes.

@@ -39,7 +39,7 @@ export const terms = {
       heading: '3. Subscriptions, trials, and billing',
       body: [
         `Paid membership is offered as ${PRICE_MONTHLY}/month or ${PRICE_YEARLY}/year. Prices are shown in US dollars and may change with at least 30 days notice before your next renewal.`,
-        `New members can try the member channels free in our Discord server. The trial does not involve a checkout or a card, so no payment method is collected and there is nothing to be charged. A paid subscription only ever begins when you personally choose a plan and pay for it.`,
+        `New members can try the member channels free for 7 days through our checkout page on Whop. A payment method is required to start the trial so that it can continue as a subscription if you let it run. If you do not cancel before the trial ends, the plan you selected begins and bills at its normal rate from that date. You can cancel at any time before then and will not be charged — see section 4.`,
         'Billing is recurring and renews automatically at the end of each period until you cancel. We will notify you by email and/or in Discord before each renewal.',
         'Payments are processed by Whop, which is our payment provider. Whop handles your card details; we never see or store your full card number. Wallets such as Apple Pay and Google Pay may be used where supported.',
         'If a payment fails, Whop may retry it. If it cannot be collected, your membership and premium Discord role may be suspended until payment succeeds.',
@@ -51,7 +51,7 @@ export const terms = {
       body: [
         'You can cancel at any time from your Whop account — use "Manage membership" on our Whop product page, or Profile → Orders on whop.com. There are no cancellation fees and no minimum commitment. You can also message us and we will cancel it for you.',
         'When you cancel, your premium access continues until the end of the period you already paid for, and your Discord role stays active until that date. After that date you are not charged again and the role is removed.',
-        'A free trial involves no payment method, so there is no charge to prevent and nothing to cancel.',
+        'Cancelling during the 7-day trial stops the subscription before it converts, so no charge is made. We will email you before the trial converts, and again before each renewal.',
       ],
     },
     {

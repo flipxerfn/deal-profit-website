@@ -2,9 +2,9 @@
 // /payment and /trial pages).
 //
 // Current flow:
-//   - Free trial  -> Discord invite. No card, so a trial member has nothing to
-//                    dispute.
+//   - Free trial  -> Whop, 7 days free with a card on file.
 //   - Subscribe   -> Whop, where the plan is chosen and paid for.
+//   - Community   -> Discord, which stays free and open.
 //
 // startStripeCheckout() below is the previous self-billed Stripe flow, kept
 // intact for when the Stripe account is verified.
@@ -52,11 +52,24 @@ export const SETUP_PRICE_USD = 55;
 // Honest, and it works today.
 export const WHOP_SIGN_IN_URL = 'https://whop.com/';
 
-// Subscriptions are sold on Whop. The free trial is Discord-only on purpose:
-// no card is taken during a trial, so there is nothing a trial member can
-// dispute. Paid members buy on Whop.
+// Subscriptions AND the free trial are on Whop.
+//
+// This used to be split: the trial lived in Discord so no card was ever taken,
+// and paid members bought on Whop. That split is gone. Discord was being
+// suspended, and a Whop trial turned out to be the steadier place for it.
+//
+// The cost of the move is the selling point it took with it: every "no card"
+// claim on this site was true because no card was taken, and a 7-day Whop trial
+// takes one. So the copy across the site, the Terms, the Refunds page and the
+// Privacy page now says what actually happens — card on file, charged at the
+// end of the trial unless cancelled — instead of what used to be true.
+//
+// Discord is still the community and support channel. It is just no longer
+// where the trial happens, and nothing on this site may imply otherwise.
 export async function startCheckout({ trial = false } = {}) {
-  window.location.href = trial ? DISCORD_INVITE : WHOP_CHECKOUT_URL;
+  // Both paths land on Whop. Whop applies the 7-day trial itself when the
+  // buyer starts from the product page, so a separate trial URL is not needed.
+  window.location.href = WHOP_CHECKOUT_URL;
   return { ok: true, redirected: true };
 }
 

@@ -68,18 +68,36 @@ describe('the policy matches the buttons', () => {
     expect(text).not.toContain('/upgrade page');
   });
 
-  it('never claims a timed card trial with a payment method on file', () => {
-    // This is the copy most likely to produce a chargeback: "a payment method
-    // is required" reads as "you will be charged on day 7".
-    expect(allLegalText).not.toContain('payment method is required');
-    expect(allLegalText).not.toMatch(/payment method is required to start/);
+  it('discloses the card and the charge date, and never hides either', () => {
+    // This used to assert the opposite — that "payment method is required"
+    // appeared nowhere — because the trial was in Discord and took no card.
+    // It now runs on Whop and takes one, so the chargeback risk this test was
+    // guarding against is real and has to be disclosed, not avoided.
+    //
+    // The wording still matters: the pages must say a card is held AND say when
+    // it is charged AND say how to stop it. Saying only the first is the copy
+    // that produces chargebacks.
+    const subs = terms.sections.find((s) => s.id === 'subscriptions');
+    const subText = subs.body.join(' ');
+    expect(subText).toMatch(/7 days/);
+    expect(subText.toLowerCase()).toMatch(/payment method is required|card/);
+    expect(subText.toLowerCase()).toMatch(/cancel/);
+    expect(subText.toLowerCase()).not.toMatch(/no card/);
+    // Never imply a trial exists that bypasses checkout.
     expect(allLegalText).not.toMatch(/free trial from any trial button/);
   });
 
-  it('states plainly that no card is taken for the trial', () => {
+  it('states plainly what the trial does and does not charge', () => {
+    // The refund page is the document that gets attached to a chargeback, so it
+    // has to describe the real model: a 7-day Whop trial, card on file, and no
+    // charge if cancelled first. It used to assert "no card", which was true
+    // when the trial lived in Discord and is now false.
     const trial = refunds.sections.find((s) => s.id === 'trial');
-    expect(trial.body.join(' ').toLowerCase()).toMatch(/no card/);
-    expect(trial.body.join(' ').toLowerCase()).toMatch(/discord/);
+    const text = trial.body.join(' ');
+    expect(text.toLowerCase()).toMatch(/7 days/);
+    expect(text).toContain('Whop');
+    expect(text.toLowerCase()).toMatch(/cancel/);
+    expect(text.toLowerCase()).not.toMatch(/no card/);
   });
 
   it('names Whop as the processor and never claims Stripe', () => {
