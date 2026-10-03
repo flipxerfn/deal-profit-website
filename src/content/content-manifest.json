@@ -335,7 +335,7 @@
                 "content": { "type": "string", "label": "Answer" }
               },
               "default": [
-                { "title": "How does the free trial work?", "content": "Click any trial button and you land in our Discord server, where the member channels are. Try it there. No card is taken for the trial, so there is nothing to cancel and no charge to forget about. Subscribe on Whop when you are ready." },
+                { "title": "How does the free trial work?", "content": "Click any trial button and you land on our checkout page at Whop, where a 7-day free trial starts. A card is required so the trial can become a subscription if you let it run. Cancel from your Whop account any time before the trial ends and you pay nothing. The Discord community is free and stays free." },
                 { "title": "Can I cancel anytime?", "content": "Yes — cancel from your Stripe customer portal at any time. Your access stays until the end of the current billing period." },
                 { "title": "What makes the premium feed different?", "content": "Premium members get faster alerts plus priority notifications for price errors, penny deals and reselling opportunities that stay out of the public feed." },
                 { "title": "Are the deals guaranteed?", "content": "No. Retailers can correct pricing errors at any time, and stock is often limited. Deals are posted fast specifically so you can act before that happens." },
@@ -354,7 +354,7 @@
             "description": {
               "type": "string",
               "label": "CTA Description",
-              "default": "Try it free in Discord, then subscribe for $25/mo. Cancel anytime."
+              "default": "Try it free for 7 days on Whop, then subscribe for $25/mo. Cancel anytime."
             }
           }
         }

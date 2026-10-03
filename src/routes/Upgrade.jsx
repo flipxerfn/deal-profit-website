@@ -666,8 +666,8 @@ const Upgrade = () => {
         title="Ready to catch more deals?"
         description={
           interval === 'month'
-            ? 'Try it free in Discord, then subscribe for $25/mo. Cancel anytime.'
-            : 'Try it free in Discord, then subscribe for $200/yr (save $100). Cancel anytime.'
+            ? 'Try it free for 7 days on Whop, then subscribe for $25/mo. Cancel anytime.'
+            : 'Try it free for 7 days on Whop, then subscribe for $200/yr (save $100). Cancel anytime.'
         }
         actions={
           <>

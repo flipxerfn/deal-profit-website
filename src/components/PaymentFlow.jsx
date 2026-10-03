@@ -471,7 +471,7 @@ const PaymentFlow = () => {
                         ) : (
                           <>
                             <FaCrown className="text-sm" />
-                            Try It Free in Discord
+                            Try It Free for 7 Days
                             <FaArrowRight className="text-sm" />
                           </>
                         )}
