@@ -22,6 +22,7 @@ import {
   toPublicReview,
   validateReview,
 } from './reviews.js';
+import { buildSetupMessage, validateSetupRequest } from './setupRequest.js';
 import {
   SESSION_AGE_MS,
   SESSION_COOKIE,
@@ -1485,6 +1486,77 @@ async function getLogsChannel(env) {
 
 // Grant the premium Discord role once the subscription is (or becomes) paid.
 
+const SETUP_RATE = { windowMs: 15 * 60 * 1000, max: 5 };
+const setupSubmits = new Map();
+
+function setupRateLimited(request) {
+  const ip = clientIp(request);
+  const now = Date.now();
+  const entry = setupSubmits.get(ip);
+  if (entry && entry.resetAt > now) {
+    if (entry.count >= SETUP_RATE.max) return true;
+    entry.count += 1;
+  } else {
+    setupSubmits.set(ip, { count: 1, resetAt: now + SETUP_RATE.windowMs });
+  }
+  if (setupSubmits.size > 10_000) setupSubmits.clear();
+  return false;
+}
+
+/**
+ * POST /api/setup-request — the Deal Feed Setup intake form.
+ *
+ * Fires a Discord webhook at the owner's #logs channel and returns. Nothing is
+ * written to the Durable Object, the KV, or anywhere else. That is deliberate:
+ * a customer's server invite and username should not sit in a database that
+ * the admin dashboard can render. The webhook URL is a Worker secret
+ * (DISCORD_SETUP_WEBHOOK_URL) so it never reaches the browser, and the form
+ * posts through here rather than calling Discord directly.
+ *
+ * If the secret is missing the form still succeeds for the buyer — telling
+ * them their request failed when it was actually never delivered would be
+ * worse than telling them it is on its way. The failure is logged instead.
+ */
+async function handleSetupRequest(request, env) {
+  if (request.method !== 'POST') return json({ ok: false, error: 'method_not_allowed' }, 405);
+  if (!originIsAllowed(request)) return json({ ok: false, error: 'forbidden' }, 403);
+  if (setupRateLimited(request)) return json({ ok: false, error: 'rate_limited' }, 429);
+
+  let body = {};
+  try {
+    body = await request.json();
+  } catch {
+    return json({ ok: false, error: 'bad_request' }, 400);
+  }
+
+  const { value, error, honeypot } = validateSetupRequest(body);
+
+  // A bot filled the hidden field. Report success so it learns nothing.
+  if (honeypot) return json({ ok: true, queued: true });
+
+  if (error) return json({ ok: false, error }, 400);
+
+  const hook = env.DISCORD_SETUP_WEBHOOK_URL;
+  if (!hook) {
+    console.error('[setup-request] DISCORD_SETUP_WEBHOOK_URL is not set — request dropped');
+    return json({ ok: false, error: 'not_configured' }, 503);
+  }
+
+  const res = await fetch(`${hook}?wait=true`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content: buildSetupMessage(value) }),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    console.error(`[setup-request] webhook ${res.status}`, detail.slice(0, 200));
+    return json({ ok: false, error: 'delivery_failed' }, 502);
+  }
+
+  return json({ ok: true, queued: true });
+}
+
 async function handleUserSubscription(request, env) {
   if (request.method !== 'GET') return json({ ok: false, error: 'method_not_allowed' }, 405);
 
@@ -2324,6 +2396,9 @@ export default {
     }
     if (url.pathname === '/api/user/subscription') {
       return handleUserSubscription(request, env);
+    }
+    if (url.pathname === '/api/setup-request') {
+      return handleSetupRequest(request, env);
     }
     if (url.pathname === '/api/stats') {
       return handleSiteStats(request, env);

@@ -38,12 +38,27 @@ export default function SetupRequest() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ invite, username, note, website }),
       });
-      const data = await res.json().catch(() => ({}));
+      // A non-JSON response means the request never reached the handler that
+      // was supposed to answer it — a stale deploy, a proxy, an edge rule.
+      // Falling back to "bad_request" in that case tells the buyer their input
+      // was wrong when the server simply was not listening, which is both
+      // untrue and useless to them. It is a different failure and gets a
+      // different message.
+      const raw = await res.text();
+      let data = {};
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        data = {};
+      }
+
       if (res.ok && data.ok) {
         setState({ status: 'sent', error: null });
         return;
       }
-      setState({ status: 'error', error: data.error || 'bad_request' });
+
+      const code = data.error || (raw ? `http_${res.status}` : 'no_response');
+      setState({ status: 'error', error: code });
     } catch {
       setState({ status: 'error', error: 'delivery_failed' });
     }
