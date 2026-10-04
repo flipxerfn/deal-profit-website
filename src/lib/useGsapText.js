@@ -151,54 +151,6 @@ export function useSplitReveal(options = {}) {
 }
 
 /**
- * A scroll-linked parallax layer.
- *
- * Deliberately small: ±40px over the element's full pass through the viewport.
- * Larger values read as a bug on a phone where the viewport is short — the
- * element is in view for less scroll distance, so the same pixel range is a
- * much larger fraction of what you can see.
- */
-export function useParallax(options = {}) {
-  const { selector = '[data-parallax]', strength = 40 } = options;
-  const scope = useRef(null);
-
-  useEffect(() => {
-    const root = scope.current;
-    if (!root) return undefined;
-
-    const reduce =
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (reduce) return undefined;
-
-    const ctx = gsap.context(() => {
-      for (const el of gsap.utils.toArray(selector, root)) {
-        const amount = Number(el.dataset.parallax || strength);
-        gsap.fromTo(
-          el,
-          { yPercent: -amount / 10 },
-          {
-            yPercent: amount / 10,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: el,
-              start: 'top bottom',
-              end: 'bottom top',
-              scrub: true,
-            },
-          }
-        );
-      }
-    }, root);
-
-    return () => ctx.revert();
-  }, [selector, strength]);
-
-  return scope;
-}
-
-/**
  * Smooth scrolling, and the thing that makes scroll-linked motion feel like it
  * belongs to the page instead of being glued on top of it. GSAP's own
  * ScrollSmoother is a Club plugin; Lenis is free and does the same job, and
