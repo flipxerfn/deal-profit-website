@@ -133,14 +133,27 @@
     letter-spacing: -0.035em;
   }
 
-  /* Anything that is a number, a price or a timestamp. Tabular figures matter
-     as much as the face here: without them a column of prices jitters because
-     each digit is a different width. */
+  /* Anything that is a number, a price or a timestamp.
+
+     Tabular figures matter as much as the face here: without tnum a column of
+     prices jitters as each digit resolves to a different width, and a count
+     that changes from 197 to 198 shifts sideways under the eye.
+
+     The mono face is applied through the same hook rather than by editing ten
+     components individually — every element in the app that already declares
+     tabular figures is, by definition, showing a number, and that is exactly
+     the set that should be instrumented. It also means the next component that
+     marks up a figure gets the treatment for free instead of being forgotten. */
   .num,
   .price,
   [class*='tabular-nums'] {
+    font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     font-feature-settings: 'tnum' 1, 'zero' 1;
+    /* JetBrains Mono runs large for its nominal size because it is drawn on a
+       wide body. Without this, switching a 24px figure to mono makes it sit
+       visually heavier than the 15px label beside it. */
+    letter-spacing: -0.01em;
   }
 
   p {
