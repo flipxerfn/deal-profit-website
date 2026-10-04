@@ -7,10 +7,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Deal Profit — price errors, penny deals, hidden discounts and profitable finds shared in real time. Catch the deals before everyone else." />
     <meta name="theme-color" content="#07070a" />
-    <!-- Google Fonts: Space Grotesk (display) + Inter (body) -->
+    <!-- Fonts.
+
+         Space Grotesk + Inter was the previous pairing and it was the generic
+         choice: Space Grotesk on a dark slate background has become its own
+         cliché, and a site about numbers does not need a friendly geometric.
+
+         Archivo carries a width axis (62–125), so the display weight can be set
+         tight and expanded per role rather than being one fixed compromise.
+         JetBrains Mono is not decoration — prices, percentages and timestamps
+         are the entire argument of this site, and setting them in a mono makes
+         digits align in columns and read as instrumented rather than marketed.
+         Inter stays for body copy, where its neutrality is the point. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet" />
     <!-- Whop Pixel: page views, so ad conversions can be attributed to
          this domain. Snippet pasted verbatim from Whop docs. -->
     <script>!function(w,d,s,u,n,a,b){if(w[n])return;a=w[n]={q:[],t:+new Date,s:[],o:u,track:function(){a.q.push([+new Date].concat([].slice.call(arguments)))},setScope:function(){a.s=[].slice.call(arguments).filter(function(x){return typeof x==="string"});a.q.push([+new Date,"setScope"].concat(a.s))},scope:function(){var c=[].slice.call(arguments);return{track:function(){a.q.push([+new Date].concat([].slice.call(arguments)).concat([{__scope:c}]))}}}};b=d.createElement(s);b.async=1;b.src=u+"/s.js";d.getElementsByTagName(s)[0].parentNode.insertBefore(b,d.getElementsByTagName(s)[0])}(window,document,"script","https://t.whop.tw","whop");whop.setScope("biz_olEvrfdonYlloB");whop.track("page");</script>

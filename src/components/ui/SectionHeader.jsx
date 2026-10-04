@@ -32,6 +32,7 @@ export default function SectionHeader({ eyebrow, title, description, align = 'le
               accessible name at all. */}
           <h2
             id={titleId}
+            data-reveal
             className="mt-2 max-w-2xl text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-white text-balance"
           >
             {title}

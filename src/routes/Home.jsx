@@ -33,6 +33,7 @@ import { FEED_STATS } from '../data/siteFacts';
 
 const medianSavingPct = FEED_STATS.medianSavingPct;
 import { useReducedMotion, motionVariants, getMotionProps, useScrollReveal } from '../lib/motion';
+import { useSplitReveal, useSmoothScroll, refreshScrollTriggers, ScrollTrigger } from '../lib/useGsapText';
 import { useLinkability } from '../lib/useLinkability';
 
 const HUNT_ICONS = [FaBolt, FaCoins, FaPercent, FaBell];
@@ -231,8 +232,43 @@ const Home = () => {
   const huntReveal = useScrollReveal();
   const socialReveal = useScrollReveal();
 
+  // Smooth scroll, then the reveals. Order matters: ScrollTrigger measures
+  // element positions once at setup, and Lenis changes scroll behaviour
+  // underneath it, so measuring before Lenis settles gives every trigger a
+  // stale start point.
+  useSmoothScroll();
+  const revealScope = useSplitReveal({
+    selector: '[data-reveal]',
+    type: 'words',
+    stagger: 0.04,
+    start: 'top 88%',
+  });
+  const heroScope = useSplitReveal({
+    selector: '[data-reveal-hero]',
+    type: 'words',
+    stagger: 0.075,
+    duration: 0.9,
+    delay: 0.15,
+    // The hero is above the fold — a ScrollTrigger on it would fire at once
+    // anyway, and a trigger that fires at once is a lie about what it does.
+    start: 'top 100%',
+  });
+
+  // The feed arrives after first paint and pushes the sections below it down,
+  // so every trigger measured against the pre-feed layout fires late.
+  useEffect(() => {
+    const id = setTimeout(refreshScrollTriggers, 600);
+    const onLoad = () => ScrollTrigger.refresh();
+    window.addEventListener('load', onLoad);
+    return () => {
+      clearTimeout(id);
+      window.removeEventListener('load', onLoad);
+    };
+  }, []);
+
   return (
-    <>
+    <div ref={revealScope}>
+    <div ref={heroScope}>
       {/* Hero Section */}
       <section className="band-full band-bleed tint-brand relative pb-16 pt-12 md:pb-20 md:pt-16" aria-labelledby="hero-title">
         {/* Background: one drifting field plus a sweeping beam.
@@ -276,15 +312,31 @@ const Home = () => {
               ))}
             </motion.div>
 
-            <motion.h1
+            {/* The hero text belongs to GSAP, not to StaggerLine.
+
+                Two systems animating the same words is worse than either alone:
+                framer-motion sets inline transforms per word while SplitText
+                wraps those same words in its own spans, and the two fight over
+                the same properties for as long as both are mounted.
+
+                The two lines are handled differently on purpose. Line one splits
+                into words. Line two does NOT — it carries a clipped gradient,
+                and SplitText's word spans inherit that transparent text colour
+                without inheriting its background, so every word would paint
+                nothing and the line would vanish. Not hypothetical: that is
+                exactly what happened the first time this heading was split by
+                word. So the gradient line rises as one piece and keeps its
+                travelling sheen. */}
+            <h1
               id="hero-title"
-              {...getMotionProps(prefersReduced, motionVariants.heroWord)}
               className="text-shadow-glow text-3xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-4xl md:text-[52px] lg:text-[60px] xl:text-[68px] 2xl:text-[76px]"
             >
-              <StaggerLine text="Catch the deals" delay={0.08} />
+              <span data-reveal-hero>Catch the deals</span>
               <br />
-              <StaggerLine text="before everyone else." className="text-gradient-brand" delay={0.34} />
-            </motion.h1>
+              <span data-rise className="text-gradient-brand">
+                before everyone else.
+              </span>
+            </h1>
 
             <motion.p
               {...getMotionProps(prefersReduced, motionVariants.heroBody)}
@@ -588,7 +640,8 @@ const Home = () => {
           </>
         }
       />
-    </>
+    </div>
+    </div>
   );
 };
 

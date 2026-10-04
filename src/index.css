@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  /* Display: Archivo, set wide (wdth 125). The width axis is the reason for
+     choosing it — headings can be expanded without swapping face, so the
+     hero reads as a poster rather than as UI chrome.
+     Mono: prices, percentages, timestamps. Digits align in columns, which is
+     what a list of deals actually needs. */
+  --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
 
   /* Surface ladder — the core fix for "flat".
      Each step is 1.26:1 in relative luminance, which is the point: the
@@ -114,7 +120,27 @@
 
   h1, h2, h3, h4 {
     font-family: var(--font-display);
+    font-variation-settings: 'wdth' 112;
+    letter-spacing: -0.025em;
     text-wrap: balance;
+  }
+
+  /* The hero runs wider and heavier than section headings. Same face, different
+     setting — which is the whole reason Archivo was chosen over a single static
+     display cut. */
+  #hero-title {
+    font-variation-settings: 'wdth' 118, 'wght' 800;
+    letter-spacing: -0.035em;
+  }
+
+  /* Anything that is a number, a price or a timestamp. Tabular figures matter
+     as much as the face here: without them a column of prices jitters because
+     each digit is a different width. */
+  .num,
+  .price,
+  [class*='tabular-nums'] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1, 'zero' 1;
   }
 
   p {

@@ -80,7 +80,22 @@ const Layout = () => {
             key={pathname}
             initial={prefersReduced ? false : { opacity: 0, y: 18, scale: 0.994 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={prefersReduced ? { opacity: 0 } : { opacity: 0, y: -14, scale: 0.996 }}
+            exit={
+              prefersReduced
+                ? { opacity: 0 }
+                : {
+                    opacity: 0,
+                    y: -10,
+                    scale: 0.996,
+                    // The exit is dead time. mode="wait" means the incoming
+                    // page does not mount until this finishes, so every
+                    // millisecond here is a millisecond of staring at the page
+                    // you were trying to leave. A spring that matches the
+                    // entrance's ease reads as one continuous movement; the
+                    // same spring duration does not, because it is a wait.
+                    transition: { duration: 0.16, ease: 'easeIn' },
+                  }
+            }
             transition={
               prefersReduced
                 ? { duration: 0 }
@@ -89,10 +104,6 @@ const Layout = () => {
                     stiffness: 260,
                     damping: 28,
                     mass: 0.85,
-                    // Enter is quick so the new page is usable immediately;
-                    // exit is faster still, because it is the thing you are
-                    // waiting on while the page you wanted is still here.
-                    delay: 0,
                   }
             }
           >
