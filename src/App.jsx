@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './routes/Home';
+import usePrefetchRoutes from './lib/usePrefetchRoutes';
 
 // Only Home is in the initial bundle. Every other route is code-split so the
 // first paint only downloads what the landing page needs.
@@ -33,6 +34,13 @@ function Redirect({ to }) {
 }
 
 function App() {
+  // Pull every code-split route into the module cache while the browser is
+  // idle. Without it the first visit to any route has to wait for its chunk,
+  // and AnimatePresence mode="wait" means that wait stacks on top of the exit
+  // animation — measured at 4s to change the page for /setup-request, which
+  // reads as a broken site and sends people to the refresh button.
+  usePrefetchRoutes();
+
   return (
     <BrowserRouter>
       <Suspense fallback={<RouteFallback />}>
