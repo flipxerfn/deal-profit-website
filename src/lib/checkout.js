@@ -52,6 +52,13 @@ export const SETUP_PRICE_USD = 55;
 // Honest, and it works today.
 export const WHOP_SIGN_IN_URL = 'https://whop.com/';
 
+// The dashboard a member needs in order to cancel a future charge. This is
+// distinct from WHOP_SIGN_IN_URL on purpose: that one is the marketing home
+// page, and a link labelled "cancel" that lands on a storefront is a dead end
+// that reads as a bait-and-switch. Someone on day 5 of a trial who wants to
+// stop the charge should reach the screen where they can do it in one click.
+export const WHOP_BILLING_URL = 'https://whop.com/?dashboard=home';
+
 // Subscriptions AND the free trial are on Whop.
 //
 // This used to be split: the trial lived in Discord so no card was ever taken,

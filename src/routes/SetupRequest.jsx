@@ -208,6 +208,79 @@ export default function SetupRequest() {
           </p>
         </motion.div>
 
+        {/* The product, demonstrated rather than described.
+
+            This is the highest-leverage section on the page and it was missing.
+            Everything above it argues that the feed is alive — the live figures
+            prove the feed exists, but nothing proves that installing it in
+            someone's server produces the thing being sold. A visitor comparing
+            this against "just look at the site" needs to see the two are the
+            same product, and the cheapest honest way to show that is to show
+            this site's own feed, measured live, next to the promise.
+
+            Three real entries from /api/deals rather than stock imagery. A
+            mockup would be the one thing on this page that is not true. */}
+
+        {!failed && proof && proof.samples.length > 0 && (
+          <motion.div
+            {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+            className="mt-14"
+          >
+            <div className="text-center">
+              <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                This is what lands in your server
+              </h2>
+              <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-zinc-400">
+                Three live from the feed at the moment you loaded this page. Same
+                numbers, same formatting — posted into your channels instead of
+                here.
+              </p>
+            </div>
+
+            <ul className="mt-7 space-y-3">
+              {proof.samples.map((d) => (
+                <li
+                  key={d.id || d.title}
+                  className="card flex items-center gap-4 p-4"
+                >
+                  {d.image && (
+                    <img
+                      src={d.image}
+                      alt=""
+                      loading="lazy"
+                      className="h-14 w-14 shrink-0 rounded-lg object-cover"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-white">{d.title}</p>
+                    <p className="mt-0.5 text-xs text-zinc-500">
+                      {(d.meta || []).filter((m) => typeof m === 'string').slice(0, 2).join(' · ')}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="font-mono text-lg font-bold tabular-nums text-brand-2">
+                      ${d.price}
+                    </p>
+                    {d.referencePrice > d.price && (
+                      <p className="text-xs tabular-nums text-zinc-500 line-through">
+                        ${d.referencePrice}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-4 text-center text-xs text-zinc-500">
+              <strong className="font-semibold text-zinc-400">
+                Prices and stock are not ours.
+              </strong>{' '}
+              These move within minutes and a price error can be gone before you
+              read this. The formatting is the product — the finding is the bonus.
+            </p>
+          </motion.div>
+        )}
+
         {/* What actually happens. Concrete steps, not adjectives. */}
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}

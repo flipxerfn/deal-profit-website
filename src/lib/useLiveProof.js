@@ -78,6 +78,34 @@ export function useLiveProof() {
           return;
         }
 
+        // Sample the biggest catches rather than the first three. The feed
+        // arrives roughly chronological, so taking deals[0..2] picked whatever
+        // landed most recently — frequently a $1 Amazon listing with no
+        // reference price, which demonstrates nothing about a feed whose whole
+        // pitch is reference-price discounts. Sorting by measured discount and
+        // taking three shows the format at its most representative.
+        const samples = deals
+          .filter(
+            (d) =>
+              typeof d?.price === 'number' &&
+              typeof d?.referencePrice === 'number' &&
+              d.price > 0 &&
+              d.referencePrice > d.price
+          )
+          .sort(
+            (a, b) =>
+              (1 - b.price / b.referencePrice) - (1 - a.price / a.referencePrice)
+          )
+          .slice(0, 3)
+          .map((d) => ({
+            id: d.id ?? null,
+            title: d.title || 'Untitled find',
+            image: d.image || null,
+            price: d.price,
+            referencePrice: d.referencePrice,
+            meta: Array.isArray(d.meta) ? d.meta : [],
+          }));
+
         setProof({
           finds: deals.length,
           median,
@@ -86,6 +114,7 @@ export function useLiveProof() {
           // worth showing: it demonstrates the feed is still moving, which a
           // total alone cannot.
           latest: deals[0]?.title || null,
+          samples,
         });
       } catch {
         if (!cancelled) setFailed(true);

@@ -20,6 +20,7 @@ import SiteSearch from './SiteSearch';
 const LINKS = [
   { to: '/', label: 'Home' },
   { to: '/deals', label: 'Deals' },
+  { to: '/discord', label: 'Discord' },
   { to: '/reviews', label: 'Reviews' },
   { to: '/upgrade', label: 'Upgrade' },
   { to: '/setup-request', label: 'Deal Feed Setup' },

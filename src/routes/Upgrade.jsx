@@ -31,6 +31,7 @@ import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion'
 import { startCheckout, WHOP_SETUP_URL, DISCORD_INVITE } from '../lib/checkout';
 import PaymentFlow from '../components/PaymentFlow';
 import LinkDiscordToWhop from '../components/LinkDiscordToWhop';
+import BillingTransparency from '../components/BillingTransparency';
 import { UPGRADE_FAQS as FAQS } from '../lib/upgradeContent';
 import { FEED_STATS } from '../data/siteFacts';
 import { useLinkability } from '../lib/useLinkability';
@@ -660,6 +661,20 @@ const Upgrade = () => {
         />
         <Accordion items={FAQS} />
       </div>
+
+      {/* Charge date and cancel path.
+
+          After the FAQ and before the closing CTA, rather than in a footer.
+          Someone holding a card and wondering when it gets used is reading
+          this page top to bottom — they are not hunting for small print, and
+          every step between "I want to cancel" and the cancel button is a step
+          where they talk themselves out of it. */}
+      <motion.div
+        {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        className="mx-auto mt-14 max-w-[720px]"
+      >
+        <BillingTransparency />
+      </motion.div>
 
       {/* Final CTA */}
       <CTASection
