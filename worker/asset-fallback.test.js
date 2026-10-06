@@ -19,10 +19,6 @@ const root = resolve(import.meta.dirname, '..');
 const worker = readFileSync(resolve(root, 'worker/index.js'), 'utf8');
 const toml = readFileSync(resolve(root, 'wrangler.toml'), 'utf8');
 
-const line = worker
-  .split('\n')
-  .find((l) => /env\.\w+\.fetch\(request\)/.test(l));
-
 describe('the asset fallback can actually fire', () => {
   it('reads the binding under the name wrangler.toml declares', () => {
     // The binding name is the single source of truth; the worker must use it
@@ -30,10 +26,26 @@ describe('the asset fallback can actually fire', () => {
     const binding = toml.match(/^\s*binding\s*=\s*"(\w+)"/m)?.[1];
     expect(binding, 'no assets binding in wrangler.toml').toBeTruthy();
 
-    const read = line?.match(/env\.(\w+)\)/)?.[1];
-    const called = line?.match(/return env\.(\w+)\.fetch/)?.[1];
-    expect(read, `fallback line not found: ${line}`).toBe(binding);
-    expect(called, 'the property is fetched under a different name than it is checked').toBe(binding);
+    // Scoped to the guard rather than matched anywhere in the file. A single
+    // line was the wrong unit: the fetch is no longer a one-line
+    // `return env.X.fetch(request)` — the 404 handling above it needs
+    // statements — so the regex found nothing and reported the binding as
+    // "not found", which reads as a missing fallback when the fallback is
+    // present and working. Whitespace is normalised so the guard is found
+    // however it happens to be wrapped.
+    const guard = worker
+      .replace(/\s+/g, ' ')
+      .match(new RegExp(`if \\(env\\.${binding}\\) \\{([^}]*)\\}`, 'i'));
+
+    expect(guard, `no if (env.${binding}) guard in worker/index.js`).toBeTruthy();
+
+    const body = guard[1];
+    const called = body.match(new RegExp(`env\\.${binding}\\.fetch\\(request\\)`, 'i'));
+    expect(
+      called,
+      `the guard checks env.${binding} but never fetches env.${binding}(request) — the ` +
+        'condition can be true and still serve nothing'
+    ).toBeTruthy();
   });
 
   it('there is a final fallback so a miss is still a 404', () => {
