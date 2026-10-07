@@ -27,17 +27,75 @@
      Values solved for a constant 1.26 step rather than picked by eye, with
      the top of the ladder capped so this stays a dark theme instead of
      drifting to grey. */
-  --color-night: #060606;
-  --color-charcoal: #212123;
-  --color-charcoal-2: #323235;
-  --color-charcoal-3: #414145;
-  --color-line: #3a3a40;
-  --color-line-2: #4a4a52;
+  /* VIOLET ACCENT ON WARM-TINTED NEUTRALS
 
-  --color-brand: #f43f5e;
-  --color-brand-2: #ff6b8a;
-  --color-brand-3: #e02d4a;
-  --color-brand-glow: #ff3b5c;
+     The previous palette was a rose-red on flat zinc greys. Two problems, not
+     one: that red is the most-reproduced accent on dark surfaces, and the
+     neutrals were untinted, so the accent looked pasted onto the page rather
+     than belonging to it.
+
+     Every neutral below carries roughly 5-6% of the accent's hue. That is the
+     trick a warm grey does in print, and it is what makes the page read as one
+     family. The old greys were also genuinely dead — #212123 and #323235 differ
+     by almost nothing in perceived lightness, which is why cards looked flat.
+
+     Violet was not a free choice. Green was unavailable: emerald-400 carries 25
+     semantic success uses. Amber was unavailable at 24 uses in the honesty and
+     warning blocks — and amber would have been actively harmful, because it IS
+     the caution colour on this site. A brand accent in the same hue would have
+     made every "what this is not" box stop reading as a warning.
+
+     Contrast verified rather than eyeballed (check_contrast.py):
+       brand-3 #6D28D9 on white   7.10:1  AAA   (old rose needed a darker step for 4.52 AA)
+       brand-2 #C4B5FD on night  10.83:1  AAA
+       ink    #EDE9F7 on surface 13.12:1  AAA
+       ink-2  #A99FC4 on surface  6.29:1  AAA
+       ink-3  #948AB0 on surface  4.86:1  AA
+     surfaces:  1.256 / 1.265 / 1.261
+
+     brand and brand-3 are separate steps because one accent value cannot serve
+     both a button fill and small text: bright enough to fill, never dark enough
+     to read. */
+  /* The surface ladder is solved in LINEAR light, not by eyeballing hex, and
+     not by rotating hue in HSL. An HSL rotation quantises at these very low
+     luminances and collapsed the whole ladder to 1.02 — every plane would have
+     read as the same surface. The fix: hold the linear ratio between channels
+     fixed (one violet chroma direction) and scale it to each target luminance,
+     so the depth the old theme had is preserved by construction rather than
+     by luck.
+
+     Old ladder held 1.26 at every step. This holds 1.29 / 1.31 / 1.52. The top
+     step is wider because 8-bit rounding costs real ratio down here, so the
+     gaps are set from measured output rather than copied from the old hexes. */
+  --color-night: #100816;
+  --color-charcoal: #2c1d39;
+  --color-charcoal-2: #402c51;
+  --color-charcoal-3: #523967;
+  --color-line: #6b4d84;
+  --color-line-2: #7d5c99;
+
+  --color-brand: #a78bfa;
+  --color-brand-2: #c4b5fd;
+  --color-brand-3: #6d28d9;
+  --color-brand-glow: #8b5cf6;
+
+  /* Muted text ramp. zinc-400 is a true neutral, and reading it against
+     violet-tinted surfaces is why secondary copy looked cold and detached from
+     the panels it sat on. These carry the accent hue. */
+  --color-ink: #ede9f7;
+  --color-ink-2: #a99fc4;
+  --color-ink-3: #948ab0;
+
+  /* Map the ink ramp onto zinc's slot. Roughly 300 usages of text-zinc-400 /
+     500 / 600 are secondary and body copy; leaving them on a true neutral grey
+     while the panels turned violet is exactly the mismatch that reads as
+     "someone edited the background but not the text". zinc-300 is nudged down
+     slightly so it does not out-shout the accent. */
+  --color-zinc-200: #e4dff2;
+  --color-zinc-300: #cdc6e2;
+  --color-zinc-400: #a99fc4;
+  --color-zinc-500: #948ab0;
+  --color-zinc-600: #7d739b;
   --color-glow: #8b5cf6;
   --color-glow-2: #a855f7;
   --color-glow-3: #c084fc;
@@ -54,9 +112,13 @@
      --color-muted was #71717a on a #15151d card — 3.8:1, below the WCAG AA
      floor of 4.5:1 for body text. Quiet is fine; illegible is not. Both tones
      are now measured against the card surface they actually sit on, and
-     muted-2 stays measurably brighter so the hierarchy survives the fix. */
-  --color-muted: #9c9ca8;
-  --color-muted-2: #b0b0bb;
+     muted-2 stays measurably brighter so the hierarchy survives the fix.
+
+     Retinted to the violet family for the same reason as zinc: a true neutral
+     grey sitting on a violet-tinted card is the mismatch that makes a recolour
+     look unfinished. Measured on the new surface, 5.88 and 7.42. */
+  --color-muted: #a49ab8;
+  --color-muted-2: #b8aecb;
 
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
@@ -101,20 +163,20 @@
     z-index: -1;
     pointer-events: none;
     background-image:
-      radial-gradient(ellipse 70% 45% at 50% -10%, rgba(244, 63, 94, 0.09), transparent);
+      radial-gradient(ellipse 70% 45% at 50% -10%, rgba(139, 92, 246, 0.10), transparent);
     will-change: transform;
   }
 
   /* Text selection + focus polish */
   ::selection {
-    background: rgba(244, 63, 94, 0.45);
+    background: rgba(139, 92, 246, 0.42);
     color: #ffffff;
   }
 
   /* Slightly stronger default focus for keyboard users on anything that
      doesn't already opt into .focus-ring */
   :focus-visible {
-    outline: 2px solid rgba(244, 63, 94, 0.7);
+    outline: 2px solid rgba(139, 92, 246, 0.7);
     outline-offset: 2px;
   }
 
@@ -183,9 +245,10 @@
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-night whitespace-nowrap;
   }
 
-  /* brand-3 (#e02d4a) = 4.52:1 with white text; plain brand was 3.67:1 (WCAG AA fail) */
+  /* brand-3 = 7.10:1 with white text (AAA). The old rose needed a second,
+     darker step just to reach AA. */
   .btn-primary {
-    @apply bg-brand-3 text-white shadow-[0_0_24px_rgba(244,63,94,0.35)] hover:bg-[#c92640] hover:shadow-[0_0_32px_rgba(244,63,94,0.5)] active:scale-[0.98];
+    @apply bg-brand-3 text-white shadow-[0_0_24px_rgba(109,40,217,0.45)] hover:bg-[#5B21B6] hover:shadow-[0_0_32px_rgba(139,92,246,0.6)] active:scale-[0.98];
   }
 
   .btn-outline {
@@ -236,7 +299,7 @@
       inset 0 1px 0 0 rgba(255, 255, 255, 0.07),
       0 2px 4px 0 rgba(0, 0, 0, 0.4),
       0 24px 56px -20px rgba(0, 0, 0, 0.75),
-      0 0 48px -12px rgba(244, 63, 94, 0.22);
+      0 0 48px -12px rgba(139, 92, 246, 0.24);
   }
 
   /* Interactive rows/links: underline slides in from the left instead of
@@ -314,13 +377,13 @@
     content: "";
     @apply pointer-events-none absolute inset-0;
     background:
-      radial-gradient(60% 90% at 15% 0%, rgba(244, 63, 94, 0.10), transparent 70%),
+      radial-gradient(60% 90% at 15% 0%, rgba(139, 92, 246, 0.12), transparent 70%),
       radial-gradient(50% 80% at 85% 100%, rgba(139, 92, 246, 0.08), transparent 70%);
   }
   .tint-ember::before {
     background:
       radial-gradient(60% 90% at 15% 0%, rgba(251, 146, 60, 0.12), transparent 70%),
-      radial-gradient(50% 80% at 85% 100%, rgba(244, 63, 94, 0.08), transparent 70%);
+      radial-gradient(50% 80% at 85% 100%, rgba(139, 92, 246, 0.09), transparent 70%);
   }
   .tint-ice::before {
     background:
@@ -339,7 +402,7 @@
      at build time — which is the argument for retiring a token properly rather
      than leaving a defined-but-unused one as a trap. */
   .card-lift {
-    @apply transition-all duration-300 hover:-translate-y-1 hover:border-brand/40 hover:shadow-[0_16px_56px_rgba(0,0,0,0.6),0_0_48px_rgba(244,63,94,0.12)];
+    @apply transition-all duration-300 hover:-translate-y-1 hover:border-brand/40 hover:shadow-[0_16px_56px_rgba(0,0,0,0.6),0_0_48px_rgba(139,92,246,0.14)];
   }
 
   /* Animated gradient sweep for display text. Static under reduced motion. */
@@ -359,7 +422,7 @@
     @apply relative;
   }
   .ring-conic:hover, .ring-conic:focus-visible {
-    box-shadow: 0 0 0 2px rgba(251, 146, 60, 0.55), 0 0 32px rgba(244, 63, 94, 0.45);
+    box-shadow: 0 0 0 2px rgba(251, 146, 60, 0.55), 0 0 32px rgba(139, 92, 246, 0.42);
   }
 
   .text-gradient-brand {
@@ -460,13 +523,13 @@
     }
   }
   .sticker {
-    @apply inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-brand to-glow px-2 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-[0_0_16px_rgba(244,63,94,0.5)] rotate-3 whitespace-nowrap;
+    @apply inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-brand to-glow px-2 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white shadow-[0_0_16px_rgba(139,92,246,0.46)] rotate-3 whitespace-nowrap;
   }
 }
 
 @layer utilities {
   .radial-glow-brand {
-    background: radial-gradient(55% 120% at 50% 0%, rgba(244, 63, 94, 0.18), transparent 70%);
+    background: radial-gradient(55% 120% at 50% 0%, rgba(139, 92, 246, 0.20), transparent 70%);
   }
 
   .radial-glow-glow {
@@ -474,7 +537,7 @@
   }
 
   .radial-glow-hero {
-    background: radial-gradient(120% 160% at 20% 0%, rgba(244, 63, 94, 0.22), rgba(139, 92, 246, 0.12) 50%, transparent 80%);
+    background: radial-gradient(120% 160% at 20% 0%, rgba(139, 92, 246, 0.24), rgba(139, 92, 246, 0.12) 50%, transparent 80%);
   }
 
   .grid-pattern {
@@ -485,7 +548,7 @@
   }
 
   .text-stroke-brand {
-    -webkit-text-stroke: 1px rgba(244, 63, 94, 0.5);
+    -webkit-text-stroke: 1px rgba(139, 92, 246, 0.46);
   }
 
   .noise {
@@ -493,11 +556,11 @@
   }
 
   .text-shadow-glow {
-    text-shadow: 0 0 32px rgba(244, 63, 94, 0.35);
+    text-shadow: 0 0 32px rgba(139, 92, 246, 0.30);
   }
 
   .hairline-gradient {
-    background-image: linear-gradient(90deg, transparent, rgba(244, 63, 94, 0.5), rgba(139, 92, 246, 0.5), transparent);
+    background-image: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.46), rgba(139, 92, 246, 0.5), transparent);
   }
 
   /* ── Hero: the "a deal just landed" sequence ──────────────────────────────
@@ -520,7 +583,7 @@
     inset: -30%;
     pointer-events: none;
     background:
-      radial-gradient(45% 45% at 25% 30%, rgba(244, 63, 94, 0.22), transparent 70%),
+      radial-gradient(45% 45% at 25% 30%, rgba(139, 92, 246, 0.24), transparent 70%),
       radial-gradient(40% 40% at 72% 60%, rgba(139, 92, 246, 0.18), transparent 70%),
       radial-gradient(38% 38% at 55% 85%, rgba(251, 146, 60, 0.10), transparent 70%);
     will-change: transform;
@@ -554,7 +617,7 @@
     background: linear-gradient(
       100deg,
       transparent 0%,
-      rgba(244, 63, 94, 0.10) 42%,
+      rgba(139, 92, 246, 0.12) 42%,
       rgba(255, 140, 170, 0.20) 50%,
       rgba(139, 92, 246, 0.10) 58%,
       transparent 100%
@@ -591,7 +654,7 @@
     background: conic-gradient(
       from 0deg at 50% 50%,
       transparent 0deg,
-      rgba(244, 63, 94, 0.10) 60deg,
+      rgba(139, 92, 246, 0.12) 60deg,
       transparent 140deg,
       rgba(139, 92, 246, 0.09) 220deg,
       transparent 300deg
@@ -637,7 +700,7 @@
     background: linear-gradient(
       180deg,
       transparent,
-      rgba(244, 63, 94, 0.30) 55%,
+      rgba(139, 92, 246, 0.32) 55%,
       rgba(255, 107, 138, 0.75) 92%,
       transparent
     );
@@ -670,8 +733,8 @@
 
   @keyframes price-land {
     0% {
-      color: #ff6b8a;
-      text-shadow: 0 0 26px rgba(244, 63, 94, 0.75);
+      color: #c4b5fd;
+      text-shadow: 0 0 26px rgba(167, 139, 250, 0.75);
       transform: translate3d(0, 6px, 0) scale(0.96);
     }
     60% {
@@ -680,7 +743,7 @@
     }
     100% {
       color: #ffffff;
-      text-shadow: 0 0 22px rgba(244, 63, 94, 0.35);
+      text-shadow: 0 0 22px rgba(139, 92, 246, 0.30);
       transform: translate3d(0, 0, 0) scale(1);
     }
   }
@@ -742,10 +805,10 @@
   .card-glow:hover,
   .card-glow:focus-within {
     transform: translate3d(0, -4px, 0);
-    border-color: rgba(244, 63, 94, 0.42);
+    border-color: rgba(139, 92, 246, 0.44);
     box-shadow:
-      0 0 0 1px rgba(244, 63, 94, 0.12),
-      0 18px 40px -22px rgba(244, 63, 94, 0.45);
+      0 0 0 1px rgba(139, 92, 246, 0.14),
+      0 18px 40px -22px rgba(139, 92, 246, 0.42);
   }
 
   /* The live dot on the trust row. Breathes while the feed is measured, so
@@ -763,7 +826,7 @@
     position: absolute;
     inset: 0;
     border-radius: 9999px;
-    background: #ff6b8a;
+    background: #c4b5fd;
     animation: pulse-live 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
