@@ -13,6 +13,7 @@ import { buttonClass, Badge, SectionHeader } from './ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 import { fetchSubscription as fetchSubscriptionStatus, startCheckout } from '../lib/checkout';
 import CancelViaWhop from './CancelViaWhop';
+import CancelSaveOffer from './CancelSaveOffer';
 
 const DISCORD_INVITE = 'https://discord.gg/dealprofit';
 const PRICE = '$25';
@@ -664,8 +665,18 @@ const PaymentFlow = () => {
                     )
                   ) : (
                     /* A Whop member. They have real billing, just not with us —
-                       so point them at the only place that can stop it. */
-                    <CancelViaWhop />
+                       so point them at the only place that can stop it.
+
+                       The save offer comes first on purpose. This branch only
+                       renders for someone who has already opened the cancel
+                       path, so they are leaving — but "leaving because of the
+                       price" is a different decision from "leaving", and the
+                       discount is only worth reading before the instructions
+                       that complete the cancellation. */
+                    <>
+                      <CancelSaveOffer />
+                      <CancelViaWhop />
+                    </>
                   )}
                 </div>
               </div>
