@@ -2417,7 +2417,23 @@ export default {
     // and every unmatched path fell through to a 500 instead of being served.
     // Deep links outside the client router, and any typo'd URL, returned
     // "error code 1101" rather than the site.
-    if (env.ASSETS) return env.ASSETS.fetch(request);
+    if (env.ASSETS) {
+      const res = await env.ASSETS.fetch(request);
+      if (res.status === 404) {
+        // Missing asset (e.g. a stale <script> chunk from an old build):
+        // fail loud with 404, NEVER serve index.html as the script body.
+        // An HTML document in a <script> request throws "Unexpected token '<'"
+        // and leaves the page black until reload.
+        if (url.pathname.startsWith('/assets/')) {
+          return new Response('Not found', { status: 404 });
+        }
+        // Any other miss (a client-side route like /deals, or a deep link
+        // outside the router): serve the SPA shell so react-router can take
+        // over on the client.
+        return env.ASSETS.fetch(new Request(new URL('/', url.origin), request));
+      }
+      return res;
+    }
     return new Response('Not found', { status: 404 });
   },
 
