@@ -246,7 +246,7 @@ const Upgrade = () => {
                 </li>
                 <li className="flex items-start gap-2">
                   <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
-                  Nothing to cancel, ever
+                  Nothing to cancel, ever — this is the free tier
                 </li>
               </ul>
               <a
@@ -513,14 +513,20 @@ const Upgrade = () => {
         </motion.div>
       </motion.div>
 
-      {/* One-time service, deliberately not competing with the subscription.
+      {/* The setup service, deliberately not competing with the subscription.
           Named "Deal Feed Setup" rather than "Mirror Setup": mirroring is
           jargon, and a buyer who has to stop to work out what a mirror is has
           already bounced. The URL slug still says mirror because Whop fixes a
           product's route at creation; nobody reads the address.
           It sits below the plans and after the "what each button does" cards so
           the reading order is: what am I paying for -> the subscription -> this
-          is an alternative if you want your own feed instead. */}
+          is an alternative if you want your own feed instead.
+
+          Became $55/month on 2026-10-07, up from a one-time $55. The label is
+          now explicit about the cadence at every point of contact, because a
+          buyer who discovers the recurrence after paying is a dispute, not a
+          sale. It is still visually subordinate to Premium — same product,
+          different delivery, and most people here do not need it. */}
       <section className="mx-auto mt-14 max-w-3xl md:mt-16" aria-labelledby="setup-title">
         <div className="surface-raised relative overflow-hidden rounded-xl border border-white/10 bg-charcoal-2/50 p-6 sm:p-7">
           <div
@@ -529,16 +535,16 @@ const Upgrade = () => {
           />
           <div className="relative">
             <p className="text-xs font-semibold uppercase tracking-wider text-glow-3">
-              Optional &middot; one-time
+              Optional &middot; $55/month
             </p>
             <h2 id="setup-title" className="mt-1 text-xl font-extrabold tracking-tight text-white sm:text-2xl">
               Want your own community getting the feed?
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-zinc-400">
               If you run a server and would rather your members saw the finds
-              themselves than reading about them, that is a separate one-time
-              setup. It is not part of Premium and you do not need it to be a
-              member here.
+              themselves than reading about them, that is a separate monthly
+              service at $55. It is not part of Premium and you do not need it to
+              be a member here. You can cancel it any time from Whop.
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-4">
               <a
@@ -547,10 +553,10 @@ const Upgrade = () => {
                 rel="noopener noreferrer"
                 className={buttonClass({ variant: 'outline', size: 'md' })}
               >
-                Deal Feed Setup &mdash; $55 once
+                Deal Feed Setup &mdash; $55/month
                 <FaArrowRight className="text-xs" />
               </a>
-              <p className="text-xs text-zinc-500">One-time fee. Nothing to cancel.</p>
+              <p className="text-xs text-zinc-500">$55 a month. Cancel any time, no fee.</p>
             </div>
           </div>
         </div>

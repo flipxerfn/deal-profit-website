@@ -84,29 +84,55 @@ describe('startCheckout cannot sell the one-time service', () => {
 
 describe('the page describes the two offers as separate', () => {
   it('marks the mirror as optional', () => {
-    expect(upgradeCode).toMatch(/Optional\s*&middot;\s*one-time/);
+    expect(upgradeCode).toMatch(/Optional\s*&middot;\s*\$55\/month/);
   });
 
   it('says explicitly that it is not part of Premium', () => {
     // This is the sentence that stops someone paying $25 and expecting the
     // $55 service, or the reverse.
     expect(upgradeCode).toMatch(/not part of Premium/i);
-    expect(upgradeCode).toMatch(/do not need it to be a\s*member here/i);
+    expect(upgradeCode).toMatch(/do not need it to\s*be a member here/i);
   });
 
   it('shows the price from the shared constant, not a hard-coded number', () => {
-    expect(upgrade).toMatch(/Deal Feed Setup &mdash; \$55 once/);
+    expect(upgrade).toMatch(/Deal Feed Setup &mdash; \$55\/month/);
     // The literal is rendered, but the component must not define its own.
     expect(upgradeCode).not.toMatch(/const\s+SETUP_PRICE[A-Z_]*\s*=/);
   });
 
   it('the price constant is what the page says', () => {
     expect(SETUP_PRICE_USD).toBe(55);
-    expect(upgrade).toContain(`$${SETUP_PRICE_USD} once`);
+    expect(upgrade).toContain(`$${SETUP_PRICE_USD}/month`);
   });
 
-  it('says one-time, so nobody expects a subscription', () => {
-    expect(upgradeCode).toMatch(/Nothing to cancel/i);
+  it('states the monthly cadence at every point of contact', () => {
+    // This became a $55/month subscription on 2026-10-07. The recurring price
+    // has to be stated at the eyebrow, the button, and the caption — a buyer
+    // who finds out after paying is a dispute, not a sale. These three are
+    // pinned separately because each is separately tempting to trim.
+    expect(upgradeCode).toMatch(/Optional\s*&middot;\s*\$55\/month/);
+    expect(upgrade).toMatch(/Deal Feed Setup &mdash; \$55\/month/);
+    expect(upgradeCode).toMatch(/\$55 a month\. Cancel any time/i);
+
+    // And the setup block must not still be describing it as a one-off.
+    // Scoped to that block: "Nothing to cancel, ever" is correct and load-bearing
+    // on the FREE Discord card, which really is free and really has nothing to
+    // cancel. A page-wide ban on the phrase would be a rule that forces a lie.
+    const setupBlock = upgradeCode.slice(
+      upgradeCode.indexOf('Optional &middot;'),
+      upgradeCode.indexOf('Setup flow')
+    );
+    expect(setupBlock.length).toBeGreaterThan(200);
+    expect(setupBlock).not.toMatch(/\$55 once/i);
+    expect(setupBlock).not.toMatch(/one-time/i);
+    expect(setupBlock).not.toMatch(/Nothing to cancel/i);
+  });
+
+  it('tells people how to cancel, in the same block as the price', () => {
+    // A subscription with no visible exit is the thing that generates
+    // chargebacks, and the exit has to sit next to the price rather than in a
+    // FAQ the buyer has to go looking for.
+    expect(upgradeCode).toMatch(/cancel it any time from Whop/i);
   });
 
   it('does not promise deal volume or speed', () => {

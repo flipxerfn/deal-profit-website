@@ -74,17 +74,41 @@ describe('Deal Feed Setup — the sale itself', () => {
     expect(html).toMatch(/buy the setup on whop/i);
   });
 
-  it('never describes the service as recurring', () => {
-    expect(html).toMatch(/once, not a subscription/i);
-    // A monthly framing anywhere on this page contradicts the product.
-    expect(html).not.toMatch(/per month/i);
-    expect(html).not.toMatch(/\/\s*mo(nth)?\b/i);
+  it('states the monthly price, not a one-off', () => {
+    // This service became $55/month on 2026-10-07. The previous version of this
+    // test asserted the OPPOSITE — that no recurring language existed — which is
+    // what let a stale page keep shipping after the price changed on Whop.
+    expect(html).toMatch(/every month, cancel any time/i);
+    expect(html).toMatch(/\$55 a month/i);
+    expect(html).not.toMatch(/once, not a subscription/i);
+    expect(html).not.toMatch(/nothing recurring/i);
+    expect(html).not.toMatch(/Nothing to cancel/i);
+    expect(html).not.toMatch(/one-time/i);
+  });
+
+  it('says how to cancel, in the body of the page', () => {
+    // The charge is on a card now. A recurring product whose exit is buried in a
+    // collapsed FAQ row is a chargeback waiting to happen, so the cancel path
+    // is asserted in the DELIVERABLES list — which renders as visible markup,
+    // above the fold, next to the price.
+    expect(html).toMatch(/Cancel from your Whop account/i);
+    expect(html).toMatch(/One click, no email, no fee/i);
+
+    // FAQ rows are collapsed in SSR output, so the answers never reach this
+    // string. Assert the questions exist instead. An earlier version of this
+    // suite asserted on the answers and passed for the wrong reason — against a
+    // page it never actually rendered.
+    expect(html).toMatch(/What happens if I stop paying/i);
+    expect(html).toMatch(/Is there a contract or a minimum term/i);
   });
 
   it('describes concrete work rather than adjectives', () => {
     expect(html).toMatch(/what the \$55 actually buys/i);
     expect(html).toMatch(/we connect the bot to your server/i);
-    expect(html).toMatch(/we watch it fire for a week/i);
+    // Was "we watch it fire for a week" — honest for a one-time job, and a
+    // downgrade at $55/month because it implied the relationship ended there.
+    expect(html).toMatch(/we keep it running, month to month/i);
+    expect(html).not.toMatch(/we watch it fire for a week/i);
   });
 });
 

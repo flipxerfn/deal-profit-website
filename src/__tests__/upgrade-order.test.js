@@ -33,14 +33,16 @@ const idx = (needle) => {
 
 describe('the comparison comes before the upsell', () => {
   const compare = idx('{/* Free vs Premium comparison with billing interval selector */}');
-  const setup = idx('{/* One-time service, deliberately not competing');
+  const setup = idx('{/* The setup service, deliberately not competing');
   const cards = idx('should not be a mystery. Say exactly what each button does and what');
   const hero = idx('{/* Hero */}');
 
-  it('the comparison precedes the $55 one-time offer', () => {
+  it('the comparison precedes the $55/month offer', () => {
     // This is the regression: a $55 offer shown to someone who does not yet
     // know what the $25 subscription does. Deal Feed Setup is optional and
-    // independent, so it reads as a trap rather than an alternative.
+    // independent, so it reads as a trap rather than an alternative. It is
+    // worse now the setup is also recurring — two unknown subscriptions on one
+    // page, the larger one appearing first, is how people end up disputing.
     expect(compare, 'the $55 upsell is still above the comparison').toBeLessThan(setup);
   });
 
@@ -66,12 +68,24 @@ describe('the comparison comes before the upsell', () => {
 
 describe('the upsell still reads as optional when it is reached', () => {
   it('says so outright', () => {
-    expect(src).toMatch(/Optional\s*&middot;\s*one-time/);
+    expect(src).toMatch(/Optional\s*&middot;\s*\$55\/month/);
     expect(src).toMatch(/not part of Premium/i);
   });
 
-  it('still states the price and that nothing recurs', () => {
-    expect(src).toMatch(/Deal Feed Setup &mdash; \$55 once/);
-    expect(src).toMatch(/Nothing to cancel/i);
+  it('states the monthly price and that it can be cancelled', () => {
+    // Two recurring products now sit on this page: Premium at $25/mo and Deal
+    // Feed Setup at $55/mo. "Nothing to cancel" was true when the setup was a
+    // one-off and is now false; leaving it would tell a buyer the larger of
+    // the two charges is not recurring.
+    expect(src).toMatch(/Deal Feed Setup &mdash; \$55\/month/);
+    expect(src).toMatch(/Cancel any time, no fee/i);
+    expect(src).not.toMatch(/Deal Feed Setup &mdash; \$55 once/);
+  });
+
+  it('keeps the free Discord tier honest about being free', () => {
+    // "Nothing to cancel, ever" belongs HERE and must survive: the Discord tier
+    // really is free. A refactor that swept that phrase away would make the
+    // free option sound like a trap.
+    expect(src).toMatch(/Nothing to cancel, ever/i);
   });
 });

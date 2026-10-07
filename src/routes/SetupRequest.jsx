@@ -33,6 +33,13 @@ const ERRORS = {
  * "posted into your server" — that is a restatement of the product name.
  * Specific steps are checkable against a promise, and a buyer can tell the
  * difference between a description of work and a description of a feeling.
+ *
+ * Reordered and extended when this became a monthly subscription rather than a
+ * one-time setup. A recurring price has to promise ongoing value, and the old
+ * third item — "we watch it fire for a week" — quietly implied the
+ * relationship ended after seven days. It also made no sense to sell month to
+ * month without putting the exit in the deliverables list, where it is read
+ * before the FAQ rather than hunted for in it.
  */
 const DELIVERABLES = [
   {
@@ -47,8 +54,13 @@ const DELIVERABLES = [
   },
   {
     icon: FaClock,
-    title: 'We watch it fire for a week',
-    text: 'Posts going out are not proof the job is finished. We stay in for seven days, fix anything that breaks, and tune the noise level to what your members actually want.',
+    title: 'We keep it running, month to month',
+    text: 'This is a subscription, so the job does not end at week one. We keep the feed posting, fix what breaks, retune the noise level when you want it changed, and you can message us any time. Seven days in, we check in on how it is landing.',
+  },
+  {
+    icon: FaShieldHalved,
+    title: 'Cancel from your Whop account',
+    text: 'One click, no email, no fee, no conversation. It stops the next charge and the feed keeps going until the end of what you have already paid for. We would rather you leave on your own terms than stay because cancelling felt like a fight.',
   },
 ];
 
@@ -77,7 +89,15 @@ const FAQS = [
   },
   {
     q: 'Can I cancel it?',
-    a: 'There is nothing recurring to cancel. It is one payment of $55 and the work gets done. You can remove the bot from your server at any time with one click, and the posts you have already made stay put.',
+    a: 'Any time, from your Whop account, in about a minute. It is a monthly subscription, so it renews every 30 days — cancelling stops the next charge and you keep everything until the end of the period you already paid for. The bot keeps posting to your server until then; after that you can remove it with one click, and the posts already made stay put.',
+  },
+  {
+    q: 'What happens if I stop paying?',
+    a: 'The feed stops posting. We do not hold your server hostage and we do not delete anything — the bot loses its role and the posts it already made stay in your channels. Nothing breaks in your Discord; it just goes quiet. If you want it running again later you can resubscribe and we will reconnect it.',
+  },
+  {
+    q: 'Is there a contract or a minimum term?',
+    a: 'No. Month to month, cancel whenever. There is no annual lock-in on this one and no cancellation fee.',
   },
   {
     q: 'Is my server invite stored?',
@@ -135,7 +155,7 @@ export default function SetupRequest() {
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
           className="text-center"
         >
-          <p className="text-xs font-bold uppercase tracking-wider text-brand">One-time service</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-brand">Monthly service</p>
           <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white sm:text-4xl md:text-[44px]">
             Deal Feed Setup
           </h1>
@@ -145,7 +165,7 @@ export default function SetupRequest() {
           </p>
           <p className="mt-6 text-3xl font-extrabold tracking-tight text-white">
             $55
-            <span className="ml-2 text-base font-semibold text-zinc-400">once, not a subscription</span>
+            <span className="ml-2 text-base font-semibold text-zinc-400">every month, cancel any time</span>
           </p>
         </motion.div>
 
@@ -204,7 +224,7 @@ export default function SetupRequest() {
             <FaArrowRight className="text-sm" aria-hidden="true" />
           </a>
           <p className="mt-3 text-xs text-zinc-500">
-            One payment, done once. Nothing recurring, nothing to cancel.
+            $55 a month. Cancel any time from your Whop account — no contract, no fee.
           </p>
         </motion.div>
 
@@ -324,6 +344,10 @@ export default function SetupRequest() {
             We are not a retailer and we cannot hold stock. We post what our members find, so a
             price error can be gone within minutes. Anything from the feed is a lead worth checking,
             not a guaranteed buy. We would rather you know that now than hear it from your members.
+            <span className="mt-3 block">
+              And we are not promising you money. This is a feed, not a system that finds and
+              fulfils inventory for you. What you do with a find is your call and your risk.
+            </span>
           </p>
         </motion.div>
 
