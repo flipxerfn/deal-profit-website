@@ -1,0 +1,9 @@
+#index.html must never be cached long-term: it references the hashed
+#/assets/* bundles. A stale cached index.html can point at a bundle the new
+#build deleted, and Cloudflare's SPA fallback then hands the browser an HTML
+#document as if it were JavaScript — a black page until a reload.
+#Hashed assets, on the other hand, are immutable and can be cached forever.
+/*
+  Cache-Control: public, max-age=0, must-revalidate
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
