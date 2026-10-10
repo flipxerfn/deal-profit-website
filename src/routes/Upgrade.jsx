@@ -93,24 +93,42 @@ const BENEFITS = [
   },
 ];
 
+// The free tier lists what it IS, not what it lacks. Every one of these is
+// something someone gets real value from today — that is the point. Padding
+// this list with basics ("basic deal browsing") made the free tier look thin
+// and gave the paid tier nothing to improve on, which is the reason the
+// Discord's own members declined to upgrade: the comparison said premium was
+// just "more of the same".
 const FREE_FEATURES = [
-  'Public deal feed',
-  'Selected free deals',
-  'Basic deal browsing',
-  'Search & filter deals',
-  'Community reviews',
+  'The live deal feed, as each find is caught',
+  "Other members' finds and the deals they post",
+  'Search and filter the feed',
+  'Community reviews from people who bought',
+  'Public channels, read and browse',
 ];
 
+// This list was nine items saying one thing — "you see deals sooner":
+// "faster alerts", "price error alerts", "penny deal alerts", "more focused
+// notifications", "more deal opportunities", "premium-only deal
+// opportunities". Six ways of promising the same speed bump, on top of
+// "Everything in Free".
+//
+// Two things were wrong with it beyond the padding. It described FEATURES
+// rather than OUTCOMES, so there was nothing for a buyer to picture themselves
+// doing. And it never said what is NOT in the free tier, which is the only
+// thing a comparison table has to do.
+//
+// Each line below is therefore one distinguishable thing, phrased as what the
+// buyer gets rather than as a system capability. The first line is the whole
+// pitch: a price error is usually gone in minutes, and the free tier arrives
+// too late to act on it. Everything else supports that.
 const PREMIUM_FEATURES = [
   'Everything in Free',
-  'Faster alerts',
-  'Premium Discord access',
-  'Premium-only deal opportunities',
-  'More deal opportunities',
-  'Price error alerts',
-  'Penny deal alerts',
-  'Reselling opportunities',
-  'More focused notifications',
+  'Alerts within minutes of a find going live, not a daily digest — a price error is usually gone before then',
+  'Your own alert channel: only the finds that match what you actually buy',
+  'Members-only finds that never touch the public feed',
+  'Dedicated channels for reselling, so you can compare notes without it mixed in with general chat',
+  'Priority access when we are set up in a new server',
 ];
 
 // Trial content merged in from the old /trial page
