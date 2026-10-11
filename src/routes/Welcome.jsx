@@ -56,9 +56,10 @@ export default function Welcome() {
             className="mt-8 rounded-xl border border-amber-400/25 bg-amber-400/[0.06] p-4 text-sm leading-relaxed text-amber-100/90"
           >
             <strong className="font-semibold text-amber-200">Your trial is running.</strong> It
-            ends after 7 days and then bills at the normal rate. Cancel from your Whop account
-            any time before then and you are not charged — nothing here is automatic and there
-            is nothing you need to remember to do.
+            ends after 7 days and then bills automatically at the normal rate. It charges on
+            its own, with no reminder from us. To avoid it, cancel from your Whop account before
+            the trial ends — it takes about a minute and you keep access until the day it would
+            have billed.
           </motion.div>
         )}
 

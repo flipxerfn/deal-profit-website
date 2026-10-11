@@ -153,8 +153,7 @@ export default function SetupRequest() {
       <div className="radial-glow-hero pointer-events-none absolute inset-0" aria-hidden="true" />
 
       <div className="relative mx-auto w-full max-w-[900px] px-4 sm:px-6 lg:px-8">
-        <motion.div
-          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        <ScrollReveal
           className="text-center"
         >
           <p className="text-xs font-bold uppercase tracking-wider text-brand">Monthly service</p>
@@ -169,7 +168,7 @@ export default function SetupRequest() {
             $55
             <span className="ml-2 text-base font-semibold text-zinc-400">every month, cancel any time</span>
           </p>
-        </motion.div>
+        </ScrollReveal>
 
         {/* Proof before price.
             This block sits ABOVE the buy button on purpose. The previous
@@ -179,8 +178,7 @@ export default function SetupRequest() {
             feed is empty, the block renders nothing rather than claiming a
             number it cannot back up. */}
         {!failed && proof && (
-          <motion.div
-            {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+          <ScrollReveal delay={0.05}
             className="mt-10 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.04] p-5 sm:p-6"
           >
             <p className="text-xs font-bold uppercase tracking-wider text-emerald-400">
@@ -211,11 +209,10 @@ export default function SetupRequest() {
                 <span className="font-semibold text-white">Newest catch:</span> {proof.latest}
               </p>
             )}
-          </motion.div>
+          </ScrollReveal>
         )}
 
-        <motion.div
-          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        <ScrollReveal delay={0.1}
           className="mt-8 text-center"
         >
           <a
@@ -230,7 +227,7 @@ export default function SetupRequest() {
           <p className="mt-3 text-xs text-zinc-500">
             $55 a month. Cancel any time from your Whop account — no contract, no fee.
           </p>
-        </motion.div>
+        </ScrollReveal>
 
         {/* The product, demonstrated rather than described.
 
@@ -246,8 +243,7 @@ export default function SetupRequest() {
             mockup would be the one thing on this page that is not true. */}
 
         {!failed && proof && proof.samples.length > 0 && (
-          <motion.div
-            {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+          <ScrollReveal delay={0.15}
             className="mt-14"
           >
             <div className="text-center">
@@ -302,12 +298,11 @@ export default function SetupRequest() {
               These move within minutes and a price error can be gone before you
               read this. The formatting is the product — the finding is the bonus.
             </p>
-          </motion.div>
+          </ScrollReveal>
         )}
 
         {/* What actually happens. Concrete steps, not adjectives. */}
-        <motion.div
-          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        <ScrollReveal delay={0.2}
           className="mt-16"
         >
           <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
@@ -329,15 +324,14 @@ export default function SetupRequest() {
               );
             })}
           </ul>
-        </motion.div>
+        </ScrollReveal>
 
         {/* The limit of the claim, stated plainly and early.
             Placed above the form on purpose. A feed product whose failure mode
             is "you told a channel full of people to buy something that was
             never in stock" has exactly one honest defence, and burying it in a
             footer is how a buyer finds out about it in public instead. */}
-        <motion.div
-          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        <ScrollReveal delay={0.25}
           className="mt-10 rounded-2xl border border-amber-400/25 bg-amber-400/[0.04] p-5 sm:p-6"
         >
           <h2 className="flex items-center gap-2 text-sm font-bold text-white">
@@ -353,11 +347,10 @@ export default function SetupRequest() {
               fulfils inventory for you. What you do with a find is your call and your risk.
             </span>
           </p>
-        </motion.div>
+        </ScrollReveal>
 
         {/* Objections, before the form. */}
-        <motion.div
-          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        <ScrollReveal delay={0.3}
           className="mt-14"
         >
           <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
@@ -388,10 +381,9 @@ export default function SetupRequest() {
               );
             })}
           </div>
-        </motion.div>
+        </ScrollReveal>
 
-        <motion.div
-          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        <ScrollReveal delay={0.35}
           className="mt-16"
         >
           <div className="mb-8 text-center">
@@ -403,10 +395,9 @@ export default function SetupRequest() {
               invite, and this page does not keep a copy of it.
             </p>
           </div>
-        </motion.div>
+        </ScrollReveal>
 
-        <motion.div
-          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        <ScrollReveal delay={0.4}
         >
           {state.status === 'sent' ? (
             <div className="surface-raised rounded-2xl border border-emerald-400/30 p-8 text-center">
@@ -536,7 +527,7 @@ export default function SetupRequest() {
               </div>
             </form>
           )}
-        </motion.div>
+        </ScrollReveal>
       </div>
     </section>
   );
