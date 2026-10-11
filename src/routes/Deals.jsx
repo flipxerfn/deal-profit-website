@@ -16,6 +16,8 @@ import { DISCORD_INVITE } from '../lib/checkout';
 import { Button, Input, Select, Badge, SkeletonCard } from '../components/ui';
 import { CATEGORIES, DEALS as DEMO_DEALS } from '../data/deals';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
+import { useSplitReveal } from '../lib/useGsapText';
+import LiveTicker from '../components/LiveTicker';
 
 const SORT_OPTIONS = [
   { id: 'newest', label: 'Sort: Newest' },
@@ -61,6 +63,17 @@ const statusPill = {
 };
 
 const Deals = () => {
+  // Word-by-word heading reveal. This page had none — Home and /upgrade got it
+  // and /deals did not, which is backwards: this is the page a buyer lands on
+  // from a video, and it has the least motion of any of them.
+  const revealScope = useSplitReveal({
+    selector: '[data-reveal]',
+    type: 'words',
+    stagger: 0.05,
+    start: 'top 90%',
+  });
+
+
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [sort, setSort] = useState('newest');
@@ -196,7 +209,7 @@ const Deals = () => {
     (feed.source !== 'discord' || feed.deals.some((d) => d.id === 'penny-cpu'));
 
   return (
-    <section className="pb-4" aria-labelledby="deals-title">
+    <section ref={revealScope} className="pb-4" aria-labelledby="deals-title">
       <motion.header
         {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
         className="mb-8"
@@ -211,7 +224,11 @@ const Deals = () => {
             )}
           </div>
         </div>
-        <h1 id="deals-title" className="mt-1 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+        <h1
+          id="deals-title"
+          data-reveal
+          className="mt-1 text-3xl font-extrabold tracking-tight text-white sm:text-4xl"
+        >
           Latest deals
         </h1>
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-zinc-400">
@@ -219,6 +236,17 @@ const Deals = () => {
             ? 'Pulled straight from the Deal Profit Discord — price errors, penny deals and profitable listings, filtered and sorted your way.'
             : 'Real finds from the Deal Profit community — price errors, penny deals and profitable listings, filtered and sorted your way.'}
         </p>
+
+        {/* The live ticker, which until now rendered on the homepage only.
+
+            This is the page where it belongs. The homepage uses it as proof that
+            the feed moves; here it sits directly above the grid it summarises,
+            so someone who scrolls past the filters has already seen prices
+            scrolling before they start sorting. Same component, same
+            data source, no duplicated fetch — it reads the same endpoint. */}
+        <div className="mt-6">
+          <LiveTicker />
+        </div>
 
         {/* Accuracy caveat. It sits directly under the page description, before
             any price is on screen, because it is not a disclaimer about the site
