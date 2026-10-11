@@ -6,10 +6,21 @@ import Footer from './Footer';
 import SiteCounter from './SiteCounter';
 import { ScrollProgress } from './ScrollText';
 import { useReducedMotion } from '../lib/motion';
+import { useSmoothScroll } from '../lib/useGsapText';
 
 const Layout = () => {
   const { pathname } = useLocation();
   const prefersReduced = useReducedMotion();
+
+  // Smooth scroll lives HERE, not on Home.
+  //
+  // It was called from Home alone, so /deals, /upgrade, /setup-request and
+  // /reviews all scrolled with native behaviour while only the homepage had
+  // the smoothed variant — and every scroll-linked animation added later would
+  // have to be re-enabled per route, which is the kind of thing that gets
+  // forgotten on the route nobody tested. One call at the layout level covers
+  // every page and every future one.
+  useSmoothScroll();
   const { scrollYProgress } = useScroll();
 
   // Reset scroll position on every route change (react-router keeps the

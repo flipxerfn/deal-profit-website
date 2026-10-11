@@ -16,7 +16,7 @@ import {
   FaStar,
   FaTag,
 } from 'react-icons/fa';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Badge,
@@ -28,6 +28,7 @@ import {
   CardHover,
 } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
+import { useSplitReveal, refreshScrollTriggers } from '../lib/useGsapText';
 import { startCheckout, WHOP_SETUP_URL, DISCORD_INVITE } from '../lib/checkout';
 import PaymentFlow from '../components/PaymentFlow';
 import LinkDiscordToWhop from '../components/LinkDiscordToWhop';
@@ -153,6 +154,21 @@ const TRUST_ITEMS = (pctLinkable) => [
 
 
 const Upgrade = () => {
+  // Word-by-word heading reveals, the same treatment the homepage gets.
+  //
+  // SectionHeader already emits data-reveal on its h2, so the attribute was
+  // present here and doing nothing — nothing on this page read it. This is the
+  // page that has to convince someone to hand over a card, and its headings
+  // resolving as you reach them is worth more here than anywhere else on the
+  // site.
+  const revealScope = useSplitReveal({
+    selector: '[data-reveal]',
+    type: 'words',
+    stagger: 0.04,
+    start: 'top 88%',
+  });
+
+
   const linkability = useLinkability();
   const prefersReduced = useReducedMotion();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -179,8 +195,21 @@ const Upgrade = () => {
     }
   };
 
+  // The monthly/yearly toggle changes the price text and the height of the
+  // comparison card, so ScrollTrigger's cached measurements go stale on
+  // click. Without this, the reveals below the toggle fire at the wrong scroll
+  // depth after the first switch.
+  useEffect(() => {
+    const id = setTimeout(() => refreshScrollTriggers(), 120);
+    return () => clearTimeout(id);
+  }, [interval]);
+
   return (
-    <section className="band-full band-bleed tint-brand relative pb-4 pt-12" aria-labelledby="upgrade-title">
+    <section
+      ref={revealScope}
+      className="band-full band-bleed tint-brand relative pb-4 pt-12"
+      aria-labelledby="upgrade-title"
+    >
       {/* Background glow */}
       <div className="radial-glow-hero pointer-events-none absolute inset-0" aria-hidden="true" />
       <div

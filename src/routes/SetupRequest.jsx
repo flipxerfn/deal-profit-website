@@ -13,6 +13,7 @@ import { motion } from 'framer-motion';
 import { WHOP_SETUP_URL } from '../lib/checkout';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 import { useLiveProof, pct } from '../lib/useLiveProof';
+import AnimatedFigure from '../components/AnimatedFigure';
 
 const ERRORS = {
   invite_required: 'Paste the invite link to your Discord server.',
@@ -187,18 +188,20 @@ export default function SetupRequest() {
             <dl className="mt-4 grid grid-cols-3 gap-4">
               <div>
                 <dt className="text-xs text-zinc-400">Finds right now</dt>
-                <dd className="mt-1 text-3xl font-extrabold tabular-nums text-white">{proof.finds}</dd>
+                <dd className="mt-1 text-3xl font-extrabold tabular-nums text-white">
+                  <AnimatedFigure value={proof.finds} />
+                </dd>
               </div>
               <div>
                 <dt className="text-xs text-zinc-400">Median off</dt>
                 <dd className="mt-1 text-3xl font-extrabold tabular-nums text-brand-2">
-                  {medianPct}%
+                  <AnimatedFigure value={medianPct} suffix="%" />
                 </dd>
               </div>
               <div>
                 <dt className="text-xs text-zinc-400">Retailers</dt>
                 <dd className="mt-1 text-3xl font-extrabold tabular-nums text-white">
-                  {proof.retailers}
+                  <AnimatedFigure value={proof.retailers} />
                 </dd>
               </div>
             </dl>

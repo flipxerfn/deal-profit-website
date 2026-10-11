@@ -33,7 +33,7 @@ import { FEED_STATS } from '../data/siteFacts';
 
 const medianSavingPct = FEED_STATS.medianSavingPct;
 import { useReducedMotion, motionVariants, getMotionProps, useScrollReveal } from '../lib/motion';
-import { useSplitReveal, useSmoothScroll, refreshScrollTriggers, ScrollTrigger } from '../lib/useGsapText';
+import { useSplitReveal, refreshScrollTriggers, ScrollTrigger } from '../lib/useGsapText';
 import { useLinkability } from '../lib/useLinkability';
 
 const HUNT_ICONS = [FaBolt, FaCoins, FaPercent, FaBell];
@@ -232,11 +232,6 @@ const Home = () => {
   const huntReveal = useScrollReveal();
   const socialReveal = useScrollReveal();
 
-  // Smooth scroll, then the reveals. Order matters: ScrollTrigger measures
-  // element positions once at setup, and Lenis changes scroll behaviour
-  // underneath it, so measuring before Lenis settles gives every trigger a
-  // stale start point.
-  useSmoothScroll();
   const revealScope = useSplitReveal({
     selector: '[data-reveal]',
     type: 'words',
