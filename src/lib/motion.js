@@ -198,9 +198,9 @@ export const motionVariants = {
       y: 0,
       scale: 1,
       boxShadow: [
-        '0 0 0 0px rgba(244, 63, 94, 0)',
-        '0 0 34px 2px rgba(244, 63, 94, 0.34)',
-        '0 0 0 0px rgba(244, 63, 94, 0)',
+        '0 0 0 0px rgba(139, 92, 246, 0)',
+        '0 0 34px 2px rgba(139, 92, 246, 0.30)',
+        '0 0 0 0px rgba(139, 92, 246, 0)',
       ],
     },
     transition: {

@@ -119,7 +119,7 @@ export default function MemberSuccess() {
                     className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                 ) : (
-                  <div className="flex aspect-square w-full items-center justify-center bg-[radial-gradient(90%_140%_at_18%_0%,rgba(244,63,94,0.2),transparent_78%)]">
+                  <div className="flex aspect-square w-full items-center justify-center bg-[radial-gradient(90%_140%_at_18%_0%,rgba(139,92,246,0.2),transparent_78%)]">
                     <FaBolt className="h-6 w-6 text-brand-2" aria-hidden="true" />
                   </div>
                 )}

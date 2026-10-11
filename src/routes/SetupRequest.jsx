@@ -12,6 +12,7 @@ import {
 import { motion } from 'framer-motion';
 import { WHOP_SETUP_URL } from '../lib/checkout';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
+import ScrollReveal from '../components/ScrollReveal';
 import { useLiveProof, pct } from '../lib/useLiveProof';
 import AnimatedFigure from '../components/AnimatedFigure';
 

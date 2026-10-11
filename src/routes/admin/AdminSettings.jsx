@@ -120,7 +120,7 @@ const AdminSettings = () => {
       <section className="card relative overflow-hidden p-6">
         <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
         <div
-          className="absolute inset-0 bg-[radial-gradient(90%_120%_at_20%_0%,rgba(244,63,94,0.08),transparent_70%)]"
+          className="absolute inset-0 bg-[radial-gradient(90%_120%_at_20%_0%,rgba(139,92,246,0.08),transparent_70%)]"
           aria-hidden="true"
         />
         <div className="relative mb-5 flex items-center gap-2">

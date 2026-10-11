@@ -66,7 +66,7 @@ const DealCard = ({ deal, spotlight = false }) => {
             />
           </div>
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(90%_140%_at_18%_0%,rgba(244,63,94,0.22),rgba(139,92,246,0.14)_48%,transparent_78%)]">
+          <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(90%_140%_at_18%_0%,rgba(139,92,246,0.22),rgba(139,92,246,0.14)_48%,transparent_78%)]">
             <div className="flex flex-col items-center gap-2">
               <FaBolt className="h-8 w-8 text-brand-2" />
               <span className="text-xs font-bold uppercase tracking-widest text-zinc-300">

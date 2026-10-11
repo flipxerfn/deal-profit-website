@@ -300,7 +300,7 @@ const Home = () => {
               className="mb-5 inline-flex flex-wrap items-center gap-2"
             >
               {['Price Errors', 'Penny Deals', 'Glitch Finds'].map((tag) => (
-                <Badge key={tag} variant="brand" className="gap-1.5 shadow-[0_0_12px_rgba(244,63,94,0.3)]">
+                <Badge key={tag} variant="brand" className="gap-1.5 shadow-[0_0_12px_rgba(139,92,246,0.3)]">
                   <span className="h-1 w-1 rounded-full bg-brand animate-pulse" />
                   {tag}
                 </Badge>
@@ -371,7 +371,7 @@ const Home = () => {
                   {...getMotionProps(prefersReduced, motionVariants.heroTrust)}
                   className="flex min-w-0 items-center gap-2"
                 >
-                  <span className="relative inline-flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10 text-brand shadow-[0_0_12px_rgba(244,63,94,0.2)] shrink-0">
+                  <span className="relative inline-flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10 text-brand shadow-[0_0_12px_rgba(139,92,246,0.2)] shrink-0">
                     <item.icon className="h-3.5 w-3.5" />
                     {/* A breathing dot beside the icon, not instead of it. The
                         icon still names the claim; the dot marks it as measured
@@ -434,7 +434,7 @@ const Home = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal/50 via-black/5 to-black/15" aria-hidden="true" />
                 <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
-                  <Badge variant="brand" className="shadow-[0_0_12px_rgba(244,63,94,0.4)]">Price error</Badge>
+                  <Badge variant="brand" className="shadow-[0_0_12px_rgba(139,92,246,0.4)]">Price error</Badge>
                   <Badge variant="outline" className="border-black/30 bg-black/50 text-zinc-200 backdrop-blur-sm">Tech</Badge>
                 </div>
                 {/* 7. The scan sweep. Over the archived example, not the live

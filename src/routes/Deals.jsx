@@ -9,6 +9,7 @@ import {
 } from 'react-icons/fa6';
 import { motion } from 'framer-motion';
 import DealCard from '../components/DealCard';
+import ScrollReveal from '../components/ScrollReveal';
 import SpotlightDeal from '../components/SpotlightDeal';
 import DiscordLogin from '../components/DiscordLogin';
 import { useAuth } from '../lib/useAuth';
@@ -455,14 +456,20 @@ const Deals = () => {
             {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
             className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
           >
-            {visible.map((deal) => (
-              <motion.div
+            {visible.map((deal, deal_index) => (
+              // Replaced a mount-triggered staggerItem with a per-card scroll
+              // reveal. The stagger container animated every card the moment
+              // the page loaded — including the ones three screens down — so
+              // by the time the reader scrolled to them the motion was already
+              // over. The per-card delay is derived from the index so cards
+              // still cascade, but only as they actually arrive.
+              <ScrollReveal
                 key={deal.id}
                 className="min-w-0"
-                {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
+                delay={Math.min(deal_index, 4) * 0.06}
               >
                 <DealCard deal={deal} />
-              </motion.div>
+              </ScrollReveal>
             ))}
           </motion.div>
 

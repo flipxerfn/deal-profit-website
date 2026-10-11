@@ -4,10 +4,10 @@ export default function CTASection({ eyebrow, title, description, actions, class
   return (
     <section className={clsx('relative mt-12 overflow-hidden rounded-xl border border-brand/20 p-6 md:p-8 lg:p-12', className)}>
       <div
-        className="absolute inset-0 bg-[radial-gradient(120%_160%_at_20%_0%,rgba(244,63,94,0.22),rgba(139,92,246,0.12)_50%,transparent_80%)]"
+        className="absolute inset-0 bg-[radial-gradient(120%_160%_at_20%_0%,rgba(139,92,246,0.22),rgba(139,92,246,0.12)_50%,transparent_80%)]"
         aria-hidden="true"
       />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(244,63,94,0.1),transparent_70%)]" aria-hidden="true" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.1),transparent_70%)]" aria-hidden="true" />
       <div className="relative flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div className="max-w-xl">
           {eyebrow && <p className="text-xs font-semibold uppercase tracking-wider text-brand-2">{eyebrow}</p>}

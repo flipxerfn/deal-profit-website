@@ -54,7 +54,7 @@ const SpotlightDeal = ({ deal }) => {
           </p>
 
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-            <span className="text-4xl font-extrabold tracking-tight text-brand drop-shadow-[0_0_18px_rgba(244,63,94,0.4)]">
+            <span className="text-4xl font-extrabold tracking-tight text-brand drop-shadow-[0_0_18px_rgba(139,92,246,0.4)]">
               {deal.displayPrice || `$${deal.price.toFixed(2)}`}
             </span>
             {deal.referencePrice && (
@@ -121,7 +121,7 @@ const SpotlightDeal = ({ deal }) => {
               alt={deal.imageAlt}
               decoding="async"
               loading="lazy"
-              className="aspect-square w-full rounded-2xl object-cover ring-1 ring-white/10 shadow-[0_0_40px_rgba(244,63,94,0.25)]"
+              className="aspect-square w-full rounded-2xl object-cover ring-1 ring-white/10 shadow-[0_0_40px_rgba(139,92,246,0.25)]"
             />
           </div>
         )}

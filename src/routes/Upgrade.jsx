@@ -468,7 +468,7 @@ const Upgrade = () => {
             <ul className="relative mt-5 space-y-3">
               {PREMIUM_FEATURES.map((feature) => (
                 <li key={feature} className="relative flex items-start gap-2.5 text-sm text-zinc-200">
-                  <span className="relative mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded bg-brand/20 text-brand shadow-[0_0_8px_rgba(244,63,94,0.3)]">
+                  <span className="relative mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded bg-brand/20 text-brand shadow-[0_0_8px_rgba(139,92,246,0.3)]">
                     <FaCheck className="h-3.5 w-3.5" />
                   </span>
                   {feature}
@@ -619,7 +619,7 @@ const Upgrade = () => {
         <div className="surface-raised relative overflow-hidden rounded-xl border border-brand/20 bg-charcoal p-6 sm:p-8">
           <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
           <div
-            className="absolute inset-0 bg-[radial-gradient(90%_120%_at_20%_0%,rgba(244,63,94,0.12),transparent_70%)]"
+            className="absolute inset-0 bg-[radial-gradient(90%_120%_at_20%_0%,rgba(139,92,246,0.12),transparent_70%)]"
             aria-hidden="true"
           />
           <div className="relative">
@@ -635,7 +635,7 @@ const Upgrade = () => {
             <ul className="mt-5 space-y-3">
               {TRIAL_INCLUDES.map((item) => (
                 <li key={item} className="flex items-start gap-3 text-sm text-zinc-300">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-brand/15 text-brand shadow-[0_0_10px_rgba(244,63,94,0.25)]">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-brand/15 text-brand shadow-[0_0_10px_rgba(139,92,246,0.25)]">
                     <FaCheck className="h-3 w-3" />
                   </span>
                   {item}

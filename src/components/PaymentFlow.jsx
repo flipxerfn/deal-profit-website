@@ -536,7 +536,7 @@ const PaymentFlow = () => {
                         'Cancel anytime',
                       ].map((feature) => (
                         <li key={feature} className="flex items-center gap-2.5">
-                          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-brand/20 text-brand shadow-[0_0_8px_rgba(244,63,94,0.3)]">
+                          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-brand/20 text-brand shadow-[0_0_8px_rgba(139,92,246,0.3)]">
                             <FaCheckCircle className="h-3 w-3" />
                           </span>
                           {feature}

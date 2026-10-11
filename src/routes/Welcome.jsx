@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useSearchParams } from 'react-router-dom';
 import { DISCORD_INVITE } from '../lib/checkout';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
+import ScrollReveal from '../components/ScrollReveal';
 import LinkDiscordToWhop from '../components/LinkDiscordToWhop';
 
 /**

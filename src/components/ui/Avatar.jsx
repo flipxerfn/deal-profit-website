@@ -16,7 +16,7 @@ export function Avatar({ className = '', src, alt, children, size = 'md', ...pro
       ) : (
         <div
           className={clsx(
-            'relative flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-brand/30 via-charcoal-3 to-glow/30 font-bold text-white ring-2 ring-brand/40 shadow-[0_0_16px_rgba(244,63,94,0.25)]',
+            'relative flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-brand/30 via-charcoal-3 to-glow/30 font-bold text-white ring-2 ring-brand/40 shadow-[0_0_16px_rgba(139,92,246,0.25)]',
             sizes[size]
           )}
         >

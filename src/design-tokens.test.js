@@ -5,10 +5,36 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const css = fs.readFileSync(
-  path.join(path.dirname(fileURLToPath(import.meta.url)), 'index.css'),
-  'utf8'
-);
+const here = path.dirname(fileURLToPath(import.meta.url));
+
+const css = fs.readFileSync(path.join(here, 'index.css'), 'utf8');
+
+/**
+ * Every source file a rose literal could hide in. `walkSourceFiles` exists so
+ * the recolour guard below can check components as well as the stylesheet —
+ * the first version of that test read only index.css and passed while 12
+ * components still carried pink shadows.
+ */
+function walkSourceFiles() {
+  const out = [];
+  const visit = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        // node_modules and test fixtures are not shipped source.
+        if (entry.name === '__tests__' || entry.name === 'node_modules') continue;
+        visit(full);
+      } else if (/\.(jsx?|css)$/.test(entry.name)) {
+        // Skip this file: it contains the rose pattern as a literal string, so
+        // the guard would otherwise match its own source and fail forever.
+        if (path.resolve(full) === path.resolve(here + '/design-tokens.test.js')) continue;
+        out.push(full);
+      }
+    }
+  };
+  visit(here);
+  return out;
+}
 
 describe('visual refresh design system', () => {
   it('keeps the ice token, the one cold accent still earning its place', () => {
@@ -63,13 +89,29 @@ describe('visual refresh design system', () => {
     expect(brand).not.toBe(brand3);
   });
 
-  it('no longer references the retired rose anywhere in the stylesheet', () => {
-    // Rose survived in 22 ambient glow literals that the token swap did not
-    // reach, leaving pink halos under violet text. This pins that a partial
-    // recolour cannot ship again.
+  it('no longer references the retired rose anywhere', () => {
+    // Rose survived in 22 ambient glow literals in index.css that the token
+    // swap did not reach, leaving pink halos under violet text.
+    //
+    // It then survived AGAIN in 12 components, because this assertion only
+    // ever read index.css — and the component literals were written without
+    // spaces (`244,63,94`), which a `\s*` pattern would still match but a
+    // whole-file scope never would. The scope was the bug, not the pattern.
+    // So this now walks every source file.
     expect(css).not.toMatch(/#f43f5e/i);
     expect(css).not.toMatch(/#ff6b8a/i);
     expect(css).not.toMatch(/#e02d4a/i);
-    expect(css).not.toMatch(/244,\s*63,\s*94/i);
+
+    const rose = /244,\s*63,\s*94|#f43f5e|#ff6b8a|#e02d4a/i;
+    const offenders = [];
+    for (const file of walkSourceFiles()) {
+      if (rose.test(fs.readFileSync(file, 'utf8'))) {
+        offenders.push(file);
+      }
+    }
+    expect(
+      offenders,
+      `retired rose literals still present in:\n  ${offenders.join('\n  ')}`
+    ).toEqual([]);
   });
 });

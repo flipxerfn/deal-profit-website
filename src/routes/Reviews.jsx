@@ -12,6 +12,7 @@ import {
 import { motion } from 'framer-motion';
 import { Button, Input, Textarea, Select, Badge, Avatar, Label, RatingBars } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
+import ScrollReveal from '../components/ScrollReveal';
 import { useAuth } from '../lib/useAuth';
 import DiscordLogin from '../components/DiscordLogin';
 
@@ -312,7 +313,7 @@ const Reviews = () => {
         <motion.form
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
           onSubmit={submit}
-          className="mb-8 card border-brand/25 shadow-[0_0_30px_rgba(244,63,94,0.08)] p-6"
+          className="mb-8 card border-brand/25 shadow-[0_0_30px_rgba(139,92,246,0.08)] p-6"
         >
           <h2 className="text-sm font-extrabold uppercase tracking-wider text-white">Leave a review</h2>
           <p className="mt-1 text-sm text-zinc-500">
@@ -447,13 +448,18 @@ const Reviews = () => {
           {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
           className="grid gap-5 sm:grid-cols-2"
         >
-          {filtered.map((review) => (
-            <motion.article
+          {filtered.map((review, i) => (
+            // Mount-triggered stagger replaced with a scroll reveal — see
+            // ScrollReveal. Reviews are the proof surface, and every card
+            // animating at once while the reader is at the top meant the bottom
+            // of the list was already static by the time they reached it.
+            <ScrollReveal
               key={review.id}
-              {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
+              as="article"
+              delay={Math.min(i, 4) * 0.06}
               className={`card p-6 transition-all duration-200 hover:-translate-y-0.5 ${
                 review.featured
-                  ? 'border-brand/40 shadow-[0_0_30px_rgba(244,63,94,0.12)]'
+                  ? 'border-brand/40 shadow-[0_0_30px_rgba(139,92,246,0.12)]'
                   : 'hover:border-brand/25'
               }`}
             >
@@ -492,7 +498,7 @@ const Reviews = () => {
                   Verified review
                 </Badge>
               </div>
-            </motion.article>
+            </ScrollReveal>
           ))}
         </motion.div>
       )}

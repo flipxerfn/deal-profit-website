@@ -143,14 +143,14 @@ const Admin = () => {
           <div className="glass-strong relative overflow-hidden rounded-2xl p-8 shadow-[0_30px_80px_rgba(0,0,0,0.5)]">
             <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
             <div
-              className="absolute inset-0 bg-[radial-gradient(90%_120%_at_20%_0%,rgba(244,63,94,0.1),transparent_70%)]"
+              className="absolute inset-0 bg-[radial-gradient(90%_120%_at_20%_0%,rgba(139,92,246,0.1),transparent_70%)]"
               aria-hidden="true"
             />
             <div className="relative mb-6 flex items-center gap-3">
               <img
                 src={dealProfitLogo}
                 alt=""
-                className="h-8 w-auto drop-shadow-[0_0_16px_rgba(244,63,94,0.45)]"
+                className="h-8 w-auto drop-shadow-[0_0_16px_rgba(139,92,246,0.45)]"
               />
               <div>
                 <p className="text-sm font-extrabold tracking-tight text-white">Deal Profit</p>

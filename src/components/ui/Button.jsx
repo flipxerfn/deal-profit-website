@@ -8,7 +8,8 @@ import { clsx } from 'clsx';
 const base = 'btn-shine relative overflow-hidden inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 font-semibold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-night disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] whitespace-nowrap';
 
 const variants = {
-  // brand-3 (#e02d4a) gives white text 4.52:1 and the hover shade 5.48:1.
+  // brand-3 (#6d28d9) gives white text 7.10:1. The old rose needed a darker
+  // step just to reach AA at 4.52:1.
   // Plain brand was 3.67:1 and brand-2 2.72:1 — both fail WCAG AA, so neither
   // may sit behind white label text. These are real buttons, not the .btn
   // utility class, so they carry their own colours.
