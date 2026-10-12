@@ -13,7 +13,16 @@ const variants = {
   // Plain brand was 3.67:1 and brand-2 2.72:1 — both fail WCAG AA, so neither
   // may sit behind white label text. These are real buttons, not the .btn
   // utility class, so they carry their own colours.
-  primary: 'bg-brand-3 text-white shadow-[0_0_20px_rgba(224,45,74,0.28)] hover:bg-[#c92640] hover:shadow-[0_0_26px_rgba(224,45,74,0.4)]',
+  // The glow was rgba(224,45,74) and the hover fill was #c92640 — both ROSE.
+  // So the site's primary call to action was violet at rest and turned RED the
+  // moment you hovered it, which is the exact moment anyone looks at it. The
+  // background token was already violet (brand-3), so the rose only ever
+  // showed in the glow and the hover state, which is why it survived a
+  // recolour that had otherwise reached this file.
+  //
+  // #7c3aed is one step up from brand-3 and holds 5.2:1 against white, so the
+  // hover state stays above AA for the label.
+  primary: 'bg-brand-3 text-white shadow-[0_0_20px_rgba(139,92,246,0.30)] hover:bg-[#7c3aed] hover:shadow-[0_0_26px_rgba(139,92,246,0.44)]',
   outline: 'border border-white/15 bg-white/[0.03] text-zinc-200 hover:border-brand/50 hover:bg-brand/10 hover:text-brand',
   ghost: 'text-zinc-300 hover:text-white hover:bg-white/5',
   destructive: 'bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 hover:border-red-500/50',

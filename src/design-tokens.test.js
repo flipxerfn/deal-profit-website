@@ -90,31 +90,75 @@ describe('visual refresh design system', () => {
   });
 
   it('no longer references the retired rose anywhere', () => {
-    // Rose survived in 22 ambient glow literals in index.css that the token
-    // swap did not reach, leaving pink halos under violet text.
+    // THIS GUARD HAS BEEN WRONG THREE TIMES. Worth recording.
     //
-    // It then survived AGAIN in 12 components, because this assertion only
-    // ever read index.css — and the component literals were written without
-    // spaces (`244,63,94`), which a `\s*` pattern would still match but a
-    // whole-file scope never would. The scope was the bug, not the pattern.
-    // So this now walks every source file.
-    expect(css).not.toMatch(/#f43f5e/i);
-    expect(css).not.toMatch(/#ff6b8a/i);
-    expect(css).not.toMatch(/#e02d4a/i);
-    expect(css).not.toMatch(/#f43f8e/i);
+    // v1 matched four literal hexes and `244,63,94`, and only read index.css.
+    //   -> 12 components kept pink shadows.
+    // v2 walked every source file but still matched literals.
+    //   -> motion.js CTA pulse kept a rose box-shadow.
+    // v3 added pink #f43f8e.
+    //   -> the primary Button kept rgba(224,45,74) and hover:bg-[#c92640],
+    //      so the site's main call to action turned RED on hover.
+    //
+    // The bug was never the pattern. Enumerating values cannot work: there are
+    // infinitely many ways to write a rose, and every one of them that gets
+    // written is a value nobody remembered to add to the list.
+    //
+    // So this matches on HUE BAND instead. Rose and pink sit in the magenta
+    // arc, roughly hue 320-359. Pure red is hue 0-20 and is deliberately still
+    // allowed — `destructive` and error states are legitimately red, and a
+    // guard that banned red would force those to be wrong. The two bands do
+    // not overlap, so the ban is precise rather than a blunt "no warm colours".
+    const hexes = [];
+    const rgbs = [];
+    const HEAT = (hex) => {
+      const n = parseInt(hex, 16);
+      const r = ((n >> 16) & 255) / 255;
+      const g = ((n >> 8) & 255) / 255;
+      const b = (n & 255) / 255;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const d = max - min;
+      if (d < 0.12) return null; // greys and near-neutrals carry no hue opinion
+      let h;
+      if (max === r) h = ((g - b) / d) % 6;
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h = Math.round(h * 60);
+      if (h < 0) h += 360;
+      // The magenta/rose arc only.
+      return h >= 320 && h <= 359 ? { h, rgb: `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})` } : null;
+    };
 
-    // Pink #f43f8e belongs here too: it survived because the pattern only
-    // knew rose (244,63,94). It was painting the hero wash on every page.
-    const rose = /244,\s*63,\s*94|244,\s*63,\s*142|#f43f5e|#f43f8e|#ff6b8a|#e02d4a/i;
     const offenders = [];
     for (const file of walkSourceFiles()) {
-      if (rose.test(fs.readFileSync(file, 'utf8'))) {
-        offenders.push(file);
-      }
+      const text = fs.readFileSync(file, 'utf8');
+      const lines = text.split('\n');
+
+      lines.forEach((line, i) => {
+        // This file quotes the banned hues as patterns; skip its own source.
+        if (file.endsWith('design-tokens.test.js')) return;
+        // Skip comment lines so the explanation above is not self-flagging.
+        const trimmed = line.trim();
+        if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) return;
+
+        for (const m of line.matchAll(/#([0-9a-f]{6}|[0-9a-f]{3})\b/gi)) {
+          const hit = HEAT(m[1].length === 3 ? m[1].split('').map((c) => c + c).join('') : m[1]);
+          if (hit) offenders.push(`${file}:${i + 1}  #${m[1]}  hue ${hit.h}`);
+        }
+        for (const m of line.matchAll(/rgba?\((\d+),\s*(\d+),\s*(\d+)/g)) {
+          const [, r, g, b] = m.map(Number);
+          const hit = HEAT(
+            [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')
+          );
+          if (hit) offenders.push(`${file}:${i + 1}  rgba(${r},${g},${b})  hue ${hit.h}`);
+        }
+      });
     }
+
     expect(
       offenders,
-      `retired rose literals still present in:\n  ${offenders.join('\n  ')}`
+      `retired rose/pink hues still present (hue 320-359):\n  ${offenders.join('\n  ')}`
     ).toEqual([]);
   });
 });

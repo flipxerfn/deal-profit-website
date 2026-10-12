@@ -499,6 +499,43 @@
     }
   }
 
+  /* --- Nav link underline -------------------------------------------------
+
+     The active link already gets a framer-motion indicator that wipes in and
+     slides between links. This is the OTHER half: the underline on hover and
+     keyboard focus for every other link, which was just a colour change.
+
+     scaleX from the left is used rather than width so the wipe is a
+     compositor-only transform and does not reflow the nav on every pointer
+     pass. `:not(.nav-link-active)` keeps it off the active link, which
+     already has the motion indicator — otherwise the two stack and the active
+     link reads as double-underlined. */
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.1rem;
+    height: 1.5px;
+    border-radius: 999px;
+    pointer-events: none;
+    background: linear-gradient(90deg, var(--color-brand), var(--color-brand-2));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .nav-link:not(.nav-link-active):hover::after,
+  .nav-link:not(.nav-link-active):focus-visible::after {
+    transform: scaleX(1);
+  }
+  /* A keyboard user must see the same affordance a mouse user does, which is
+     why focus-visible is paired with hover here rather than left to the UA. */
+  @media (prefers-reduced-motion: reduce) {
+    .nav-link::after {
+      transition: none !important;
+    }
+  }
+
   /* --- Accent chip --------------------------------------------------------
 
      The pillar cards set --chip-glow / --chip-glow-hover inline so the accent
@@ -844,7 +881,7 @@
       100deg,
       transparent 0%,
       rgba(139, 92, 246, 0.12) 42%,
-      rgba(255, 140, 170, 0.20) 50%,
+      rgba(196, 181, 253, 0.20) 50%,
       rgba(139, 92, 246, 0.10) 58%,
       transparent 100%
     );
@@ -927,7 +964,7 @@
       180deg,
       transparent,
       rgba(139, 92, 246, 0.32) 55%,
-      rgba(255, 107, 138, 0.75) 92%,
+      rgba(196, 181, 253, 0.75) 92%,
       transparent
     );
     will-change: transform, opacity;

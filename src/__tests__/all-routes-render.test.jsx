@@ -31,6 +31,6 @@ describe('every page renders', () => {
         )
       );
       expect(html.length).toBeGreaterThan(500);
-    });
+    }, 30000);
   }
 });

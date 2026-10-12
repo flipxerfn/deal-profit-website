@@ -24,6 +24,7 @@ import {
 } from '../components/ui';
 import DealCard from '../components/DealCard';
 import LiveHeroFeed from '../components/LiveHeroFeed';
+import GlowCard from '../components/GlowCard';
 import LiveTicker from '../components/LiveTicker';
 import LatestFinds from '../components/LatestFinds';
 import MemberSuccess from '../components/MemberSuccess';
@@ -559,17 +560,19 @@ const Home = () => {
               category, two greens for the two savings categories, brand violet
               for the speed promise. See PILLAR_ACCENTS for why two of the four
               share a hue. */}
-          {WHAT_WE_HUNT.map((item, i) => (
-            <motion.div key={item.title} {...getMotionProps(prefersReduced, motionVariants.staggerItem)}>
-              <FeatureCard
-                icon={HUNT_ICONS[i]}
-                title={item.title}
-                text={item.text}
-                accent={PILLAR_ACCENTS[i]}
-                className="h-full"
-              />
-            </motion.div>
-          ))}
+          <GlowCard className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {WHAT_WE_HUNT.map((item, i) => (
+              <motion.div key={item.title} {...getMotionProps(prefersReduced, motionVariants.staggerItem)}>
+                <FeatureCard
+                  icon={HUNT_ICONS[i]}
+                  title={item.title}
+                  text={item.text}
+                  accent={PILLAR_ACCENTS[i]}
+                  className="h-full"
+                />
+              </motion.div>
+            ))}
+          </GlowCard>
         </motion.div>
         </motion.div>
       </section>
