@@ -8,6 +8,22 @@ import { useReducedMotion } from '../lib/motion';
 import { hostOf, isSourceLink, timeAgo } from '../lib/dealSource';
 import { isNonProductImage } from '../lib/imageQuality';
 
+/* Ten minutes, not five. The feed posts continuously, so at any moment
+   several rows are inside a five-minute window and the badge stops meaning
+   "this just arrived" and starts meaning "this is the top of the page". */
+const NEW_WINDOW_MIN = 10;
+
+const isFresh = (postedAt) => {
+  if (!postedAt) return false;
+  const t = Date.parse(postedAt);
+  if (Number.isNaN(t)) return false;
+  const mins = (Date.now() - t) / 60000;
+  // A clock skew that puts a post in the future must not make it "fresh"
+  // forever, so a small negative margin is tolerated and anything beyond it
+  // is treated as not-fresh rather than as permanently NEW.
+  return mins >= -1 && mins < NEW_WINDOW_MIN;
+};
+
 const dealOff = (deal) =>
   deal.referencePrice ? Math.round((1 - deal.price / deal.referencePrice) * 100) : null;
 
@@ -17,6 +33,7 @@ const DealCard = ({ deal, spotlight = false }) => {
   const sourceHost = hostOf(deal.url ?? deal.cta?.href);
   const verifiable = isSourceLink(deal.url ?? deal.cta?.href);
   const caught = timeAgo(deal.postedAt);
+  const fresh = isFresh(deal.postedAt);
 
   // Some feed images are not product photos. 28 of the 178 live images are
   // byte-for-byte 1920x1290 full-page Amazon captures — browser chrome,
@@ -79,6 +96,31 @@ const DealCard = ({ deal, spotlight = false }) => {
         <div className="absolute left-3 top-3 flex items-center gap-2">
           {deal.badge && (
             <Badge variant="brand">{deal.badge}</Badge>
+          )}
+          {/* NEW — only on finds that genuinely arrived in the last ten
+              minutes. Amber is the urgency colour on this site and this is the
+              urgency case: a price error that is still uncorrected.
+
+              The ping is an opacity ring and the badge itself fades, so both
+              are transform/opacity only. Under reduced motion the badge is
+              still shown — it carries real information — but it does not pulse,
+              because an animated badge on every card in a live feed is exactly
+              the repeated motion that setting exists to suppress. */}
+          {fresh && (
+            <span className="relative inline-flex items-center">
+              {!prefersReduced && (
+                <span
+                  className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400/60"
+                  aria-hidden="true"
+                />
+              )}
+              <Badge
+                variant="outline"
+                className="relative border-amber-400/50 bg-amber-400/15 text-amber-200"
+              >
+                New
+              </Badge>
+            </span>
           )}
           <Badge variant="outline" className="bg-black/60 text-zinc-200 border-black/30">
             {deal.categoryLabel}

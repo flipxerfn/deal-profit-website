@@ -9,8 +9,8 @@
 //
 // A unit test cannot catch "this animation triggers layout". A source scan can.
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import fs, { readFileSync } from 'node:fs';
+import path, { resolve } from 'node:path';
 
 const read = (p) => readFileSync(resolve(import.meta.dirname, '..', p), 'utf8');
 const css = read('index.css');
@@ -63,6 +63,72 @@ describe('motion foundation', () => {
     expect(grain).toMatch(/background-image:\s*url\("data:image\/svg\+xml/);
     expect(grain).not.toMatch(/animation:/);
     expect(grain).toContain('pointer-events: none');
+  });
+
+  it('bans AnimatePresence mode="wait", which has deadlocked twice', () => {
+    // IT HAS BROKEN IN TWO PLACES ON THIS SITE, MEASURED BOTH TIMES.
+    //
+    // 1. The Layout route wrapper. Every route change rendered a blank page:
+    //    the exit was applied to a child that was still entering, on the same
+    //    DOM node, and the page stayed mounted at opacity 0 until a reload.
+    //    See route-transition.test.js for the frame-by-frame trace.
+    //
+    // 2. The /upgrade price swap. Settled at opacity 0 with stale text and a
+    //    frozen halo. Same mechanism, smaller blast radius, which is exactly
+    //    why it survived as long as it did.
+    //
+    // The remaining AnimatePresence uses are all `mode="sync"` (the default) or
+    // `mode="popLayout"`, both of which mount the incoming child immediately
+    // alongside the outgoing one. That is the difference: there is no window in
+    // which the incoming node can be mistaken for the exiting one. Only "wait"
+    // serialises them, and "wait" is the only one that can hang.
+    const offenders = [];
+    const walk = (dir) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (e.name === 'node_modules' || e.name === '__tests__') continue;
+        const full = path.join(dir, e.name);
+        if (e.isDirectory()) { walk(full); continue; }
+        if (!/\.jsx$/.test(e.name)) continue;
+        const text = fs.readFileSync(full, 'utf8');
+        for (const m of text.matchAll(/<AnimatePresence[^>]*mode=["']wait["'][^>]*>/g)) {
+          offenders.push(`${full}: ${m[0]}`);
+        }
+      }
+    };
+    walk(path.resolve(import.meta.dirname, '..'));
+    expect(
+      offenders,
+      `AnimatePresence mode="wait" reintroduced (it has blanked pages twice):\n  ${offenders.join('\n  ')}`
+    ).toEqual([]);
+  });
+
+  it('drives the price swap with CSS, not a JS animation driver', () => {
+    // Three implementations of this one interaction have each failed, measured
+    // rather than guessed:
+    //   1. plain text        -> the number changed silently under the cursor
+    //   2. AnimatePresence   -> deadlocked at opacity 0 with stale text
+    //   3. framer on a keyed motion.p -> enter animation completed only ~half
+    //      the time; the price settled at opacity 0 on 2 of 4 toggles with its
+    //      halo frozen at the keyframe's 0% value
+    //
+    // The fix is that there is no JS driver at all: the key changes, the node
+    // remounts, a CSS animation restarts. Nothing to sequence, nothing to lose
+    // track of. That is the invariant worth pinning.
+    const upgrade = read('routes/Upgrade.jsx');
+
+    const swap = upgrade.slice(upgrade.indexOf('.price-swap'), upgrade.indexOf('.price-swap') + 400);
+    expect(swap, 'the price swap no longer uses .price-swap').toBeTruthy();
+
+    // The animated element must be a plain span, not a motion component.
+    const holder = upgrade.match(/<(\w+)[^>]*className="price-swap"/);
+    expect(holder?.[1], 'price-swap must be on a plain element').toBe('span');
+
+    // No exit, no AnimatePresence, anywhere near it.
+    expect(upgrade).not.toMatch(/<AnimatePresence/);
+    expect(swap).not.toMatch(/exit=/);
+
+    // And it is keyed on the price, which is what makes the remount happen.
+    expect(upgrade).toMatch(/key=\{interval === 'month' \? PRICE_MONTHLY_MO : PRICE_YEARLY_YR\}/);
   });
 
   it('does not attach one pointer listener per card', () => {

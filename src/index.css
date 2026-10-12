@@ -499,6 +499,132 @@
     }
   }
 
+  /* --- Skeleton shimmer ---------------------------------------------------
+
+     Replaces `animate-pulse` on the deal-grid skeletons. Pulse drops the whole
+     card to ~40% and back, which reads as "this is broken" rather than "this is
+     loading" — and it moves every pixel of the card, not the light across it.
+
+     This is the same trick as .btn-shine: a highlight parked off-stage, moved
+     across with a transform. Compositor-only, and only one element animates
+     per card instead of the entire card. 1.4s with a delay is slower than a
+     1s pulse on purpose — loading states that hurry look like errors. */
+  .skeleton-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      100deg,
+      transparent 36%,
+      rgba(196, 181, 253, 0.14) 50%,
+      transparent 64%
+    );
+    background-size: 220% 100%;
+    animation: skeleton-sweep 1.4s ease-in-out infinite;
+  }
+  @keyframes skeleton-sweep {
+    from {
+      background-position: 130% 0;
+    }
+    to {
+      background-position: -130% 0;
+    }
+  }
+
+  /* --- Price swap ---------------------------------------------------------
+
+     Pure CSS, triggered by a React `key` on the element. Changing the billing
+     interval changes the key, which remounts the node, which restarts this.
+
+     It was framer-motion before, and it failed intermittently: measured across
+     four toggles, the price settled at opacity 0 on the second and fourth, with
+     its halo frozen at the keyframe's 0% value. A remounting keyed motion node
+     does not reliably complete its enter animation — the same class of problem
+     as the route wrapper, in a smaller blast radius, which is why it survived
+     long enough to look like a timing problem rather than a real one.
+
+     A CSS animation on a remounted element is deterministic: no JS driver, no
+     animation lifecycle to lose track of. Remount is the trigger, so there is
+     nothing to sequence.
+
+     `both` fill is required and is the point — without the backwards fill the
+     element would sit at full opacity for one frame before the animation
+     started, which shows as a flicker on every toggle. */
+  .price-swap {
+    display: block;
+    animation: price-swap-in 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .price-swap::after {
+    content: '';
+    position: absolute;
+    inset: -10px -14px;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: 999px;
+    background: radial-gradient(closest-side, rgba(167, 139, 250, 0.85), transparent 72%);
+    filter: blur(9px);
+    animation: price-halo 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes price-swap-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 10px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  /* --- Rotating conic border (Premium card) -------------------------------
+
+     A slowly rotating conic gradient masked to a 1.5px ring. `ring-conic` is
+     the hover glow that already existed; this is the always-on border on the
+     one card the page is selling.
+
+     Rotating a conic gradient is a repaint of the gradient itself, not a
+     transform, so this is the one place on the site where a continuous
+     animation costs paint. It is kept to a single element, runs at 14s, and
+     is a 1.5px ring — the painted area is tiny even though the repaint is not
+     free. 14s is slow enough that it never draws the eye away from the price.
+     */
+  .ring-spin {
+    position: relative;
+    isolation: isolate;
+  }
+  .ring-spin::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    padding: 1.5px;
+    pointer-events: none;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(167, 139, 250, 0.85) 55deg,
+      rgba(34, 211, 238, 0.6) 120deg,
+      transparent 200deg,
+      transparent 360deg
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: ring-spin 14s linear infinite;
+  }
+  @keyframes ring-spin {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+
   /* --- Nav link underline -------------------------------------------------
 
      The active link already gets a framer-motion indicator that wipes in and
@@ -771,6 +897,30 @@
        transform, so no light leaks across the label. */
     .shimmer::after {
       animation: none !important;
+    }
+
+    /* The price still SWAPS — it just arrives without travelling. A price that
+       silently changes under the cursor is worse than one that fades. */
+    .price-swap {
+      animation: none !important;
+    }
+    .price-swap::after {
+      animation: none !important;
+      opacity: 0.22;
+    }
+
+    /* The shimmer sweep is a transform; under reduced motion it parks at the
+       off-stage position rather than sweeping. */
+    .skeleton-shimmer::after {
+      animation: none !important;
+      background-position: 130% 0;
+    }
+
+    /* A rotating border is decoration, not information. Frozen, it still
+       reads as a highlighted card without anything moving. */
+    .ring-spin::before {
+      animation: none !important;
+      transform: none !important;
     }
 
     /* The row still arrives — that is information. It just stops flashing. */

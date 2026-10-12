@@ -11,7 +11,12 @@ export function Skeleton({ className = '', ...props }) {
 
 export function SkeletonCard({ className = '' }) {
   return (
-    <div className={clsx('overflow-hidden rounded-xl border border-white/10 bg-charcoal', className)}>
+    // `skeleton-shimmer` needs `relative` to anchor its sweep. `animate-pulse`
+    // was dropped in favour of it: pulse fades the whole card (including the
+    // border and text placeholders), which reads as an error rather than as
+    // loading. The sweep moves the light instead, leaving the card's shape
+    // stable, which is the thing that actually says "not ready yet".
+    <div className={clsx('skeleton-shimmer relative overflow-hidden rounded-xl border border-white/10 bg-charcoal', className)}>
       <Skeleton className="aspect-[16/9] w-full" />
       <div className="space-y-3 p-5">
         <Skeleton className="h-4 w-3/4" />

@@ -308,7 +308,7 @@ const Upgrade = () => {
             </div>
 
             {/* 2. Free trial — the middle path, and the one the video should push. */}
-            <div className="card relative overflow-hidden border-white/15 p-6">
+            <div className="ring-spin card relative overflow-hidden border-white/15 p-6">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-300">
                   <FaCrown className="text-base text-brand-2" aria-hidden="true" />
@@ -355,9 +355,39 @@ const Upgrade = () => {
                   No trial
                 </Badge>
               </div>
-              <p className="mt-3 text-2xl font-extrabold tracking-tight text-white">
-                {interval === 'month' ? PRICE_MONTHLY_MO : PRICE_YEARLY_YR}
-              </p>
+              {/* THE PRICE SWAP
+
+                  Three implementations were wrong before this one worked:
+
+                  1. Plain text. The number silently changed under the cursor,
+                     so a reader comparing $25/mo against $200/yr had no signal
+                     that anything had happened.
+                  2. AnimatePresence mode="wait". Measured deadlocking — the
+                     price settled at opacity 0 with stale text. Same mechanism
+                     that blanked whole pages on route change.
+                  3. framer-motion on a keyed motion.p. The text swapped
+                     correctly but the enter animation completed only about half
+                     the time: across four toggles the price settled at
+                     opacity 0 on the second and fourth, its halo frozen at the
+                     keyframe's 0% value.
+
+                  So there is no JS animation driver here at all. The `key`
+                  changes with the price, the node remounts, and a CSS
+                  animation restarts. That is deterministic — there is no
+                  animation lifecycle to lose track of, and no exit to sequence.
+
+                  `.price-swap` carries both the entrance and the halo. It is
+                  transform and opacity only. */}
+              <div className="relative mt-3 h-[2.25rem] overflow-hidden">
+                <p className="absolute inset-0 text-2xl font-extrabold tracking-tight text-white">
+                  <span
+                    key={interval === 'month' ? PRICE_MONTHLY_MO : PRICE_YEARLY_YR}
+                    className="price-swap"
+                  >
+                    {interval === 'month' ? PRICE_MONTHLY_MO : PRICE_YEARLY_YR}
+                  </span>
+                </p>
+              </div>
               <ul className="mt-4 space-y-2 text-sm text-zinc-300">
                 <li className="flex items-start gap-2">
                   <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
