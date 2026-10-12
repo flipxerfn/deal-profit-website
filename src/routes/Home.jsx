@@ -29,7 +29,7 @@ import LiveTicker from '../components/LiveTicker';
 import LatestFinds from '../components/LatestFinds';
 import MemberSuccess from '../components/MemberSuccess';
 import ProofCatches from '../components/ProofCatches';
-import rtpcImg from '../assets/crops/deal1-hero.webp';
+import rtpcImg from '../assets/crops/deal1-hero-wide.webp';
 import { WHAT_WE_HUNT, HOW_IT_WORKS, COMMUNITY_STATS } from '../data/deals';
 import { FEED_STATS } from '../data/siteFacts';
 
@@ -435,13 +435,43 @@ const Home = () => {
                 </p>
               </div>
 
-              <div className="relative aspect-[16/9] overflow-hidden rounded-lg bg-charcoal-2">
+              {/* 3:1, not 16:9.
+
+                  The asset is a listing screenshot at 3.055:1. A 16:9 box forced
+                  object-fit to choose between letterboxing and cropping, and the
+                  answer that looked best in isolation — object-cover — cut the
+                  right-hand column off the screenshot.
+
+                  The real problem was upstream: deal1-hero.webp had already been
+                  cropped from 1170px to 544px, keeping the left 46% of the
+                  image. No object-fit value could recover pixels the file no
+                  longer had. That crop sliced "YEYIAN Phoenix Mesh Gaming PC"
+                  down to "YEYIAN ... Gaming" with the right edge of every word
+                  gone, so the card read as a rendering fault.
+
+                  Regenerated from the uncropped deal1.jpg at 3:1, and the box
+                  now matches the asset, so object-contain letterboxes almost
+                  nothing. */}
+              <div className="relative aspect-[3/1] overflow-hidden rounded-lg bg-charcoal-2">
                 <img
                   src={rtpcImg}
                   alt="Archived example: an RTX 5060 gaming PC listed at $39.99 against a $599.99 retail price"
                   decoding="async"
                   loading="lazy"
-                  className="h-full w-full object-cover object-center brightness-[0.96]"
+                  /* object-contain, not object-cover.
+
+                     This is a retailer listing screenshot, and the reason it is
+                     on the page is that the price is IN the image — "$39.99"
+                     against "$599.99" is the entire claim. object-cover on a
+                     16:9 box cropped the sides and sliced the right-hand column
+                     of text clean off, so the hero showed "YEYIANG / Gaming /
+                     Ultra 5" with every word's right edge missing and read as a
+                     rendering fault rather than as a crop.
+
+                     Letterboxing is the right trade. The wrapper already has
+                     bg-charcoal-2 so the bars are a deliberate surface, not a
+                     hole. */
+                  className="h-full w-full object-contain object-center brightness-[0.96]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal/50 via-black/5 to-black/15" aria-hidden="true" />
                 <div className="absolute left-3 top-3 z-10 flex items-center gap-2">

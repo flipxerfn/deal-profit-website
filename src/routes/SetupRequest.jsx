@@ -305,7 +305,7 @@ export default function SetupRequest() {
         <ScrollReveal delay={0.2}
           className="mt-16"
         >
-          <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+          <h2 className="text-center text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
             What the $55 actually buys
           </h2>
           <ul className="mt-6 space-y-4">
@@ -353,7 +353,7 @@ export default function SetupRequest() {
         <ScrollReveal delay={0.3}
           className="mt-14"
         >
-          <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+          <h2 className="text-center text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
             Fair questions
           </h2>
           <div className="mt-5 divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10 bg-charcoal">

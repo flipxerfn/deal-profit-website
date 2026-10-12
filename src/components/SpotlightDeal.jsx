@@ -115,13 +115,26 @@ const SpotlightDeal = ({ deal }) => {
         </div>
 
         {img && (
+          /* object-cover, not contain.
+
+             These are retailer listing screenshots, and they are not square —
+             the archived example is 1920x1290 with the product name and price
+             set into the image itself. `object-cover` on an aspect-square box
+             crops the sides off, which cut the headline text in half: the hero
+             read "YEYIANG / Gaming / Ultra 5" with the right edge of every
+             word sliced away, so the card looked broken rather than cropped.
+
+             `object-contain` keeps the whole screenshot. The letterboxing is
+             the correct trade — the alternative is showing a deal image with
+             half its words removed, on the surface whose job is to make the
+             feed look real. */
           <div className="mx-auto w-40 sm:w-full">
             <img
               src={img}
               alt={deal.imageAlt}
               decoding="async"
               loading="lazy"
-              className="aspect-square w-full rounded-2xl object-cover ring-1 ring-white/10 shadow-[0_0_40px_rgba(139,92,246,0.25)]"
+              className="aspect-square w-full rounded-2xl bg-charcoal-2 object-contain ring-1 ring-white/10 shadow-[0_0_40px_rgba(139,92,246,0.25)]"
             />
           </div>
         )}

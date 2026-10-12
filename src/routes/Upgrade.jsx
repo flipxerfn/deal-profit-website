@@ -17,6 +17,7 @@ import {
   FaTag,
 } from 'react-icons/fa';
 import { useEffect, useState } from 'react';
+import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import {
   Badge,
@@ -265,7 +266,7 @@ const Upgrade = () => {
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             {/* 1. Discord — free, no card. Recommended for TikTok traffic. */}
-            <div className="card relative overflow-hidden border-brand/40 p-6">
+            <div className="card relative flex flex-col overflow-hidden border-brand/40 p-6">
               <div
                 className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand to-transparent"
                 aria-hidden="true"
@@ -282,7 +283,7 @@ const Upgrade = () => {
               <p className="mt-3 text-2xl font-extrabold tracking-tight text-white">
                 Free, no card
               </p>
-              <ul className="mt-4 space-y-2 text-sm text-zinc-300">
+              <ul className="mt-4 mb-5 space-y-2 text-sm text-zinc-300">
                 <li className="flex items-start gap-2">
                   <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
                   The live deal feed, as it lands
@@ -300,7 +301,7 @@ const Upgrade = () => {
                 href={DISCORD_INVITE}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={buttonClass({ variant: 'primary', size: 'lg' })}
+                className={clsx('mt-auto w-full', buttonClass({ variant: 'primary', size: 'lg' }))}
               >
                 <FaDiscord className="text-sm" aria-hidden="true" />
                 Join Discord here
@@ -308,7 +309,7 @@ const Upgrade = () => {
             </div>
 
             {/* 2. Free trial — the middle path, and the one the video should push. */}
-            <div className="ring-spin card relative overflow-hidden border-white/15 p-6">
+            <div className="ring-spin card relative flex flex-col overflow-hidden border-white/15 p-6">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-300">
                   <FaCrown className="text-base text-brand-2" aria-hidden="true" />
@@ -319,7 +320,7 @@ const Upgrade = () => {
                 </Badge>
               </div>
               <p className="mt-3 text-2xl font-extrabold tracking-tight text-white">$0 for a week</p>
-              <ul className="mt-4 space-y-2 text-sm text-zinc-300">
+              <ul className="mt-4 mb-5 space-y-2 text-sm text-zinc-300">
                 <li className="flex items-start gap-2">
                   <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
                   Everything in the member channels
@@ -337,7 +338,7 @@ const Upgrade = () => {
                 type="button"
                 onClick={handleStartTrial}
                 disabled={trialLoading}
-                className={buttonClass({ variant: 'outline', size: 'lg' })}
+                className={clsx('mt-auto w-full', buttonClass({ variant: 'outline', size: 'lg' }))}
               >
                 <FaCrown className="text-sm" aria-hidden="true" />
                 {trialLoading ? 'Opening Whop…' : 'Start Free Trial'}
@@ -345,7 +346,7 @@ const Upgrade = () => {
             </div>
 
             {/* 3. Paid — for someone already sold. */}
-            <div className="card relative overflow-hidden border-white/15 p-6">
+            <div className="card relative flex flex-col overflow-hidden border-white/15 p-6">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-300">
                   <FaBolt className="text-base text-brand-2" aria-hidden="true" />
@@ -388,7 +389,7 @@ const Upgrade = () => {
                   </span>
                 </p>
               </div>
-              <ul className="mt-4 space-y-2 text-sm text-zinc-300">
+              <ul className="mt-4 mb-5 space-y-2 text-sm text-zinc-300">
                 <li className="flex items-start gap-2">
                   <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
                   Full member access from the first minute
@@ -405,7 +406,7 @@ const Upgrade = () => {
               <button
                 type="button"
                 onClick={handleUpgrade}
-                className={buttonClass({ variant: 'primary', size: 'lg' })}
+                className={clsx('mt-auto w-full', buttonClass({ variant: 'primary', size: 'lg' }))}
               >
                 <FaCrown className="text-sm" aria-hidden="true" />
                 Subscribe {interval === 'month' ? 'Monthly' : 'Yearly'}

@@ -32,7 +32,24 @@ const STATS = (pctLinkable) => [
   { icon: FaBolt, value: String(FEED_STATS.dealsInFeed), label: 'Finds in feed' },
   {
     icon: FaShieldAlt,
-    value: pctLinkable ?? '--',
+    // This number is MEASURED from the live feed, so it can legitimately be
+    // unavailable: the request failed, or there were not yet enough posts to
+    // say anything true.
+    //
+    // It used to render the string "--" in that case, which is the worst
+    // possible answer. A dash in a stat tile reads as a value that failed to
+    // load, so a reader concludes the claim is broken rather than unmeasured —
+    // on the one card whose whole job is to prove the feed is real. Same
+    // reasoning as SiteCounter refusing to render "0 finds".
+    //
+    // So it renders the icon at reduced opacity instead: clearly "not
+    // measured yet", clearly not a number, and it never asserts anything.
+    value:
+      pctLinkable == null ? (
+        <FaShieldAlt className="mx-auto h-5 w-5 text-zinc-600" aria-hidden="true" />
+      ) : (
+        `${pctLinkable}%`
+      ),
     label: 'Link straight to the listing',
   },
   { icon: FaCoins, value: `${FEED_STATS.medianSavingPct}%`, label: 'Median off' },
