@@ -8,11 +8,30 @@ export const springs = {
 };
 
 export function useReducedMotion() {
-  const [prefersReduced, setPrefersReduced] = useState(false);
+  // Read the media query SYNCHRONOUSLY on the first render.
+  //
+  // This used to initialise to `false` and correct itself in an effect, which
+  // meant the first paint of every page always got the full-motion treatment:
+  // the route wrapper was mounted at `opacity: 0; translateY(18px)` and
+  // animated in, even with prefers-reduced-motion set. Measured on / under
+  // reduced motion, the page sat at opacity 0 for seconds before resolving —
+  // technically it recovered, but a reduced-motion user should never be shown
+  // the movement at all, only its end state.
+  //
+  // `typeof window` guard keeps server rendering safe: on the server there is
+  // no matchMedia and the honest answer is "not reduced", which is also the
+  // pre-hydration markup's assumption.
+  const [prefersReduced, setPrefersReduced] = useState(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  });
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReduced(mediaQuery.matches);
+    // Only push a change if it actually differs, so a preference that is
+    // already correctly read on first render does not cause a needless
+    // re-render of every animated subtree on the page.
+    setPrefersReduced((prev) => (prev === mediaQuery.matches ? prev : mediaQuery.matches));
     const handler = (e) => setPrefersReduced(e.matches);
     mediaQuery.addEventListener('change', handler);
     return () => mediaQuery.removeEventListener('change', handler);
