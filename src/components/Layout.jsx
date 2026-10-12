@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { motion, useScroll, AnimatePresence } from 'framer-motion';
+import { motion, useScroll } from 'framer-motion';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import SiteCounter from './SiteCounter';
@@ -70,59 +70,58 @@ const Layout = () => {
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-x-0 top-0 z-0 h-[520px] bg-[radial-gradient(40%_110%_at_88%_-12%,rgba(244,63,142,0.12),transparent_70%)]"
+        className="pointer-events-none fixed inset-x-0 top-0 z-0 h-[520px] bg-[radial-gradient(40%_110%_at_88%_-12%,rgba(139,92,246,0.14),transparent_70%)]"
       />
       <Navbar />
       <ScrollProgress />
       <main className="relative z-10 flex-1">
         {/* Route transitions.
 
-            This was key={pathname} with an animate but no exit and no
-            AnimatePresence, which means every tab change was an instant swap
-            plus a fade-in. Nothing ever left, so nothing moved. You cannot
-            feel a transition that only has one half.
+            ENTER ONLY. There is deliberately no exit and no AnimatePresence.
 
-            mode="wait" holds the outgoing page until it has finished leaving,
-            so the two never overlap and the text never cross-fades into mush.
-            The exit carries the page up and out — the reverse of the entrance,
-            so the movement reads as travel rather than a glitch. */}
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={pathname}
-            initial={prefersReduced ? false : { opacity: 0, y: 18, scale: 0.994 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={
-              prefersReduced
-                ? { opacity: 0 }
-                : {
-                    opacity: 0,
-                    y: -10,
-                    scale: 0.996,
-                    // The exit is dead time. mode="wait" means the incoming
-                    // page does not mount until this finishes, so every
-                    // millisecond here is a millisecond of staring at the page
-                    // you were trying to leave. A spring that matches the
-                    // entrance's ease reads as one continuous movement; the
-                    // same spring duration does not, because it is a wait.
-                    transition: { duration: 0.16, ease: 'easeIn' },
-                  }
-            }
-            transition={
-              prefersReduced
-                ? { duration: 0 }
-                : {
-                    type: 'spring',
-                    stiffness: 260,
-                    damping: 28,
-                    mass: 0.85,
-                  }
-            }
-          >
+            This block had both, and the exit was the cause of a production bug:
+            navigating between routes rendered a completely BLANK page, and the
+            only way out was a hard reload.
+
+            What was actually happening, measured frame by frame on a single
+            DOM node:
+
+              314ms  new route mounts, opacity 1
+              559ms  enter tween running, y heading +18 -> 0
+              612ms  y has passed 0 and reached -2.45px
+              989ms  opacity slams to 0
+             1001ms  transform lands on y:-10 scale:0.996
+
+            That last pair is the `exit` target verbatim. The exit was being
+            applied to a child that was still entering, on the same node, and
+            nothing ever brought the opacity back. The enter tween's y going
+            NEGATIVE is the tell — it was already travelling toward the exit's
+            y:-10 rather than the entrance's y:0.
+
+            Two things made this look like something it was not. With
+            mode="wait" only the FIRST nav after a page load failed, which
+            reads as a warm-up quirk; without mode="wait" the first TWO failed.
+            So mode="wait" was not causing the bug, it was delaying it. Only
+            removing the exit fixed it: 12/12 route transitions clean.
+
+            A 0.16s decorative exit is not worth a class of bug that blanks the
+            page. The entrance is kept because it is the half the reader
+            actually perceives — something still moves on a route change, it
+            just arrives rather than leaves. */}
+        <motion.div
+          key={pathname}
+          initial={prefersReduced ? false : { opacity: 0, y: 18, scale: 0.994 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={
+            prefersReduced
+              ? { duration: 0 }
+              : { type: 'spring', stiffness: 260, damping: 28, mass: 0.85 }
+          }
+        >
             <div className="mx-auto w-full max-w-[1800px] px-4 py-8 sm:px-6 md:py-12 lg:px-8">
               <Outlet />
             </div>
           </motion.div>
-        </AnimatePresence>
       </main>
       <Footer />
       <SiteCounter />

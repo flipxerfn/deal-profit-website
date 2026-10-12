@@ -101,8 +101,11 @@ describe('visual refresh design system', () => {
     expect(css).not.toMatch(/#f43f5e/i);
     expect(css).not.toMatch(/#ff6b8a/i);
     expect(css).not.toMatch(/#e02d4a/i);
+    expect(css).not.toMatch(/#f43f8e/i);
 
-    const rose = /244,\s*63,\s*94|#f43f5e|#ff6b8a|#e02d4a/i;
+    // Pink #f43f8e belongs here too: it survived because the pattern only
+    // knew rose (244,63,94). It was painting the hero wash on every page.
+    const rose = /244,\s*63,\s*94|244,\s*63,\s*142|#f43f5e|#f43f8e|#ff6b8a|#e02d4a/i;
     const offenders = [];
     for (const file of walkSourceFiles()) {
       if (rose.test(fs.readFileSync(file, 'utf8'))) {

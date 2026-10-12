@@ -130,7 +130,7 @@ const Admin = () => {
 
   if (phase === 'checking') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(90%_140%_at_50%_0%,rgba(244,63,142,0.1),rgba(139,92,246,0.08)_48%,transparent_78%)]">
+      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(90%_140%_at_50%_0%,rgba(139,92,246,0.13),rgba(139,92,246,0.08)_48%,transparent_78%)]">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand/30 border-t-brand" />
       </div>
     );
@@ -138,7 +138,7 @@ const Admin = () => {
 
   if (phase === 'login') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(90%_140%_at_50%_0%,rgba(244,63,142,0.1),rgba(139,92,246,0.08)_48%,transparent_78%)] px-4">
+      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(90%_140%_at_50%_0%,rgba(139,92,246,0.13),rgba(139,92,246,0.08)_48%,transparent_78%)] px-4">
         <div className="w-full max-w-md">
           <div className="glass-strong relative overflow-hidden rounded-2xl p-8 shadow-[0_30px_80px_rgba(0,0,0,0.5)]">
             <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
@@ -225,7 +225,7 @@ const Admin = () => {
       : 'Not configured';
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(90%_140%_at_50%_0%,rgba(244,63,142,0.1),rgba(139,92,246,0.08)_48%,transparent_78%)]">
+    <div className="min-h-screen bg-[radial-gradient(90%_140%_at_50%_0%,rgba(139,92,246,0.13),rgba(139,92,246,0.08)_48%,transparent_78%)]">
       <header className="border-b border-white/10 bg-night/80 backdrop-blur">
         <div className="mx-auto flex max-w-[1152px] items-center justify-between px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
