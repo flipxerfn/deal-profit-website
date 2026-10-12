@@ -21,6 +21,30 @@
 // Still non-interactive and still out of the tab order: it is a status readout,
 // and a tab stop for information nobody can act on is just noise for keyboard
 // users.
+//
+// WHY IT IS NOT `fixed` ANY MORE
+// -----------------------------
+// It used to be pinned to the bottom-left corner at z-40. Measured across every
+// route at 1440 and 390: it sat on top of real content on ALL of them —
+//
+//   /deals        on a deal card image
+//   /welcome      on the amber trial-notice panel
+//   /discord      on a section
+//   /setup-request on the pricing body
+//   /upgrade      on the page container
+//
+// It is `pointer-events-none`, so it never blocked a click, but it is opaque
+// and it permanently covered a 241x31px patch of whatever was underneath. On
+// mobile it landed on the category filter pills, so half a pill was visible
+// behind it and the row looked broken.
+//
+// It is also not actually live in the way a pinned badge implies: it fetches
+// once on mount. So "always on screen" was never buying currency, it was just
+// an obstruction with a good excuse.
+//
+// Now it sits in the flow above the footer. Same number, same source, same
+// honesty rules, on every page — but it cannot occlude anything, because
+// nothing is on top of it.
 import { useEffect, useState } from 'react';
 import { FaBolt } from 'react-icons/fa6';
 import { measurableCatches, discountStats } from '../lib/proof';
@@ -67,7 +91,7 @@ export default function SiteCounter() {
 
   return (
     <div
-      className="surface-raised pointer-events-none fixed bottom-3 left-3 z-40 flex select-none items-center gap-2.5 rounded-full border border-white/10 bg-charcoal/90 px-3.5 py-1.5 text-[11px] font-medium text-zinc-300 backdrop-blur"
+      className="surface-raised pointer-events-none mx-auto mb-6 flex w-fit select-none items-center gap-2.5 rounded-full border border-white/10 bg-charcoal/90 px-3.5 py-1.5 text-[11px] font-medium text-zinc-300"
       aria-label={`${stats.finds} finds posted, median saving ${stats.median} percent`}
     >
       <span className="flex items-center gap-1.5">
