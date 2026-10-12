@@ -499,6 +499,64 @@
     }
   }
 
+  /* --- Accent chip --------------------------------------------------------
+
+     The pillar cards set --chip-glow / --chip-glow-hover inline so the accent
+     colour lives with the accent definition in FeatureCard, and this rule only
+     knows how to cross-fade between them. Doing it in CSS rather than swapping
+     an inline boxShadow on hover is what makes the glow actually animate —
+     an inline style change is not interpolable. */
+  .accent-chip {
+    box-shadow: 0 0 16px var(--chip-glow, transparent);
+    transition:
+      box-shadow 300ms ease,
+      background-color 300ms ease,
+      color 300ms ease;
+  }
+  .group:hover .accent-chip,
+  .accent-chip:hover {
+    box-shadow: 0 0 26px var(--chip-glow-hover, transparent);
+  }
+
+  /* --- New-row highlight flash -------------------------------------------
+
+     Fires on the row that has just entered the top of the hero feed, so the
+     5s loop reads as "something arrived" rather than as a carousel turning.
+
+     The highlight is an absolutely-positioned overlay whose OPACITY animates.
+     Animating the row's own background-color would repaint the row every frame
+     for the length of the flash, and the overlay approach paints once and then
+     only changes opacity — compositor-only, same as everything else here. */
+  .feed-row-new {
+    position: relative;
+    isolation: isolate;
+  }
+  .feed-row-new::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      rgba(139, 92, 246, 0.55),
+      rgba(34, 211, 238, 0.28) 60%,
+      transparent
+    );
+    animation: feed-row-flash 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes feed-row-flash {
+    0% {
+      opacity: 0.9;
+      transform: translateX(-14%);
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(0);
+    }
+  }
+
   /* --- Cursor-following glow border --------------------------------------
 
      The gradient is placed by two custom properties (--glow-x/--glow-y) that
@@ -676,6 +734,12 @@
        transform, so no light leaks across the label. */
     .shimmer::after {
       animation: none !important;
+    }
+
+    /* The row still arrives — that is information. It just stops flashing. */
+    .feed-row-new::after {
+      animation: none !important;
+      opacity: 0;
     }
 
     /* The cursor glow is still useful feedback for a mouse user, but a

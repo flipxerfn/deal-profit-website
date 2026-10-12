@@ -29,6 +29,11 @@ export default function LiveHeroFeed() {
   const [deals, setDeals] = useState(null);
   const [live, setLive] = useState(false);
   const [index, setIndex] = useState(0);
+  // True only when the window has advanced at least once. Without this the
+  // flash would also fire on the very first paint, which is not an arrival —
+  // it is the page loading — and a highlight that means nothing teaches the
+  // reader to ignore it.
+  const [advanced, setAdvanced] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -60,7 +65,10 @@ export default function LiveHeroFeed() {
 
   useEffect(() => {
     if (prefersReduced || !deals?.length) return undefined;
-    const t = setInterval(() => setIndex((i) => (i + 1) % rows.length), ROTATE_MS);
+    const t = setInterval(() => {
+      setIndex((i) => (i + 1) % rows.length);
+      setAdvanced(true);
+    }, ROTATE_MS);
     return () => clearInterval(t);
   }, [prefersReduced, deals, rows.length]);
 
@@ -96,7 +104,12 @@ export default function LiveHeroFeed() {
               animate={{ opacity: 1, y: 0 }}
               exit={prefersReduced ? undefined : { opacity: 0, y: -8 }}
               transition={{ duration: 0.28, ease: 'easeOut', delay: i * 0.03 }}
-              className="flex items-center gap-3 rounded-lg bg-white/[0.03] px-3 py-2 transition-colors hover:bg-white/[0.06]"
+              className={`flex items-center gap-3 rounded-lg bg-white/[0.03] px-3 py-2 transition-colors hover:bg-white/[0.06] ${
+                // Only the row entering at the top, and only once the loop has
+                // actually turned. Under reduced motion the CSS kills the flash
+                // itself, so no JS branch is needed here.
+                advanced && i === 0 ? 'feed-row-new' : ''
+              }`}
             >
               {/* A consistent mark so the eye tracks a column instead of
                   reading each row. The comparison site anchors its list the

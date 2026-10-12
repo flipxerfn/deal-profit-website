@@ -72,6 +72,12 @@ const Layout = () => {
         aria-hidden="true"
         className="pointer-events-none fixed inset-x-0 top-0 z-0 h-[520px] bg-[radial-gradient(40%_110%_at_88%_-12%,rgba(139,92,246,0.14),transparent_70%)]"
       />
+      {/* Film grain. One fixed layer for the whole document at z-1: it sits
+          over the band gradients and under main (z-10), so it dithers the
+          large flat violet fields without ever sitting on top of text.
+          aria-hidden and pointer-events-none, so it costs nothing for a
+          screen reader and never eats a click. */}
+      <div className="grain-overlay" aria-hidden="true" />
       <Navbar />
       <ScrollProgress />
       <main className="relative z-10 flex-1">

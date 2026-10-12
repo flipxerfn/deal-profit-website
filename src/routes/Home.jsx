@@ -17,6 +17,7 @@ import {
   buttonClass,
   SectionHeader,
   FeatureCard,
+  PILLAR_ACCENTS,
   StatCard,
   CTASection,
   Avatar,
@@ -134,6 +135,15 @@ const StaggerLine = ({ text, className = '', delay = 0 }) => {
 };
 
 // Animated count-up for pure-numeric stat values (e.g. "10K+", "93%").
+/* Counts up when it scrolls into view, once.
+
+   This was already correctly scroll-gated (useInView, once:true) — recording
+   that so the next person does not "fix" it into an on-mount count, which is
+   the version that finishes animating while the reader is still at the top.
+
+   The real value is the initial state, so a number that renders empty until
+   hydration is a number that reads as broken on a page whose entire job is
+   proving the feed is alive. */
 const Counter = ({ value }) => {
   const prefersReduced = useReducedMotion();
   const ref = useRef(null);
@@ -545,9 +555,19 @@ const Home = () => {
           {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
           className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
+          {/* Each pillar carries its own accent — amber for the closing-window
+              category, two greens for the two savings categories, brand violet
+              for the speed promise. See PILLAR_ACCENTS for why two of the four
+              share a hue. */}
           {WHAT_WE_HUNT.map((item, i) => (
             <motion.div key={item.title} {...getMotionProps(prefersReduced, motionVariants.staggerItem)}>
-              <FeatureCard icon={HUNT_ICONS[i]} title={item.title} text={item.text} className="h-full" />
+              <FeatureCard
+                icon={HUNT_ICONS[i]}
+                title={item.title}
+                text={item.text}
+                accent={PILLAR_ACCENTS[i]}
+                className="h-full"
+              />
             </motion.div>
           ))}
         </motion.div>

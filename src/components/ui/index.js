@@ -9,7 +9,7 @@ export { Select } from './Select';
 export { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from './Dialog';
 export { Skeleton, SkeletonCard, SkeletonText, SkeletonAvatar } from './Skeleton';
 export { default as SectionHeader } from './SectionHeader';
-export { default as FeatureCard } from './FeatureCard';
+export { default as FeatureCard, PILLAR_ACCENTS } from './FeatureCard';
 export { default as StatCard } from './StatCard';
 export { default as CTASection } from './CTASection';
 export { default as Accordion } from './Accordion';
