@@ -29,6 +29,7 @@ import {
   CardHover,
 } from '../components/ui';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
+import ScrollReveal, { RevealGroup, RevealItem } from '../components/ScrollReveal';
 import { useSplitReveal, refreshScrollTriggers } from '../lib/useGsapText';
 import { startCheckout, WHOP_SETUP_URL, DISCORD_INVITE } from '../lib/checkout';
 import PaymentFlow from '../components/PaymentFlow';
@@ -264,9 +265,13 @@ const Upgrade = () => {
             Start here — pick one
           </h2>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {/* The three ways in reveal in sequence as they scroll into view.
+              They used to cascade on MOUNT, which meant the one decision this
+              page exists to present had already finished animating before the
+              reader had scrolled to it. */}
+          <RevealGroup stagger={0.12} className="mt-6 grid gap-4 md:grid-cols-3">
             {/* 1. Discord — free, no card. Recommended for TikTok traffic. */}
-            <div className="card relative flex flex-col overflow-hidden border-brand/40 p-6">
+            <RevealItem className="card relative flex flex-col overflow-hidden border-brand/40 p-6">
               <div
                 className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand to-transparent"
                 aria-hidden="true"
@@ -306,10 +311,10 @@ const Upgrade = () => {
                 <FaDiscord className="text-sm" aria-hidden="true" />
                 Join Discord here
               </a>
-            </div>
+            </RevealItem>
 
             {/* 2. Free trial — the middle path, and the one the video should push. */}
-            <div className="ring-spin card relative flex flex-col overflow-hidden border-white/15 p-6">
+            <RevealItem className="ring-spin card relative flex flex-col overflow-hidden border-white/15 p-6">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-300">
                   <FaCrown className="text-base text-brand-2" aria-hidden="true" />
@@ -343,10 +348,10 @@ const Upgrade = () => {
                 <FaCrown className="text-sm" aria-hidden="true" />
                 {trialLoading ? 'Opening Whop…' : 'Start Free Trial'}
               </button>
-            </div>
+            </RevealItem>
 
             {/* 3. Paid — for someone already sold. */}
-            <div className="card relative flex flex-col overflow-hidden border-white/15 p-6">
+            <RevealItem className="card relative flex flex-col overflow-hidden border-white/15 p-6">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-300">
                   <FaBolt className="text-base text-brand-2" aria-hidden="true" />
@@ -411,8 +416,8 @@ const Upgrade = () => {
                 <FaCrown className="text-sm" aria-hidden="true" />
                 Subscribe {interval === 'month' ? 'Monthly' : 'Yearly'}
               </button>
-            </div>
-          </div>
+            </RevealItem>
+          </RevealGroup>
 
           <p className="mx-auto mt-5 max-w-2xl text-center text-xs text-zinc-500">
             All three go through the same checkout on Whop. The Discord is free and stays free —
@@ -428,35 +433,54 @@ const Upgrade = () => {
         {/* Billing interval selector */}
         <div className="mb-8 flex items-center justify-center gap-4">
           <span className="text-sm text-zinc-400">Billing</span>
+          {/* The highlight is a single element that SLIDES between the two
+              options (layoutId), rather than a background colour swapped on
+              two buttons. The slide is the signal that the price below moved
+              because of the click — a colour change on the button alone reads
+              as two independent toggles. */}
           <div className="relative inline-flex items-center gap-1 rounded-lg bg-charcoal p-1">
             <button
               type="button"
               onClick={() => setInterval('month')}
-              className={`relative px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                interval === 'month'
-                  ? 'bg-brand-3 text-white shadow-[0_0_16px_rgba(139,92,246,0.45)]'
-                  : 'text-zinc-400 hover:text-white'
+              className={`relative px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                interval === 'month' ? 'text-white' : 'text-zinc-400 hover:text-white'
               }`}
             >
-              Monthly
+              {interval === 'month' && (
+                <motion.span
+                  layoutId="billing-pill"
+                  className="absolute inset-0 rounded-md bg-brand-3 shadow-[0_0_16px_rgba(139,92,246,0.45)]"
+                  transition={prefersReduced ? { duration: 0 } : { type: 'spring', stiffness: 340, damping: 30 }}
+                  aria-hidden="true"
+                />
+              )}
+              <span className="relative z-10">Monthly</span>
             </button>
             <button
               type="button"
               onClick={() => setInterval('year')}
-              className={`relative px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                interval === 'year'
-                  ? 'bg-brand-3 text-white shadow-[0_0_16px_rgba(139,92,246,0.45)]'
-                  : 'text-zinc-400 hover:text-white'
+              className={`relative px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                interval === 'year' ? 'text-white' : 'text-zinc-400 hover:text-white'
               }`}
             >
-              Yearly
-              <FaTag className="ml-1 inline text-[10px]" aria-hidden="true" />
+              {interval === 'year' && (
+                <motion.span
+                  layoutId="billing-pill"
+                  className="absolute inset-0 rounded-md bg-brand-3 shadow-[0_0_16px_rgba(139,92,246,0.45)]"
+                  transition={prefersReduced ? { duration: 0 } : { type: 'spring', stiffness: 340, damping: 30 }}
+                  aria-hidden="true"
+                />
+              )}
+              <span className="relative z-10">
+                Yearly
+                <FaTag className="ml-1 inline text-[10px]" aria-hidden="true" />
+              </span>
             </button>
           </div>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div className="card relative overflow-hidden p-6 sm:p-8">
+        <RevealGroup stagger={0.12} className="grid gap-5 sm:grid-cols-2">
+          <RevealItem className="card relative overflow-hidden p-6 sm:p-8">
             <div
               className="absolute inset-0 bg-gradient-to-br from-zinc-900/50 to-transparent"
               aria-hidden="true"
@@ -472,9 +496,9 @@ const Upgrade = () => {
                 </li>
               ))}
             </ul>
-          </div>
+          </RevealItem>
 
-          <div className="relative card overflow-hidden border-brand/30 p-6 sm:p-8">
+          <RevealItem className="relative card overflow-hidden border-brand/30 p-6 sm:p-8">
             <div className="hairline-gradient absolute inset-x-0 top-0 h-px" aria-hidden="true" />
             <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-glow/5" aria-hidden="true" />
             <div className="flex items-center justify-between mb-4">
@@ -489,8 +513,16 @@ const Upgrade = () => {
               )}
             </div>
             <div className="mb-5 text-center">
-              <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
-                {interval === 'month' ? PRICE_MONTHLY_MO : PRICE_YEARLY_YR}
+              {/* Remounts on interval change, so the CSS animation replays.
+                  Same deterministic mechanism as the price in the plan cards
+                  above — no JS animation driver to lose track of. */}
+              <span className="inline-block">
+                <span
+                  key={interval === 'month' ? PRICE_MONTHLY_MO : PRICE_YEARLY_YR}
+                  className="price-swap relative text-4xl sm:text-5xl font-extrabold tracking-tight text-white"
+                >
+                  {interval === 'month' ? PRICE_MONTHLY_MO : PRICE_YEARLY_YR}
+                </span>
               </span>
               <p className="mt-1 text-sm text-zinc-400">
                 {interval === 'month' ? 'Billed monthly' : 'Billed annually'}
@@ -506,8 +538,8 @@ const Upgrade = () => {
                 </li>
               ))}
             </ul>
-          </div>
-        </div>
+          </RevealItem>
+        </RevealGroup>
       </motion.div>
 
         <motion.div
@@ -551,8 +583,8 @@ const Upgrade = () => {
         {/* The part people actually get wrong: clicking a button on a site
             should not be a mystery. Say exactly what each button does and what
             happens next, before they commit to anything. */}
-        <motion.div
-          {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+        <RevealGroup
+          stagger={0.09}
           className="mx-auto mt-10 grid max-w-4xl gap-4 text-left sm:grid-cols-2"
         >
           {[
@@ -573,12 +605,12 @@ const Upgrade = () => {
               body: 'Cancel from your Whop account any time, or just ask in the server. You keep access until the end of the period you already paid for, and are not charged again.',
             },
           ].map((item) => (
-            <div key={item.title} className="surface-raised rounded-xl border border-white/10 bg-charcoal-2/60 p-5">
+            <RevealItem key={item.title} y={20} className="surface-raised rounded-xl border border-white/10 bg-charcoal-2/60 p-5">
               <p className="text-sm font-semibold text-white">{item.title}</p>
               <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{item.body}</p>
-            </div>
+            </RevealItem>
           ))}
-        </motion.div>
+        </RevealGroup>
 
         {/* The panel that says what to actually do about it. The four cards
             above explain that linking is required; this one does the linking,
@@ -663,16 +695,16 @@ const Upgrade = () => {
             <p className="mt-3 text-sm text-zinc-400">
               Subscribe for {interval === 'month' ? '$25/mo' : '$200/yr (save $100)'} whenever you're ready.
             </p>
-            <ul className="mt-5 space-y-3">
+            <RevealGroup as="ul" stagger={0.08} className="mt-5 space-y-3">
               {TRIAL_INCLUDES.map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm text-zinc-300">
+                <RevealItem as="li" key={item} y={14} x={-8} className="flex items-start gap-3 text-sm text-zinc-300">
                   <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-brand/15 text-brand shadow-[0_0_10px_rgba(139,92,246,0.25)]">
                     <FaCheck className="h-3 w-3" />
                   </span>
                   {item}
-                </li>
+                </RevealItem>
               ))}
-            </ul>
+            </RevealGroup>
           </div>
         </div>
       </div>
@@ -685,16 +717,16 @@ const Upgrade = () => {
           title="Built for people who hate missing deals"
           description="Every premium feature is designed around one goal: catching the deal before it is gone."
         />
-        <motion.div
-          {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
+        <RevealGroup
+          stagger={0.08}
           className="mx-auto grid max-w-[1400px] gap-4 sm:grid-cols-2 lg:grid-cols-3"
         >
           {BENEFITS.map((benefit) => (
-            <motion.div key={benefit.title} {...getMotionProps(prefersReduced, motionVariants.staggerItem)}>
+            <RevealItem key={benefit.title} y={26} blur={3}>
               <FeatureCard icon={benefit.icon} title={benefit.title} text={benefit.text} className="h-full" />
-            </motion.div>
+            </RevealItem>
           ))}
-        </motion.div>
+        </RevealGroup>
       </div>
 
       {/* Why Upgrade section */}
@@ -716,14 +748,15 @@ const Upgrade = () => {
       </motion.div>
 
       {/* Trust indicators (moved from /trial) */}
-      <motion.div
-        {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
+      <RevealGroup
+        stagger={0.1}
         className="mx-auto mt-16 grid max-w-[1300px] gap-4 sm:grid-cols-3 md:mt-20"
       >
         {TRUST_ITEMS(linkability?.pct).map((item) => (
-          <motion.div
+          <RevealItem
             key={item.label}
-            {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
+            y={24}
+            scale={0.97}
             className="card p-4 text-center"
           >
             <div className="mx-auto mb-3 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
@@ -731,9 +764,9 @@ const Upgrade = () => {
             </div>
             <h3 className="text-sm font-bold text-white">{item.label}</h3>
             <p className="mt-1 text-xs text-zinc-400">{item.desc}</p>
-          </motion.div>
+          </RevealItem>
         ))}
-      </motion.div>
+      </RevealGroup>
 
       {/* FAQ */}
       <div className="mx-auto mt-16 max-w-4xl md:mt-20">
@@ -760,7 +793,9 @@ const Upgrade = () => {
         <BillingTransparency />
       </motion.div>
 
-      {/* Final CTA */}
+      {/* Final CTA. Revealed on scroll so the closing ask arrives rather than
+          already being finished by the time it is reached. */}
+      <ScrollReveal distance={30}>
       <CTASection
         title="Ready to catch more deals?"
         description={
@@ -792,6 +827,7 @@ const Upgrade = () => {
           </>
         }
       />
+      </ScrollReveal>
       </div>
     </section>
   );

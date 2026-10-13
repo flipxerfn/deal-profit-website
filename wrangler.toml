@@ -28,16 +28,24 @@ storage = "sqlite"
 crons = ["*/5 * * * *"]
 
 [vars]
-# Override these with your real values:
-#   - In the Cloudflare dashboard under Settings -> Variables and Secrets, or
-#   - Locally in .dev.vars (gitignored), or
-#   - Via `npx wrangler secret put <NAME>` / `npx wrangler deploy --var <NAME>:<value>`.
-# DISCORD_BOT_TOKEN and admin credentials: a Secret bound with the same name in the dashboard
-# takes precedence over these plain [vars] defaults, so production works out of the box here
-# but is hard to brute-force once you add the Secrets. Keep category IDs non-secret.
+# Everything here is PUBLIC: a [vars] entry is committed to this file, printed in
+# full by `wrangler deploy`, and readable by anyone with repository access. Only
+# non-secret configuration belongs in this section.
+#
+# Secrets (DISCORD_BOT_TOKEN, DISCORD_CLIENT_SECRET, DISCORD_PUBLIC_KEY,
+# STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, DISCORD_SETUP_WEBHOOK_URL) live in the
+# Cloudflare dashboard, and ADMIN_PASSWORD is set the same way:
+#
+#   printf '%s' "$NEW_PASSWORD" | npx wrangler secret put ADMIN_PASSWORD
+#
+# A Secret bound with the same name as a [vars] entry takes precedence, but do not
+# rely on that: a secret CANNOT be created while a plain var of the same name is
+# deployed (Cloudflare rejects it with "Binding name already in use"), so a
+# password left in this file also blocks the secret that is supposed to replace it.
+#
+# Local development reads the same names from .dev.vars, which is gitignored.
 DISCORD_CATEGORY_IDS = ""
 ADMIN_USERNAME = "goosievv"
-ADMIN_PASSWORD = "Orio23!!2012"
 STRIPE_PUBLISHABLE_KEY = ""
 DISCORD_CLIENT_ID = "1553844051449483445"
 DISCORD_REDIRECT_URI = "https://goosiev.com/api/discord/callback"

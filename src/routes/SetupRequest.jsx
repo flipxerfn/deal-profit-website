@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import {
   FaDiscord,
   FaPaperPlane,
@@ -12,7 +13,7 @@ import {
 import { motion } from 'framer-motion';
 import { WHOP_SETUP_URL } from '../lib/checkout';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
-import ScrollReveal from '../components/ScrollReveal';
+import ScrollReveal, { RevealGroup, RevealItem } from '../components/ScrollReveal';
 import { useLiveProof, pct } from '../lib/useLiveProof';
 import AnimatedFigure from '../components/AnimatedFigure';
 
@@ -257,10 +258,13 @@ export default function SetupRequest() {
               </p>
             </div>
 
-            <ul className="mt-7 space-y-3">
+            <RevealGroup as="ul" stagger={0.12} className="mt-7 space-y-3">
               {proof.samples.map((d) => (
-                <li
+                <RevealItem
+                  as="li"
                   key={d.id || d.title}
+                  y={22}
+                  x={-12}
                   className="card flex items-center gap-4 p-4"
                 >
                   {d.image && (
@@ -287,9 +291,9 @@ export default function SetupRequest() {
                       </p>
                     )}
                   </div>
-                </li>
+                </RevealItem>
               ))}
-            </ul>
+            </RevealGroup>
 
             <p className="mt-4 text-center text-xs text-zinc-500">
               <strong className="font-semibold text-zinc-400">
@@ -308,11 +312,11 @@ export default function SetupRequest() {
           <h2 className="text-center text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
             What the $55 actually buys
           </h2>
-          <ul className="mt-6 space-y-4">
+          <RevealGroup as="ul" stagger={0.11} className="mt-6 space-y-4">
             {DELIVERABLES.map((d) => {
               const Icon = d.icon;
               return (
-                <li key={d.title} className="card flex gap-4 p-5 sm:p-6">
+                <RevealItem as="li" key={d.title} y={28} x={-14} className="card flex gap-4 p-5 sm:p-6">
                   <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand/15 text-brand">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
@@ -320,10 +324,10 @@ export default function SetupRequest() {
                     <h3 className="text-sm font-bold text-white">{d.title}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-zinc-400">{d.text}</p>
                   </div>
-                </li>
+                </RevealItem>
               );
             })}
-          </ul>
+          </RevealGroup>
         </ScrollReveal>
 
         {/* The limit of the claim, stated plainly and early.
@@ -374,9 +378,28 @@ export default function SetupRequest() {
                       </span>
                     </button>
                   </h3>
-                  {open && (
-                    <p className="px-5 pb-4 text-sm leading-relaxed text-zinc-400">{f.a}</p>
-                  )}
+                  {/* Height is animated rather than the panel simply
+                      appearing. The wrapper is overflow-hidden so the
+                      question below slides down instead of jumping, which is
+                      what makes a long FAQ feel like one document rather than
+                      a series of toggles. */}
+                  <AnimatePresence initial={false}>
+                    {open && (
+                      <motion.div
+                        key="answer"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{
+                          duration: prefersReduced ? 0 : 0.28,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
+                        className="overflow-hidden"
+                      >
+                        <p className="px-5 pb-4 text-sm leading-relaxed text-zinc-400">{f.a}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               );
             })}
@@ -400,7 +423,12 @@ export default function SetupRequest() {
         <ScrollReveal delay={0.4}
         >
           {state.status === 'sent' ? (
-            <div className="surface-raised rounded-2xl border border-emerald-400/30 p-8 text-center">
+            <motion.div
+              initial={prefersReduced ? false : { opacity: 0, y: 18, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 240, damping: 26, mass: 0.9 }}
+              className="surface-raised rounded-2xl border border-emerald-400/30 p-8 text-center"
+            >
               <FaCircleCheck className="mx-auto h-10 w-10 text-emerald-400" aria-hidden="true" />
               <h2 className="mt-4 text-xl font-extrabold text-white">It is with us</h2>
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-zinc-400">
@@ -414,7 +442,7 @@ export default function SetupRequest() {
                 <strong className="font-semibold text-white">Admin</strong> on your server — we
                 can usually get in and start straight away.
               </p>
-            </div>
+            </motion.div>
           ) : (
             <form
               onSubmit={submit}

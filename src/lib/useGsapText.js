@@ -53,6 +53,9 @@ export function useSplitReveal(options = {}) {
     const root = scope.current;
     if (!root) return undefined;
 
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (reduceMotion.matches) return undefined;
+
     const targets = gsap.utils.toArray(selector, root);
     if (!targets.length) return undefined;
 
@@ -135,7 +138,22 @@ export function useSplitReveal(options = {}) {
       }
     }, root);
 
+    const onMotionPreferenceChange = (event) => {
+      if (event.matches) {
+        riseCtx.revert();
+        ctx.revert();
+        for (const target of targets) {
+          if (target._split) {
+            target._split.revert();
+            target._split = null;
+          }
+        }
+      }
+    };
+    reduceMotion.addEventListener('change', onMotionPreferenceChange);
+
     return () => {
+      reduceMotion.removeEventListener('change', onMotionPreferenceChange);
       riseCtx.revert();
       ctx.revert();
       for (const el of targets) {

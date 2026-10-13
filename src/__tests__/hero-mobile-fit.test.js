@@ -73,7 +73,7 @@ describe('the hero fits a phone', () => {
     // green while the column had no class at all. The other matched the column
     // only when it happened to have a class, so removing the class entirely
     // skipped past it rather than failing.
-    const after = home.split('lg:grid-cols-[1fr_0.9fr]')[1];
+    const after = home.split('className="home-hero-grid relative grid items-center"')[1];
     expect(after, 'hero grid not found').toBeTruthy();
 
     const firstTag = after.match(/<([a-z]+)(\s[^>]*?)?>/);
@@ -90,15 +90,20 @@ describe('the hero fits a phone', () => {
     // therefore changed nothing: the hero card was 553px on a 375px screen and
     // the track followed it. This cost two rounds — the first commit fixed the
     // wrong child, the second fixed one of two.
-    // Anchored on the card itself rather than on "the next motion.div" —
-    // the first version scanned forward and matched the CTA row inside the
-    // left column, which passed while the real grid child had no min-w-0.
-    const card = home.match(/className="([^"]*)"\s*>\s*\n\s*<div className="surface-raised-strong/);
+    //
+    // The card no longer carries `surface-raised-strong`: the hero visual is
+    // now the live-feed card component, and the wrapper is the min-w-0 motion
+    // div that holds <LiveHeroFeed />. Anchored on that wrapper, because it is
+    // the actual grid child and therefore the thing that sets the track.
+    const card = home.match(
+      /<motion\.div\s+\{\.\.\.getMotionProps\(prefersReduced, motionVariants\.heroCard\)\}\s+className="([^"]*)"/
+    );
     expect(card?.[1], 'the motion.div wrapping the hero card was not found').toBeTruthy();
     expect(
       card[1],
       'the hero card is the widest grid child and needs min-w-0, or it sets the track for both columns'
     ).toMatch(/min-w-0/);
+    expect(card[1]).toMatch(/relative/);
   });
 
   it('trust indicators may shrink inside the two-column grid', () => {

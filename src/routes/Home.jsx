@@ -22,14 +22,11 @@ import {
   CTASection,
   Avatar,
 } from '../components/ui';
-import DealCard from '../components/DealCard';
 import LiveHeroFeed from '../components/LiveHeroFeed';
 import GlowCard from '../components/GlowCard';
-import LiveTicker from '../components/LiveTicker';
 import LatestFinds from '../components/LatestFinds';
 import MemberSuccess from '../components/MemberSuccess';
 import ProofCatches from '../components/ProofCatches';
-import rtpcImg from '../assets/crops/deal1-hero-wide.webp';
 import { WHAT_WE_HUNT, HOW_IT_WORKS, COMMUNITY_STATS } from '../data/deals';
 import { FEED_STATS } from '../data/siteFacts';
 
@@ -66,74 +63,6 @@ const TRUST_ITEMS = (pctLinkable) => [
   { icon: FaBell, label: 'Fast posts', desc: 'Shared as they are caught' },
   { icon: FaBolt, label: 'No hype', desc: 'Dead links marked as examples' },
 ];
-
-// Staggered word-by-word reveal for the hero headline line (respects reduced motion).
-/* 4. A price that drops.
-   The archived example used to read "$39.99 / 93% off" as static text on a
-   card labelled "not a live find". Animating the number lands the idea that
-   something just happened here, which is the entire claim of the site.
-
-   It counts DOWN from the retail price to the caught price, because that is
-   the direction money moves and it is the direction the eye expects. It ends
-   in white rather than the brand colour, so the value is legible at rest.
-
-   The percentage sits next to it rather than inside it because a number that
-   is still moving and a number that has settled should not share a glyph. */
-const PriceDrop = ({ from, to, decimals = 2, duration = 1100 }) => {
-  const prefersReduced = useReducedMotion();
-  const [shown, setShown] = useState(from);
-
-  useEffect(() => {
-    if (prefersReduced) {
-      setShown(to);
-      return undefined;
-    }
-    let raf;
-    const start = performance.now();
-    const tick = (now) => {
-      const t = Math.min(1, (now - start) / duration);
-      // easeOutCubic — fast off the line, settling gently, like a needle.
-      const eased = 1 - Math.pow(1 - t, 3);
-      setShown(from + (to - from) * eased);
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [from, to, duration, prefersReduced]);
-
-  return (
-    <span className="tabular-nums price-land">
-      ${shown.toFixed(decimals)}
-    </span>
-  );
-};
-
-const StaggerLine = ({ text, className = '', delay = 0 }) => {
-  const prefersReduced = useReducedMotion();
-  if (prefersReduced) return <span className={className}>{text}</span>;
-  const words = text.split(' ');
-  // When the line is a clipped gradient, each word has to carry the gradient
-  // itself. The parent span gets background-clip:text, but its children are
-  // separate inline boxes with their own background — so they inherit the
-  // transparent text colour and paint nothing, and the whole line disappears.
-  const isGradient = /text-gradient/.test(className);
-  return (
-    <span className={className}>
-      {words.map((word, i) => (
-        <motion.span
-          key={`${word}-${i}`}
-          className={isGradient ? 'inline-block will-change-transform text-gradient-brand' : 'inline-block will-change-transform'}
-          initial={{ opacity: 0, y: '0.45em', filter: 'blur(8px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ delay: delay + i * 0.06, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        >
-          {word}
-          {i < words.length - 1 ? '\u00A0' : ''}
-        </motion.span>
-      ))}
-    </span>
-  );
-};
 
 // Animated count-up for pure-numeric stat values (e.g. "10K+", "93%").
 /* Counts up when it scrolls into view, once.
@@ -273,7 +202,7 @@ const Home = () => {
   }, []);
 
   return (
-    <div ref={revealScope}>
+    <div ref={revealScope} className="home-page">
     <div ref={heroScope}>
       {/* Hero Section */}
       <section className="band-full band-bleed tint-brand relative pb-16 pt-12 md:pb-20 md:pt-16" aria-labelledby="hero-title">
@@ -292,19 +221,8 @@ const Home = () => {
         <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8">
           <motion.div
             {...getMotionProps(prefersReduced, motionVariants.heroSequence)}
-            className="relative grid items-center gap-10 lg:grid-cols-[1fr_0.9fr] lg:gap-16"
+            className="home-hero-grid relative grid items-center"
           >
-          {/* min-w-0 on the COLUMN, not just on the items inside it. A grid
-              item defaults to min-width:auto, so it sizes to its content's
-              intrinsic width and refuses to shrink — and every child inherits
-              that. Measured at 390px: the column resolved to 627px inside a
-              375px viewport, and body clips it, so "GLITCH FINDS" and half the
-              hero paragraph were simply gone with no scrollbar to find them by.
-
-              The first attempt fixed the trust items' shrink-0 instead, which
-              made it WORSE — 494px became 627px, because without shrink-0 the
-              items grew to max-content. The item was never the cause; the
-              column was. */}
           <div className="min-w-0">
             <motion.div
               {...getMotionProps(prefersReduced, motionVariants.heroWord)}
@@ -318,28 +236,13 @@ const Home = () => {
               ))}
             </motion.div>
 
-            {/* The hero text belongs to GSAP, not to StaggerLine.
-
-                Two systems animating the same words is worse than either alone:
-                framer-motion sets inline transforms per word while SplitText
-                wraps those same words in its own spans, and the two fight over
-                the same properties for as long as both are mounted.
-
-                The two lines are handled differently on purpose. Line one splits
-                into words. Line two does NOT — it carries a clipped gradient,
-                and SplitText's word spans inherit that transparent text colour
-                without inheriting its background, so every word would paint
-                nothing and the line would vanish. Not hypothetical: that is
-                exactly what happened the first time this heading was split by
-                word. So the gradient line rises as one piece and keeps its
-                travelling sheen. */}
             <h1
               id="hero-title"
-              className="text-shadow-glow text-3xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-4xl md:text-[52px] lg:text-[60px] xl:text-[68px] 2xl:text-[76px]"
+              className="home-hero-title font-extrabold tracking-tight text-white"
             >
               <span data-reveal-hero>Catch the deals</span>
               <br />
-              <span data-rise className="text-gradient-brand">
+              <span className="text-gradient-brand">
                 before everyone else.
               </span>
             </h1>
@@ -355,7 +258,7 @@ const Home = () => {
 
             <motion.div
               {...getMotionProps(prefersReduced, motionVariants.heroBody)}
-              className="mt-8 flex flex-wrap gap-4"
+              className="mt-7 flex flex-wrap gap-4"
             >
               <Link to="/deals" className={buttonClass({ variant: 'primary', size: 'lg' })}>
                 Explore Deals
@@ -374,7 +277,7 @@ const Home = () => {
                 wrapping row from sm up. */}
             <motion.div
               {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
-              className="mt-10 grid grid-cols-2 gap-x-4 gap-y-3 text-xs text-zinc-400 sm:flex sm:flex-wrap sm:items-center sm:gap-6 sm:text-sm"
+              className="home-trust grid grid-cols-2 text-sm text-zinc-400"
             >
               {TRUST_ITEMS(linkability?.pct).map((item) => (
                 <motion.div
@@ -405,124 +308,14 @@ const Home = () => {
             </motion.div>
           </div>
 
-          {/* Premium deal card + live ticker */}
+          {/* Current community finds lead the hero; this is real feed data, never a fabricated sample. */}
           <motion.div
             {...getMotionProps(prefersReduced, motionVariants.heroCard)}
             className="relative min-w-0"
           >
-            <div className="surface-raised-strong rounded-2xl border border-white/10 bg-charcoal p-3">
-              {/*
-                The live feed LEADS the card. It used to sit underneath a large
-                archived example image, captioned "the live feed is below" — so
-                the largest thing on the front page, and the first thing a
-                visitor read, was a $39.99 RTX 5060 that never existed.
-
-                Every other part of this site works to establish that the finds
-                are real: measured discount rates, a "99% link to the listing"
-                claim, a live strip of items with minute-old timestamps. A
-                fabricated deal sitting on top of all of it argues against the
-                thing the page is selling, and it is exactly the element a
-                reviewer screenshots first. The example image is still useful —
-                it shows what a catch looks like — so it stays, below the real
-                things, labelled.
-              */}
-              <LiveHeroFeed />
-
-              <div className="mx-2 mt-1 border-t border-white/10 px-1 py-3">
-                <p className="text-xs text-zinc-400">
-                  <FaBolt className="mr-1 inline h-3 w-3 text-brand" />
-                  What a catch looks like — archived example, not a live find
-                </p>
-              </div>
-
-              {/* 3:1, not 16:9.
-
-                  The asset is a listing screenshot at 3.055:1. A 16:9 box forced
-                  object-fit to choose between letterboxing and cropping, and the
-                  answer that looked best in isolation — object-cover — cut the
-                  right-hand column off the screenshot.
-
-                  The real problem was upstream: deal1-hero.webp had already been
-                  cropped from 1170px to 544px, keeping the left 46% of the
-                  image. No object-fit value could recover pixels the file no
-                  longer had. That crop sliced "YEYIAN Phoenix Mesh Gaming PC"
-                  down to "YEYIAN ... Gaming" with the right edge of every word
-                  gone, so the card read as a rendering fault.
-
-                  Regenerated from the uncropped deal1.jpg at 3:1, and the box
-                  now matches the asset, so object-contain letterboxes almost
-                  nothing. */}
-              <div className="relative aspect-[3/1] overflow-hidden rounded-lg bg-charcoal-2">
-                <img
-                  src={rtpcImg}
-                  alt="Archived example: an RTX 5060 gaming PC listed at $39.99 against a $599.99 retail price"
-                  decoding="async"
-                  loading="lazy"
-                  /* object-contain, not object-cover.
-
-                     This is a retailer listing screenshot, and the reason it is
-                     on the page is that the price is IN the image — "$39.99"
-                     against "$599.99" is the entire claim. object-cover on a
-                     16:9 box cropped the sides and sliced the right-hand column
-                     of text clean off, so the hero showed "YEYIANG / Gaming /
-                     Ultra 5" with every word's right edge missing and read as a
-                     rendering fault rather than as a crop.
-
-                     Letterboxing is the right trade. The wrapper already has
-                     bg-charcoal-2 so the bars are a deliberate surface, not a
-                     hole. */
-                  className="h-full w-full object-contain object-center brightness-[0.96]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-charcoal/50 via-black/5 to-black/15" aria-hidden="true" />
-                <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
-                  <Badge variant="brand" className="shadow-[0_0_12px_rgba(139,92,246,0.4)]">Price error</Badge>
-                  <Badge variant="outline" className="border-black/30 bg-black/50 text-zinc-200 backdrop-blur-sm">Tech</Badge>
-                </div>
-                {/* 7. The scan sweep. Over the archived example, not the live
-                    feed — the live feed is real and must not look synthetic. */}
-                <div className="scan-sweep" aria-hidden="true" />
-              </div>
-              <div className="flex flex-wrap items-end justify-between gap-3 px-3 pb-2 pt-4">
-                <div>
-                  <p className="text-sm font-bold text-white">RTX 5060 Gaming PC</p>
-                  <p className="mt-0.5 text-xs text-zinc-500">
-                    <span className="line-through decoration-zinc-600">Retail $599.99</span>
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-extrabold tracking-tight">
-                    <PriceDrop from={599.99} to={39.99} />
-                  </p>
-                  <p className="text-xs font-semibold text-brand-2">
-                    <span className="badge-tick inline-block">Archived example: 93% off</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/*
-              The floating "Example find / 93% OFF" badge that used to sit at
-              the top-right of this card is gone.
-
-              Two reasons, and the second is the one that mattered. It floated
-              at the top of the card, which after the reorder is the live feed,
-              so it would have labelled real finds as an example. And it put a
-              fabricated discount figure in the most prominent position on the
-              page — a statistic for a deal that never happened, above a
-              headline about catching deals that do.
-
-              The archived example is still labelled in two places below, which
-              is where the labelling belongs: attached to the thing it is
-              labelling.
-            */}
+            <LiveHeroFeed />
           </motion.div>
           </motion.div>
-          {/* The one piece of motion on the page driven by data rather than a
-              timer: a continuous strip of genuinely recent finds. The hero
-              cards above rotate on a fixed interval and repeat, which reads as
-              a slideshow after the first minute. This shows the thing that is
-              actually true — new finds arrive constantly, and they are new. */}
-          <LiveTicker />
         </div>
       </section>
 
@@ -584,13 +377,13 @@ const Home = () => {
         />
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          className="min-w-0"
         >
           {/* Each pillar carries its own accent — amber for the closing-window
               category, two greens for the two savings categories, brand violet
               for the speed promise. See PILLAR_ACCENTS for why two of the four
               share a hue. */}
-          <GlowCard className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <GlowCard className="home-pillar-grid grid sm:grid-cols-2 lg:grid-cols-4">
             {WHAT_WE_HUNT.map((item, i) => (
               <motion.div key={item.title} {...getMotionProps(prefersReduced, motionVariants.staggerItem)}>
                 <FeatureCard
@@ -598,7 +391,7 @@ const Home = () => {
                   title={item.title}
                   text={item.text}
                   accent={PILLAR_ACCENTS[i]}
-                  className="h-full"
+                  className="home-pillar-card h-full"
                 />
               </motion.div>
             ))}

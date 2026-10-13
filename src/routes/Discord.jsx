@@ -1,6 +1,8 @@
 import { FaDiscord, FaBolt, FaLock, FaUsers, FaShieldAlt, FaCoins, FaComments } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import { buttonClass, StatCard, Avatar, CTASection } from '../components/ui';
+import { StatCard, Avatar, CTASection } from '../components/ui';
+import ScrollReveal, { RevealGroup, RevealItem } from '../components/ScrollReveal';
+import AnimatedFigure from '../components/AnimatedFigure';
 import discord1Cropped from '../assets/crops/discord1-cropped.webp';
 import discord2Cropped from '../assets/crops/discord2-cropped.webp';
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
@@ -26,10 +28,16 @@ const BENEFITS = [
 ];
 
 // Measured from the live feed, not estimated — see data/siteFacts.js.
-// Measured live. The old figure was a constant counting 9 Discord channel
-// links as links to a listing — see lib/useLinkability.js.
+//
+// `figure` values count up as the tile scrolls in. The number is already in
+// the DOM on first paint (that is the whole point of AnimatedFigure), so the
+// motion is additive rather than the thing that makes the figure exist.
 const STATS = (pctLinkable) => [
-  { icon: FaBolt, value: String(FEED_STATS.dealsInFeed), label: 'Finds in feed' },
+  {
+    icon: FaBolt,
+    figure: { value: FEED_STATS.dealsInFeed },
+    label: 'Finds in feed',
+  },
   {
     icon: FaShieldAlt,
     // This number is MEASURED from the live feed, so it can legitimately be
@@ -44,22 +52,28 @@ const STATS = (pctLinkable) => [
     //
     // So it renders the icon at reduced opacity instead: clearly "not
     // measured yet", clearly not a number, and it never asserts anything.
-    value:
-      pctLinkable == null ? (
-        <FaShieldAlt className="mx-auto h-5 w-5 text-zinc-600" aria-hidden="true" />
-      ) : (
-        `${pctLinkable}%`
-      ),
+    figure: pctLinkable == null ? null : { value: pctLinkable, suffix: '%' },
+    fallback: <FaShieldAlt className="mx-auto h-5 w-5 text-zinc-600" aria-hidden="true" />,
     label: 'Link straight to the listing',
   },
-  { icon: FaCoins, value: `${FEED_STATS.medianSavingPct}%`, label: 'Median off' },
-  { icon: FaComments, value: '24/7', label: 'Monitoring' },
+  {
+    icon: FaCoins,
+    figure: { value: FEED_STATS.medianSavingPct, suffix: '%' },
+    label: 'Median off',
+  },
+  { icon: FaComments, staticValue: '24/7', label: 'Monitoring' },
 ];
 
 const MEMBER_INITIALS = ['PH', 'RK', 'JT', 'MS', 'AL'];
 
 const ScreenshotCard = ({ image, alt, title, stat, note }) => (
-  <motion.div className="group card overflow-hidden p-3">
+  <motion.div
+    // Lifts and tilts toward the pointer. Transform-only, so the hover costs a
+    // composited layer rather than a repaint of the image.
+    whileHover={{ y: -6, rotate: -0.6 }}
+    transition={{ type: 'spring', stiffness: 260, damping: 24, mass: 0.8 }}
+    className="group card overflow-hidden p-3"
+  >
     <div className="relative aspect-[9/16] overflow-hidden rounded-lg bg-charcoal-2">
       <img
         src={image}
@@ -92,7 +106,8 @@ const Discord = () => {
 
   return (
     <section className="pb-4" aria-labelledby="discord-title">
-      {/* Hero */}
+      {/* Hero. Above the fold, so this one stays mount-triggered: it is the
+          first thing on screen and its motion would be over either way. */}
       <motion.div
         {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
         className="mx-auto max-w-[760px] text-center"
@@ -115,97 +130,138 @@ const Discord = () => {
         </p>
       </motion.div>
 
-      {/* Stats */}
-      <motion.div
-        {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
+      {/* Stats.
+          Scroll-triggered, not mount-triggered. These tiles sit below the fold,
+          and the cascade used to play while the page was still loading, so a
+          reader arriving here saw four finished tiles and no movement at all.
+          Each figure now counts up from just under its real value as the tile
+          comes into view. */}
+      <RevealGroup
+        stagger={0.11}
         className="mx-auto mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         {STATS(linkability?.pct).map((stat) => (
-          <motion.div key={stat.label} {...getMotionProps(prefersReduced, motionVariants.staggerItem)}>
-            <StatCard icon={stat.icon} value={stat.value} label={stat.label} className="h-full" />
-          </motion.div>
+          <RevealItem key={stat.label} y={26} scale={0.97}>
+            <StatCard
+              icon={stat.icon}
+              value={
+                stat.figure ? (
+                  <AnimatedFigure value={stat.figure.value} suffix={stat.figure.suffix} />
+                ) : (
+                  stat.staticValue ?? stat.fallback
+                )
+              }
+              label={stat.label}
+              className="h-full"
+            />
+          </RevealItem>
         ))}
-      </motion.div>
+      </RevealGroup>
 
-      {/* Screenshots */}
-      <motion.div
-        {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
+      {/* Screenshots. The two channel captures rise and settle in sequence
+          rather than appearing as two flat panels. */}
+      <RevealGroup
+        stagger={0.14}
         className="mx-auto mt-12 grid max-w-[860px] gap-5 sm:grid-cols-2 md:mt-14"
       >
-        <ScreenshotCard
-          image={discord1Cropped}
-          alt="Discord channels showing real-time deal alerts"
-          title="Deal alerts, live"
-          note="Price errors posted as they appear"
-          stat="Real-time"
-        />
-        <ScreenshotCard
-          image={discord2Cropped}
-          alt="Discord members sharing product finds and reselling opportunities"
-          title="Community finds"
-          note="Profitable picks shared by members"
-          stat="Exclusive"
-        />
-      </motion.div>
+        <RevealItem y={40} scale={0.96}>
+          <ScreenshotCard
+            image={discord1Cropped}
+            alt="Discord channels showing real-time deal alerts"
+            title="Deal alerts, live"
+            note="Price errors posted as they appear"
+            stat="Real-time"
+          />
+        </RevealItem>
+        <RevealItem y={40} scale={0.96}>
+          <ScreenshotCard
+            image={discord2Cropped}
+            alt="Discord members sharing product finds and reselling opportunities"
+            title="Community finds"
+            note="Profitable picks shared by members"
+            stat="Exclusive"
+          />
+        </RevealItem>
+      </RevealGroup>
 
       {/* Benefits */}
-      <motion.div
-        {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
+      <RevealGroup
+        stagger={0.1}
         className="mx-auto mt-14 grid max-w-[900px] gap-4 sm:grid-cols-3 md:mt-16"
       >
         {BENEFITS.map((benefit) => {
           const Icon = benefit.icon;
           return (
-            <motion.div
-              key={benefit.title}
-              {...getMotionProps(prefersReduced, motionVariants.staggerItem)}
-              className="card card-hover p-6 text-center"
-            >
-              <div className="mx-auto mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#5865F2]/15 text-[#8b95f7]">
-                <Icon className="h-4 w-4" />
-              </div>
-              <h2 className="text-sm font-bold text-white">{benefit.title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-zinc-400">{benefit.text}</p>
-            </motion.div>
+            <RevealItem key={benefit.title} y={28} blur={4}>
+              <motion.div
+                whileHover={{ y: -5 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 24, mass: 0.8 }}
+                className="card h-full p-6 text-center"
+              >
+                <div className="mx-auto mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[#5865F2]/15 text-[#8b95f7]">
+                  <Icon className="h-4 w-4" />
+                </div>
+                <h2 className="text-sm font-bold text-white">{benefit.title}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{benefit.text}</p>
+              </motion.div>
+            </RevealItem>
           );
         })}
-      </motion.div>
+      </RevealGroup>
 
-      {/* Social proof */}
-      <motion.div
-        {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-        className="mt-12 flex items-center justify-center gap-3 md:mt-14"
-      >
-        <div className="flex -space-x-3">
+      {/* Social proof.
+          The avatar row pops in one face at a time. It is the only element on
+          the page that reads as a group of people rather than a group of
+          cards, so it is the one place a stagger reads as arrival. */}
+      <ScrollReveal className="mt-12 flex items-center justify-center gap-3 md:mt-14" distance={18}>
+        {/* RevealGroup rather than framer's own whileInView: these avatars are
+            the one place a skipped trigger is very obvious (four of five faces
+            missing), so they go through the same reveal path the rest of the
+            page uses, which self-heals when a fast scroll skips the observer. */}
+        <RevealGroup stagger={0.07} amount={0.3} className="flex -space-x-3">
           {MEMBER_INITIALS.map((ini, i) => (
-            <Avatar key={ini} size="sm" className={`ring-2 ring-night ${i % 2 ? 'grayscale' : ''}`}>
-              <span className="text-[10px] font-bold">{ini}</span>
-            </Avatar>
+            <RevealItem
+              as="span"
+              key={ini}
+              y={0}
+              x={-10}
+              scale={0.6}
+              className="inline-flex"
+            >
+              <Avatar size="sm" className={`ring-2 ring-night ${i % 2 ? 'grayscale' : ''}`}>
+                <span className="text-[10px] font-bold">{ini}</span>
+              </Avatar>
+            </RevealItem>
           ))}
-        </div>
+        </RevealGroup>
         <p className="text-sm text-zinc-400">
-          <span className="font-semibold text-white">{FEED_STATS.dealsInFeed} finds</span> posted to
-          the server so far
+          <span className="font-semibold text-white">
+            <AnimatedFigure value={FEED_STATS.dealsInFeed} /> finds
+          </span>{' '}
+          posted to the server so far
         </p>
-      </motion.div>
+      </ScrollReveal>
 
-      {/* CTA */}
-      <CTASection
-        eyebrow="Live community"
-        title="New members are joining as finds are caught."
-        description="Join the server, catch the next price error first, and learn from the people who find them daily."
-        actions={
-          <a
-            href="https://discord.gg/dealprofit"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#5865F2] px-7 py-3 text-sm font-semibold text-white shadow-[0_0_24px_rgba(88,101,242,0.4)] transition-all duration-200 hover:bg-[#6b76f3] hover:shadow-[0_0_32px_rgba(88,101,242,0.55)] active:scale-[0.98]"
-          >
-            <FaDiscord className="text-base" />
-            Join the Deal Profit Discord
-          </a>
-        }
-      />
+      {/* CTA. Revealed on scroll like the sections above it, so the closing ask
+          arrives rather than already being there. */}
+      <ScrollReveal distance={30}>
+        <CTASection
+          eyebrow="Live community"
+          title="New members are joining as finds are caught."
+          description="Join the server, catch the next price error first, and learn from the people who find them daily."
+          actions={
+            <a
+              href="https://discord.gg/dealprofit"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#5865F2] px-7 py-3 text-sm font-semibold text-white shadow-[0_0_24px_rgba(88,101,242,0.4)] transition-all duration-200 hover:bg-[#6b76f3] hover:shadow-[0_0_32px_rgba(88,101,242,0.55)] active:scale-[0.98]"
+            >
+              <FaDiscord className="text-base" />
+              Join the Deal Profit Discord
+            </a>
+          }
+        />
+      </ScrollReveal>
     </section>
   );
 };

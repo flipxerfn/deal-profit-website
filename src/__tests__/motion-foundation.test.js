@@ -144,15 +144,51 @@ describe('motion foundation', () => {
   });
 
   it('makes scroll reveals collapse to plain elements under reduced motion', () => {
-    // whileInView plays on viewport entry. A reduced-motion user should get the
-    // content at full opacity, not the same movement played more quietly.
+    // A reduced-motion user should get the content at full opacity immediately,
+    // not the same movement played more quietly.
+    //
+    // This used to assert framer's `viewport={{ once: true }}`, i.e. it pinned
+    // the IMPLEMENTATION (whileInView) rather than the promise. The reveal was
+    // subsequently rewritten around an IntersectionObserver plus a scroll-stop
+    // sweep, because `whileInView` strands elements at opacity 0 when the page
+    // is jumped rather than scrolled (13 measured on /upgrade). The old
+    // assertion failed against a strictly better component.
+    //
+    // What is asserted now is the promise itself, and it is a stronger check
+    // than the prop was:
+    //   - reduced motion returns a PLAIN element, with no motion component at
+    //     all, so there is no animation to play quietly;
+    //   - the reveal is progressive by default — it starts hidden and is driven
+    //     to shown by state, rather than by an `animate:` variant that fires on
+    //     mount (which is the bug the rewrite exists to fix).
     expect(scrollReveal).toMatch(/if \(prefersReduced\)/);
-    expect(scrollReveal).toMatch(/viewport=\{\{ once: true/);
+    expect(scrollReveal, 'reduced motion must not return a motion component').toMatch(
+      /const Plain = as;/
+    );
+    expect(scrollReveal, 'the reveal must be state-driven, not mount-animated').toMatch(
+      /animate=\{shown \?/
+    );
+    expect(scrollReveal).toMatch(/IntersectionObserver/);
   });
 
   it('animates scroll reveals on transform and opacity only', () => {
-    expect(scrollReveal).toMatch(/initial=\{\{ opacity: 0, y: \d+ \}\}/);
-    expect(scrollReveal).toMatch(/whileInView=\{\{ opacity: 1, y: 0 \}\}/);
+    // Extract the reveal's own initial/animate objects and assert they contain
+    // no layout-triggering property. The distance is a variable now, so this
+    // cannot be a literal regex like the old `y: \d+` — matching the shape and
+    // then checking the KEYS is both narrower and harder to satisfy wrongly.
+    const initial = scrollReveal.match(/initial=\{\{([^}]*)\}\}/)?.[1] ?? '';
+    const animate = scrollReveal.match(/animate=\{shown \? \{([^}]*)\}/)?.[1] ?? '';
+    expect(initial, 'no initial={{...}} on the reveal').toBeTruthy();
+    expect(animate, 'no animate={{...}} on the reveal').toBeTruthy();
+
+    for (const [label, body] of [['initial', initial], ['animate', animate]]) {
+      expect(body, `${label} does not include opacity`).toContain('opacity');
+      const props = [...body.matchAll(/([a-zA-Z]+)\s*:/g)].map((m) => m[1]);
+      const layout = props.filter((p) =>
+        ['height', 'width', 'top', 'left', 'margin', 'padding', 'inset'].includes(p)
+      );
+      expect(layout, `${label} animates layout properties: ${layout.join(', ')}`).toEqual([]);
+    }
   });
 
   it('keeps the shared fade-up variant transform/opacity only', () => {

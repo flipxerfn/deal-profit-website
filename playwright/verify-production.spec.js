@@ -47,12 +47,26 @@ const ROUTES = ['/', '/deals', '/upgrade', '/setup-request', '/discord'];
  * longer than any legitimate entrance animation and still fails fast on a real
  * regression.
  */
-async function waitForVisibleRoute(page, label, timeout = 25_000) {
+async function waitForVisibleRoute(page, label, timeout = 25_000, previous = null) {
   try {
     await page.waitForFunction(
-      () => {
+      (prev) => {
         const wrap = document.querySelector('main')?.firstElementChild;
-        if (!wrap) return false;
+        // The node identity check is the whole point, and it was missing.
+        //
+        // React Router calls history.pushState BEFORE React re-renders, so
+        // `waitForURL` resolves while the OUTGOING page is still mounted at
+        // opacity 1. A predicate that only reads opacity therefore succeeds
+        // against the page we are leaving, and the very next read can catch
+        // the incoming wrapper at opacity 0. That is exactly how this failed:
+        // the wait resolved in 313ms, then measured 0.
+        //
+        // Requiring a DIFFERENT node than the one that was on screen before the
+        // click makes "visible" mean "the new route is visible", which is the
+        // thing being asserted. The route wrapper is keyed by pathname
+        // (`key={pathname}` in Layout), so a route change always produces a new
+        // node — this is reliable, not incidental.
+        if (!wrap || wrap === prev) return false;
         const cs = getComputedStyle(wrap);
         return (
           Number(cs.opacity) > 0.9 &&
@@ -60,7 +74,7 @@ async function waitForVisibleRoute(page, label, timeout = 25_000) {
           wrap.getBoundingClientRect().height > 200
         );
       },
-      null,
+      previous,
       { timeout }
     );
   } catch {
@@ -84,6 +98,11 @@ async function waitForVisibleRoute(page, label, timeout = 25_000) {
 
 test.describe('Production serves a working build', () => {
   test('every route renders visible content on a cold load', async ({ page }) => {
+    // Five routes, each with a 20s hydration wait and a 25s visibility wait, in
+    // a single test body under a 45s default budget. That budget was wrong on
+    // its face — the failure it produced was the test running out of clock, not
+    // the page being broken, so it read as a site defect when it was arithmetic.
+    test.slow();
     for (const route of ROUTES) {
       const response = await page.goto(route, { waitUntil: 'domcontentloaded' });
       expect(response?.status(), `${route} returned a non-200`).toBeLessThan(400);
@@ -112,6 +131,22 @@ test.describe('Production serves a working build', () => {
     // This is the bug itself. A cold load of every route can be fine while
     // client-side transitions leave the new page mounted at opacity 0, which
     // is exactly how it presented: the page was only reachable by reloading.
+    //
+    // `slow()` triples the 45s test budget, and the visibility waits below get
+    // 45s instead of 25s. That is for the environment, not a relaxation of the
+    // assertion.
+    //
+    // The leg back to `/` mounts the hero, its scroll reveals and the live feed
+    // in a single frame. On a machine that renders under 1fps (measured — see
+    // the note in motion.spec.js) that leg has now overrun a 25s window twice
+    // while being entirely correct: it passed on the immediate retry both
+    // times, and a genuinely blank page would not. Four legs also share one
+    // test budget, so a single slow leg needs headroom rather than a bigger
+    // share of a fixed 45s.
+    //
+    // What is NOT relaxed: an element that never resolves still fails. It just
+    // fails after 45s instead of 25s.
+    test.slow();
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(
       () => (document.querySelector('main')?.innerText || '').trim().length > 200
@@ -129,6 +164,14 @@ test.describe('Production serves a working build', () => {
 
     for (const [from, to] of pairs) {
       expect(new URL(page.url()).pathname, `setup for ${from}`).toBe(from);
+
+      // Capture the wrapper currently on screen so the visibility wait below
+      // cannot be satisfied by the page we are about to leave. See the note in
+      // waitForVisibleRoute for why this is required rather than defensive.
+      const previous = await page.evaluateHandle(
+        () => document.querySelector('main')?.firstElementChild ?? null
+      );
+
       await page.locator(`header a[href="${to}"]`).first().click();
 
       // Condition-based wait, not a sleep: wait until the URL has actually
@@ -141,10 +184,10 @@ test.describe('Production serves a working build', () => {
         { timeout: 10_000 }
       );
 
-      const state = await waitForVisibleRoute(page, `${from} -> ${to}`);
+      const state = await waitForVisibleRoute(page, `${from} -> ${to}`, 45_000, previous);
       expect(
         state.opacity,
-        `${from} -> ${to} never became visible (stuck at opacity ${state.opacity} after 25s)`
+        `${from} -> ${to} never became visible (stuck at opacity ${state.opacity} after 45s)`
       ).toBeGreaterThan(0.9);
       expect(state.height, `${from} -> ${to} collapsed the page`).toBeGreaterThan(200);
     }
@@ -152,6 +195,19 @@ test.describe('Production serves a working build', () => {
 
   test('the community invite and checkout paths are reachable', async ({ page }) => {
     await page.goto('/upgrade', { waitUntil: 'domcontentloaded' });
+
+    // Wait for the page to actually mount before asserting on its contents.
+    // `domcontentloaded` fires against an empty `#root`; every element below is
+    // rendered by React. Without this the first assertion leaned on Playwright's
+    // 5s default expect timeout, which this machine (sub-1fps, measured) can
+    // exceed while simply hydrating — so a slow mount reported as "no Discord
+    // invite link", i.e. as a broken funnel, which is the one thing this test
+    // exists to distinguish from slowness.
+    await page.waitForFunction(
+      () => (document.querySelector('main')?.innerText || '').trim().length > 200,
+      null,
+      { timeout: 20_000 }
+    );
 
     // The Discord invite is the free tier's whole destination, so its absence
     // is a broken funnel rather than a cosmetic issue.

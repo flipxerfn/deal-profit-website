@@ -31,7 +31,12 @@ describe('the hero actually populates', () => {
 
   it('still guards against setting state after unmount', () => {
     expect(src).toMatch(/return \(\) => \{\s*alive = false;/);
-    expect(src).toMatch(/if \(alive\) setDeals\(null\);/);
+    // The cleanup sets two pieces of state, so it is a block. The old gate
+    // required the single-statement form `if (alive) setDeals(null);` and
+    // failed on a refactor that widened the guard rather than weakening it.
+    expect(src).toMatch(/if \(alive\)\s*\{/);
+    expect(src).toMatch(/setDeals\(null\)/);
+    expect(src).toMatch(/setLive\(false\)/);
   });
 
   it('reaches the network', () => {
@@ -67,18 +72,27 @@ describe('the hero is the live feed, not the archived set', () => {
     // page were a fabricated find, on a page whose entire pitch is that the
     // finds are real.
     //
-    // Asserted on source ORDER, because that is the actual defect: the example
-    // is allowed to exist, and it is allowed to be visible, it just must not
-    // be what the eye lands on first.
-    // `src={rtpcImg}`, not `rtpcImg` — the identifier first appears on the
-    // import line, near the top of the file, so matching the bare name
-    // compares the live feed against an import statement and reports an
-    // ordering failure that does not exist.
-    const feedAt = home.indexOf('<LiveHeroFeed />');
-    const exampleImgAt = home.indexOf('src={rtpcImg}');
-    expect(feedAt, 'LiveHeroFeed not found in Home').toBeGreaterThan(-1);
-    expect(exampleImgAt, 'archived example image not found in Home').toBeGreaterThan(-1);
-    expect(feedAt, 'the archived example is still ahead of the live feed').toBeLessThan(exampleImgAt);
+    // That was fixed by putting the live feed first inside the card. The feed
+    // has since been reworked again: the archived example is no longer a
+    // separate element in Home.jsx at all — it is the FALLBACK inside
+    // LiveHeroFeed, rendered only when the live fetch produced nothing. That is
+    // a stronger arrangement than source ordering, because an example can no
+    // longer be shown alongside live finds even by accident.
+    //
+    // So the assertion moves onto the component's precedence rule rather than
+    // onto line order in Home. `current` is the live set and it is preferred;
+    // `fallback` is used only when there is no live data.
+    expect(home, 'Home no longer renders the live feed in the hero').toMatch(/<LiveHeroFeed \/>/);
+    expect(home, 'the archived image crept back into Home').not.toMatch(/src=\{rtpcImg\}/);
+
+    const currentLine = src.match(/const current = [^;]+;/)?.[0];
+    expect(currentLine, 'no live-vs-fallback precedence in LiveHeroFeed').toBeTruthy();
+    expect(currentLine, 'the fallback is not gated on `live`').toMatch(/live &&/);
+
+    // And the fallback rows are explicitly stripped of a URL and a timestamp,
+    // so an archived example cannot present itself as an openable live find
+    // that was "caught" at a time.
+    expect(src).toMatch(/FALLBACK\.map\(\(deal\) => \(\{ \.\.\.deal, url: null, postedAt: null \}\)\)/);
   });
 
   it('does not float a fabricated discount figure over the live feed', () => {
@@ -100,11 +114,17 @@ describe('the hero is the live feed, not the archived set', () => {
   });
 
   it('labels an archived example as archived', () => {
-    // One archived card is still on the page, for the "93% off" hero visual.
-    // That is fine — as long as it says so. The failure is a reader being
-    // unable to tell an example from a live find, not the example itself.
-    if (!/example/i.test(home)) return;
-    expect(home).toMatch(/[Aa]rchived example/);
+    // The one place an archived example can still appear is LiveHeroFeed's
+    // fallback, and it must say so wherever it shows.
+    //
+    // This used to check Home.jsx, which no longer contains the example. It
+    // looked in the wrong file, so it now checks the component that actually
+    // renders it, and it requires the label in BOTH places a reader sees the
+    // example: the status badge and the age line.
+    expect(src, 'no archived-example label in the hero card').toMatch(/Archived example/);
+    expect(src, 'the example badge does not say it is an example').toMatch(/Worked example/);
+    // The live counterpart, so the two states cannot collapse into one label.
+    expect(src).toMatch(/Live find/);
   });
 
   it('no strip on the page is built from a hard-coded array', () => {
@@ -119,12 +139,23 @@ describe('the hero is the live feed, not the archived set', () => {
 
   it('says so when the feed is unreachable instead of silently showing examples', () => {
     // A silent fallback puts the fake rows back with no indication.
-    expect(src).toContain('Live feed unreachable');
-    expect(src).toContain('Pulled live from Discord');
+    //
+    // The exact sentences were rewritten when the card was reworked; the
+    // promise is unchanged and is asserted on the meaning, in both places a
+    // reader would look: the provenance line beside the CTA, and the
+    // role="status" banner under the card.
+    expect(src, 'no "unavailable" provenance line').toMatch(/Live feed temporarily unavailable/);
+    expect(src, 'no live provenance line for the healthy state').toMatch(/Posted by the community/);
+    expect(src, 'no announced offline notice').toMatch(/role="status"/);
+    expect(src).toMatch(/Showing an archived example while the live feed reconnects/);
   });
 
   it('shows a real timestamp when a find carries one', () => {
-    expect(src).toMatch(/caught \{timeAgo\(deal\.postedAt\)\}/);
-    expect(src).toContain('archived example');
+    // The age must come from the deal's own postedAt and be a real <time>
+    // element, so the machine-readable value matches the visible one.
+    expect(src).toMatch(/<time dateTime=\{primary\.postedAt\}>\{age\}<\/time>/);
+    expect(src).toMatch(/const age = primary\.postedAt \? timeAgo\(primary\.postedAt\) : null;/);
+    // And the fallback branch is labelled archived, not given a fake age.
+    expect(src).toMatch(/Archived example · no current offer/);
   });
 });

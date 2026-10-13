@@ -1,5 +1,20 @@
 // Admin UI: sign in through the form, open the Reviews tab, verify pending reviews render.
 import { chromium } from 'playwright';
+
+// Credentials come from the environment, never from this file.
+//
+// The password used to be written in here in plain text, which put a live admin
+// credential in the repository and in its history. Any script that signs in must
+// read it from the environment instead:
+//
+//   ADMIN_PASSWORD='...' node playwright/admin-ui-check.mjs
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'goosievv';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) {
+  console.error('Set ADMIN_PASSWORD in the environment first — it is not stored in the repo.');
+  process.exit(1);
+}
+
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const errors = [];
@@ -11,11 +26,11 @@ await page.goto('http://localhost:8787/admin', { waitUntil: 'networkidle', timeo
 await page.waitForTimeout(600);
 
 // sign in
-await page.locator('input[type="password"]').fill('Orio23!!2012');
+await page.locator('input[type="password"]').fill(ADMIN_PASSWORD);
 const userInput = page.locator('input[type="text"], input:not([type="password"])').first();
 const lbl = await userInput.getAttribute('aria-label').catch(() => null);
-if (lbl) await userInput.fill('goosievv');
-else await userInput.fill('goosievv');
+if (lbl) await userInput.fill(ADMIN_USERNAME);
+else await userInput.fill(ADMIN_USERNAME);
 await page.locator('button', { hasText: 'Sign in' }).first().click();
 await page.waitForTimeout(1500);
 

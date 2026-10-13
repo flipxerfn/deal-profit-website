@@ -12,7 +12,7 @@
 // comments mention the very patterns being asserted — a raw scan matches the
 // prose and passes with the bug in place.
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 /**
@@ -212,9 +212,23 @@ describe('an empty strip is not a strip', () => {
 });
 
 describe('it is on the front page', () => {
-  it('Home imports and renders it', () => {
-    expect(home).toMatch(/import LiveTicker from '\.\.\/components\/LiveTicker'/);
-    expect(home).toMatch(/<LiveTicker \/>/);
+  it('is rendered by a page, from the live feed', () => {
+    // It used to be asserted against Home specifically (`<LiveTicker />` in
+    // Home.jsx). The front page's hero was reworked to lead with the live feed
+    // card itself, and the ticker now sits on /deals. Asserting a single host
+    // page made the test fail on a relocation rather than on the ticker
+    // disappearing — which is the thing worth guarding.
+    //
+    // What is checked: SOME route imports and renders it, it is still the
+    // /api/deals strip (not a hard-coded list), and it is not rendered from
+    // archived data.
+    const hosts = readdirSync(resolve(import.meta.dirname, '../routes'))
+      .filter((f) => f.endsWith('.jsx'))
+      .map((f) => read(`../routes/${f}`))
+      .filter((text) => /<LiveTicker\s*\/>/.test(text));
+
+    expect(hosts.length, '<LiveTicker /> is rendered by no route at all').toBeGreaterThan(0);
+    expect(hosts.some((t) => /import LiveTicker from/.test(t))).toBe(true);
   });
 });
 

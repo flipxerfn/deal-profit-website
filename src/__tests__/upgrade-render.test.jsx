@@ -16,5 +16,15 @@ describe('the three-ways-in chooser renders', () => {
     expect(html).toContain('Join Discord');
     expect(html).toContain('Free Trial');
     expect(html).toContain('Subscribe');
+  }, 20000);
+    const mod = await import('../routes/Upgrade.jsx');
+    const Up = mod.default;
+    const html = renderToStaticMarkup(
+      React.createElement(MemoryRouter, null, React.createElement(Up))
+    );
+    expect(html).toContain('Start here');
+    expect(html).toContain('Join Discord');
+    expect(html).toContain('Free Trial');
+    expect(html).toContain('Subscribe');
   });
 });

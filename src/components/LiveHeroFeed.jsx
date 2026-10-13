@@ -1,57 +1,49 @@
-// The live feed in the hero.
-//
-// This replaces a "Recent finds — examples" ticker that was fed by src/data/
-// deals.js — the archived demo set. The most prominent thing on the page was
-// captioned "example post", which is precisely the impression the credibility
-// work has been trying to remove. If someone lands and the hero is showing
-// labelled fake data, nothing else on the page gets read.
-//
-// So the hero now shows the real feed: real titles, real prices, and a real
-// "caught 4m ago" derived from postedAt. That is the whole retention pitch —
-// proof that the thing is alive, on a page the visitor is already looking at.
-//
-// Falls back to the archived set if the feed is unreachable, and says so. A
-// silent fallback would put the fake data back without the reader knowing.
+// Real, recent listings get the prime spot; an old example never masquerades as a new find.
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaBolt, FaArrowRight } from 'react-icons/fa';
+import { FaArrowRight, FaBolt, FaExternalLinkAlt, FaRegClock } from 'react-icons/fa';
 import { DEALS as FALLBACK } from '../data/deals';
-import { timeAgo, isSourceLink } from '../lib/dealSource';
+import { hostOf, isSourceLink, timeAgo } from '../lib/dealSource';
+import { isNonProductImage } from '../lib/imageQuality';
 import { useReducedMotion } from '../lib/motion';
 
 const ENDPOINT = '/api/deals';
-const ROTATE_MS = 5000;
-const VISIBLE = 4;
+const OTHER_FINDS = 2;
+
+const listingUrl = (deal) => deal.url ?? deal.cta?.href;
+const money = (amount) =>
+  typeof amount === 'number'
+    ? amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+    : null;
+const markdown = (deal) =>
+  deal.referencePrice > deal.price && deal.referencePrice > 0
+    ? Math.round((1 - deal.price / deal.referencePrice) * 100)
+    : null;
 
 export default function LiveHeroFeed() {
   const prefersReduced = useReducedMotion();
   const [deals, setDeals] = useState(null);
   const [live, setLive] = useState(false);
-  const [index, setIndex] = useState(0);
-  // True only when the window has advanced at least once. Without this the
-  // flash would also fire on the very first paint, which is not an arrival —
-  // it is the page loading — and a highlight that means nothing teaches the
-  // reader to ignore it.
-  const [advanced, setAdvanced] = useState(false);
+  const [imageUnavailable, setImageUnavailable] = useState(false);
 
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const res = await fetch(ENDPOINT, { headers: { Accept: 'application/json' } });
-        if (!res.ok) throw new Error(String(res.status));
-        const data = await res.json();
-        const list = Array.isArray(data?.deals) ? data.deals : [];
-        // `alive` is a plain binding, not a ref — `alive.current` is always
-        // undefined, which made this return early on every run.
+        const response = await fetch(ENDPOINT, { headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error(String(response.status));
+        const payload = await response.json();
+        const verified = (Array.isArray(payload?.deals) ? payload.deals : [])
+          .filter((deal) => isSourceLink(listingUrl(deal)) && (deal.title || '').trim());
         if (!alive) return;
-        // Prefer posts that carry a listing a reader can open.
-        const verified = list.filter((d) => isSourceLink(d?.url ?? d?.cta?.href));
-        setDeals((verified.length >= VISIBLE ? verified : list).slice(0, 20));
-        setLive(list.length > 0);
+        setDeals(verified.slice(0, 3));
+        setLive(verified.length > 0);
       } catch {
-        if (alive) setDeals(null);
+        if (alive) {
+          setDeals(null);
+          setLive(false);
+        }
       }
     })();
     return () => {
@@ -59,110 +51,138 @@ export default function LiveHeroFeed() {
     };
   }, []);
 
-  const rows = deals?.length
-    ? deals
-    : FALLBACK.map((d) => ({ ...d, url: d.cta?.href ?? null, postedAt: null }));
-
-  useEffect(() => {
-    if (prefersReduced || !deals?.length) return undefined;
-    const t = setInterval(() => {
-      setIndex((i) => (i + 1) % rows.length);
-      setAdvanced(true);
-    }, ROTATE_MS);
-    return () => clearInterval(t);
-  }, [prefersReduced, deals, rows.length]);
-
-  const newest = rows[0]?.postedAt ? timeAgo(rows[0].postedAt) : null;
-  const shown = rows.slice(index, index + VISIBLE);
-  const wrap = shown.length < VISIBLE ? [...shown, ...rows.slice(0, VISIBLE - shown.length)] : shown;
+  const fallback = FALLBACK.map((deal) => ({ ...deal, url: null, postedAt: null }));
+  const current = live && deals?.length ? deals : null;
+  const fallbackWithPhotos = fallback.filter((deal) => deal.image);
+  // Prefer a genuinely photographic product listing over a Discord repost screenshot.
+  const primary = current?.find((deal) => deal.image && !deal.image.includes('cdn.discordapp.com'))
+    ?? current?.find((deal) => deal.image)
+    ?? current?.[0]
+    ?? fallbackWithPhotos[0]
+    ?? fallback[0];
+  const primaryImage = primary?.image && !imageUnavailable ? primary.image : null;
+  const rest = (current ?? [])
+    .filter((deal) => deal.id !== primary?.id)
+    .slice(0, OTHER_FINDS);
+  const url = listingUrl(primary);
+  const retailer = primary.retailer ?? hostOf(url) ?? primary.categoryLabel;
+  const percentOff = markdown(primary);
+  const price = primary.displayPrice ?? money(primary.price);
+  const age = primary.postedAt ? timeAgo(primary.postedAt) : null;
 
   return (
-    <div className="border-t border-white/10 px-2 pb-2 pt-3">
-      <div className="mb-2 flex items-center justify-between gap-2 px-1">
-        <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
-          <span className="relative flex h-1.5 w-1.5">
-            {live ? (
-              <>
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-70" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand" />
-              </>
-            ) : (
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-zinc-500" />
-            )}
-          </span>
-          {live ? 'Caught just now' : 'Examples'}
-        </p>
-        {newest && <p className="text-[11px] text-zinc-400">newest {newest}</p>}
-      </div>
+    <section className="hero-live-card" aria-label={live ? 'Latest community deals' : 'Deal example'}>
+      <article>
+        <div className={`hero-live-image${primaryImage ? '' : ' hero-live-image--compact'}`}>
+          {primaryImage ? (
+            <img
+              src={primaryImage}
+              alt={primary.imageAlt || primary.title}
+              fetchPriority="high"
+              decoding="async"
+              referrerPolicy="no-referrer"
+              onLoad={(event) => {
+                const image = event.currentTarget;
+                if (isNonProductImage(image.naturalWidth, image.naturalHeight)) setImageUnavailable(true);
+              }}
+              onError={() => setImageUnavailable(true)}
+            />
+          ) : (
+            <div className="hero-live-no-image" aria-hidden="true">
+              <FaBolt />
+            </div>
+          )}
+          <div className="hero-live-image-shade" aria-hidden="true" />
+          <div className="hero-live-badges">
+            <span className={live ? 'hero-live-status' : 'hero-example-status'}>
+              <span className={live ? 'hero-live-dot' : 'hero-example-dot'} aria-hidden="true" />
+              {live ? 'Live find' : 'Worked example'}
+            </span>
+            {primary.categoryLabel && <span className="hero-deal-category">{primary.categoryLabel}</span>}
+          </div>
+          {percentOff !== null && <span className="hero-deal-discount">−{percentOff}%</span>}
+        </div>
 
-      <div className="space-y-1.5">
-        <AnimatePresence initial={false} mode="popLayout">
-          {wrap.map((deal, i) => (
-            <motion.div
-              key={`${deal.id}-${i}`}
-              initial={prefersReduced ? false : { opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={prefersReduced ? undefined : { opacity: 0, y: -8 }}
-              transition={{ duration: 0.28, ease: 'easeOut', delay: i * 0.03 }}
-              className={`flex items-center gap-3 rounded-lg bg-white/[0.03] px-3 py-2 transition-colors hover:bg-white/[0.06] ${
-                // Only the row entering at the top, and only once the loop has
-                // actually turned. Under reduced motion the CSS kills the flash
-                // itself, so no JS branch is needed here.
-                advanced && i === 0 ? 'feed-row-new' : ''
-              }`}
-            >
-              {/* A consistent mark so the eye tracks a column instead of
-                  reading each row. The comparison site anchors its list the
-                  same way; ours was text-only, which is why a wall of it read
-                  as noise rather than as a list. One hue — the square is the
-                  brand at low opacity, not a fourth accent. */}
-              <span
-                aria-hidden="true"
-                className="h-2.5 w-2.5 shrink-0 rounded-[3px] bg-brand/25 ring-1 ring-inset ring-brand/40"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-semibold text-white">{deal.title}</p>
-                <p className="flex items-center gap-1.5 text-[11px] text-zinc-500">
-                  {deal.retailer ?? deal.categoryLabel}
-                  {deal.postedAt ? (
-                    <>
-                      <span aria-hidden="true">·</span>
-                      caught {timeAgo(deal.postedAt)}
-                    </>
-                  ) : (
-                    <>
-                      <span aria-hidden="true">·</span>
-                      archived example
-                    </>
-                  )}
-                </p>
-              </div>
-              {typeof deal.price === 'number' && (
-                <span className="shrink-0 text-xs font-bold text-brand">
-                  {deal.displayPrice ?? `$${deal.price.toFixed(2)}`}
-                </span>
+        <div className="hero-live-details">
+          <div className="hero-live-copy">
+            <p className="hero-live-retailer">{retailer}</p>
+            <h2 className="hero-live-title">{primary.title}</h2>
+            <p className="hero-live-age">
+              <FaRegClock aria-hidden="true" />
+              {live && age ? (
+                <><span>Caught </span><time dateTime={primary.postedAt}>{age}</time></>
+              ) : (
+                <span>Archived example · no current offer</span>
               )}
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+            </p>
+          </div>
+          <div className="hero-live-price-wrap">
+            {primary.referencePrice > primary.price && (
+              <span className="hero-live-was">Was {money(primary.referencePrice)}</span>
+            )}
+            {price && <span className="hero-live-price">{price}</span>}
+          </div>
+        </div>
 
-      <div className="mt-2 flex items-center justify-between gap-2 px-1">
-        {/* zinc-600 is 2.35:1 on the card — unreadable at 10px, and this line
-            is the one that tells the reader whether they are looking at real
-            posts. It has to be legible. */}
-        <p className="text-[11px] text-zinc-400">
-          {live ? 'Pulled live from Discord' : 'Live feed unreachable'}
-        </p>
-        <Link
-          to="/deals"
-          className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand hover:underline"
-        >
-          <FaBolt className="h-2.5 w-2.5" aria-hidden="true" />
-          All finds
-          <FaArrowRight className="h-2.5 w-2.5" aria-hidden="true" />
-        </Link>
-      </div>
-    </div>
+        {live && primary.description && <p className="hero-live-description">{primary.description}</p>}
+
+        <div className="hero-live-footer">
+          {live && url ? (
+            <a href={url} target="_blank" rel="noopener noreferrer nofollow" className="hero-live-cta">
+              Check live listing <FaExternalLinkAlt aria-hidden="true" />
+            </a>
+          ) : (
+            <Link to="/deals" className="hero-live-cta">
+              Browse today’s live feed <FaArrowRight aria-hidden="true" />
+            </Link>
+          )}
+          <span className="hero-live-provenance">
+            <span aria-hidden="true" className="hero-live-provenance-dot" />
+            {live ? 'Posted by the community' : 'Live feed temporarily unavailable'}
+          </span>
+        </div>
+      </article>
+
+      {rest.length > 0 && (
+        <div className="hero-live-secondary" aria-label="More recent finds">
+          {rest.map((deal) => {
+            const href = listingUrl(deal);
+            const otherAge = deal.postedAt ? timeAgo(deal.postedAt) : null;
+            return (
+              <a
+                key={deal.id}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="hero-live-secondary-row"
+              >
+                <span className="hero-live-secondary-mark" aria-hidden="true">
+                  <FaBolt />
+                </span>
+                <span className="hero-live-secondary-copy">
+                  <span className="hero-live-secondary-title">{deal.title}</span>
+                  <span className="hero-live-secondary-meta">
+                    {deal.retailer ?? deal.categoryLabel}
+                    {otherAge ? ` · caught ${otherAge}` : ''}
+                  </span>
+                </span>
+                <span className="hero-live-secondary-price">{deal.displayPrice ?? money(deal.price)}</span>
+                <FaArrowRight className="hero-live-secondary-arrow" aria-hidden="true" />
+              </a>
+            );
+          })}
+          <Link to="/deals" className="hero-live-more">
+            See every live find <FaArrowRight aria-hidden="true" />
+          </Link>
+        </div>
+      )}
+
+      {!live && (
+        <div className="hero-live-offline" role="status">
+          Showing an archived example while the live feed reconnects.{' '}
+          <Link to="/deals">Check the feed</Link>
+        </div>
+      )}
+    </section>
   );
 }

@@ -1,5 +1,20 @@
 // Functional checks: review submission (local full-stack), admin login + queue (live, read-only).
 import { chromium } from 'playwright';
+
+// Credentials come from the environment, never from this file.
+//
+// The password used to be written in here in plain text, which put a live admin
+// credential in the repository and in its history. Any script that signs in must
+// read it from the environment instead:
+//
+//   ADMIN_PASSWORD='...' node playwright/interactive-qa.mjs
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'goosievv';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) {
+  console.error('Set ADMIN_PASSWORD in the environment first — it is not stored in the repo.');
+  process.exit(1);
+}
+
 const browser = await chromium.launch();
 
 // 1. REVIEW SUBMISSION on local full-stack (8787) — same code path as live, no queue pollution.
@@ -39,8 +54,8 @@ const browser = await chromium.launch();
   const ic = await inputs.count();
   let admin = {};
   if (ic >= 2) {
-    await inputs.nth(0).fill('goosievv');
-    await inputs.nth(1).fill('Orio23!!2012');
+    await inputs.nth(0).fill(ADMIN_USERNAME);
+    await inputs.nth(1).fill(ADMIN_PASSWORD);
     await page.locator('button', { hasText: /sign in|login|log in/i }).first().click();
     await page.waitForTimeout(2200);
     admin = await page.evaluate(() => ({

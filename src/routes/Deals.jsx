@@ -51,6 +51,31 @@ const prepareLiveDeals = (deals) =>
     return { ...deal, meta };
   });
 
+/**
+ * A figure that pops when it changes.
+ *
+ * The result counts on this page change on every keystroke in the search box,
+ * and a bare number swapping in place is easy to miss — especially when the
+ * number that changed is not the one you were looking at. Keying the element
+ * on the value remounts it, which restarts the tween deterministically. There
+ * is no animation lifecycle to lose track of, which is the failure mode that
+ * made a keyed framer-motion node settle at opacity 0 elsewhere on this site.
+ */
+const CountValue = ({ value, className = 'font-semibold text-zinc-300' }) => {
+  const prefersReduced = useReducedMotion();
+  return (
+    <motion.span
+      key={value}
+      initial={prefersReduced ? false : { opacity: 0, y: -7 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.22, ease: 'easeOut' }}
+      className={`inline-block ${className}`}
+    >
+      {value}
+    </motion.span>
+  );
+};
+
 const DealStates = {
   loading: 'loading',
   ready: 'ready',
@@ -291,7 +316,11 @@ const Deals = () => {
         </motion.div>
       )}
 
-      {showSpotlight && <SpotlightDeal deal={spotlight} />}
+      {showSpotlight && (
+        <ScrollReveal distance={26}>
+          <SpotlightDeal deal={spotlight} />
+        </ScrollReveal>
+      )}
 
       <motion.div
         {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
@@ -352,18 +381,15 @@ const Deals = () => {
           <p aria-live="polite">
             {signedIn ? (
               <>
-                Showing{' '}
-                <span className="font-semibold text-zinc-300">{filtered.length}</span> of{' '}
-                <span className="font-semibold text-zinc-300">{feed.deals.length}</span> deals
+                Showing <CountValue value={filtered.length} /> of{' '}
+                <CountValue value={feed.deals.length} /> deals
               </>
             ) : (
               <>
-                Showing{' '}
-                <span className="font-semibold text-zinc-300">{visible.length}</span> sample deals
+                Showing <CountValue value={visible.length} /> sample deals
                 {hiddenCount > 0 && (
                   <>
-                    {' '}· <span className="font-semibold text-zinc-300">{hiddenCount} more</span>{' '}
-                    for members
+                    {' '}· <CountValue value={hiddenCount} /> more for members
                   </>
                 )}
               </>
@@ -390,9 +416,12 @@ const Deals = () => {
           {CATEGORIES.map((cat) => {
             const isActive = category === cat.id;
             return (
-              <button
+              <motion.button
                 key={cat.id}
                 onClick={() => setCategory(cat.id)}
+                whileHover={prefersReduced ? undefined : { y: -2 }}
+                whileTap={prefersReduced ? undefined : { scale: 0.96 }}
+                transition={{ type: 'spring', stiffness: 360, damping: 26, mass: 0.7 }}
                 className={`chip chip-nowrap relative ${isActive ? 'text-brand' : 'hover:text-white'}`}
                 aria-pressed={isActive}
               >
@@ -416,7 +445,7 @@ const Deals = () => {
                     </span>
                   )}
                 </span>
-              </button>
+              </motion.button>
             );
           })}
         </motion.div>
@@ -452,26 +481,37 @@ const Deals = () => {
         </motion.div>
       ) : filtered.length > 0 ? (
         <>
-          <motion.div
-            {...getMotionProps(prefersReduced, motionVariants.staggerContainer)}
+          {/* Replaced a mount-triggered staggerItem with a per-card scroll
+              reveal. The stagger container animated every card the moment the
+              page loaded — including the ones three screens down — so by the
+              time the reader scrolled to them the motion was already over. The
+              per-card delay is derived from the index so cards still cascade,
+              but only as they actually arrive.
+
+              The grid is keyed on the active filter. Changing a category, a
+              search term or a sort remounts it, which replays that cascade for
+              the cards you are actually looking at. Without the key the grid
+              re-sorts in one silent frame, which is the one interaction on
+              this page a reader performs most often. */}
+          <div
+            key={`${query.trim().toLowerCase()}|${category}|${sort}`}
             className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
           >
             {visible.map((deal, deal_index) => (
-              // Replaced a mount-triggered staggerItem with a per-card scroll
-              // reveal. The stagger container animated every card the moment
-              // the page loaded — including the ones three screens down — so
-              // by the time the reader scrolled to them the motion was already
-              // over. The per-card delay is derived from the index so cards
-              // still cascade, but only as they actually arrive.
               <ScrollReveal
                 key={deal.id}
                 className="min-w-0"
                 delay={Math.min(deal_index, 4) * 0.06}
+                distance={28}
+                scaleFrom={0.97}
+                // Fires slightly before the card is fully in view so a fast
+                // scroll does not outrun the motion.
+                amount={0.12}
               >
                 <DealCard deal={deal} />
               </ScrollReveal>
             ))}
-          </motion.div>
+          </div>
 
           {/* Signed out: show a real slice of the feed, then ask. Locking the
               lot would leave the public page with nothing to look at, which

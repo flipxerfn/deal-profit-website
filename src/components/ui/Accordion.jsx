@@ -35,13 +35,22 @@ export default function Accordion({ items = [], className = '' }) {
             </button>
             <AnimatePresence initial={false}>
               {isOpen && (
+                // Height is animated, not just opacity. The panel used to fade
+                // in while the rest of the list snapped to its new position,
+                // so opening a question made everything below it jump. With
+                // the height in the tween the items beneath slide down and the
+                // whole FAQ reads as one document.
                 <motion.div
                   id={`${id}-panel`}
                   key="content"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: prefersReduced ? 0 : 0.25, ease: 'easeOut' }}
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{
+                    duration: prefersReduced ? 0 : 0.3,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="overflow-hidden"
                 >
                   <p className="px-5 pb-5 text-sm leading-relaxed text-zinc-400">{item.content}</p>
                 </motion.div>
