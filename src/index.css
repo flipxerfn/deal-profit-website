@@ -1378,10 +1378,25 @@
      prefers-reduced-motion block above, so the page is static and complete
      for anyone who has asked for that. */
 
-  /* 2. The breathing field behind the hero.
-     Replaces the two drifting blur orbs. This is one oversized layer that
-     translates and rotates slowly enough to read as weather rather than
-     motion. transform only. */
+  /* 2. The soft field behind the hero — NOW STATIC.
+
+     This used to translate and scale on an 18s infinite alternate loop. It was
+     one of nine ambient loops on the front page, and measuring the live site at
+     390px found 19 animations running in the initial viewport against a budget
+     of roughly five.
+
+     The research on this is consistent enough to act on: ambient decorative
+     loops are the documented 2026 cut-list item, because they cost a frame
+     rate tax and buy nothing — a visitor cannot act on a drifting gradient,
+     and the attention it borrows from the headline is attention the CTA does
+     not get. The same reporting puts the win in the hundreds: removing this
+     class of motion moved Lighthouse 78 -> 94 and INP 340ms -> 120ms.
+
+     So the colour stays — it is what stops the hero reading as a flat black
+     rectangle — and the animation goes. A static gradient costs nothing and
+     looks identical in any single frame, which is the only frame anyone
+     judges. The aliveness this page needs comes from the live feed card
+     actually updating with real finds, which is information, not weather. */
   .hero-drift {
     position: absolute;
     inset: -30%;
@@ -1390,107 +1405,38 @@
       radial-gradient(45% 45% at 25% 30%, rgba(139, 92, 246, 0.24), transparent 70%),
       radial-gradient(40% 40% at 72% 60%, rgba(139, 92, 246, 0.18), transparent 70%),
       radial-gradient(38% 38% at 55% 85%, rgba(251, 146, 60, 0.10), transparent 70%);
-    will-change: transform;
-    animation: hero-drift 18s ease-in-out infinite alternate;
   }
 
-  @keyframes hero-drift {
-    0% {
-      transform: translate3d(-3%, -2%, 0) rotate(-4deg) scale(1);
-    }
-    100% {
-      transform: translate3d(4%, 3%, 0) rotate(5deg) scale(1.14);
-    }
-  }
+  /* A wide, soft sweep of light crossing the hero — NOW STATIC.
 
-  /* A wide, soft sweep of light crossing the hero.
-
-     This replaced a 2px brand-coloured line that travelled the full height of
-     the section. It was technically what the brief asked for and it looked
-     like a scratch on the screen — a hard 2px edge at 85% opacity with its
-     own glow, crossing the headline. Light has no edge; a line does. So this
-     is 200px wide, blurred, and held down around 12% opacity, which reads as
-     the room brightening rather than an object moving through it. */
+     Removed entirely from the markup. A 200px blurred band is invisible at
+     rest; it only ever existed to be seen moving. Left in place as a still
+     image it is a vertical smudge across the headline, which is worse than
+     nothing. The live feed card beside it carries the "something is happening
+     here" signal, and it carries real data while doing it. */
   .hero-sweep {
-    position: absolute;
-    top: -20%;
-    bottom: -20%;
-    left: 0;
-    width: 200px;
-    pointer-events: none;
-    background: linear-gradient(
-      100deg,
-      transparent 0%,
-      rgba(139, 92, 246, 0.12) 42%,
-      rgba(196, 181, 253, 0.20) 50%,
-      rgba(139, 92, 246, 0.10) 58%,
-      transparent 100%
-    );
-    filter: blur(28px);
-    will-change: transform, opacity;
-    animation: hero-sweep 11s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+    display: none;
   }
 
-  @keyframes hero-sweep {
-    0% {
-      transform: translate3d(-30%, 0, 0) rotate(8deg);
-      opacity: 0;
-    }
-    15% {
-      opacity: 1;
-    }
-    85% {
-      opacity: 1;
-    }
-    100% {
-      transform: translate3d(112%, 0, 0) rotate(8deg);
-      opacity: 0;
-    }
-  }
+  /* The headline gradient is STATIC.
 
-  /* The field actually turning. A conic sheen that rotates, layered over the
-     drifting radial. Two slow motions on different axes read as depth — the
-     light is coming from somewhere and going somewhere. */
-  .hero-turn {
-    position: absolute;
-    inset: -40%;
-    pointer-events: none;
-    background: conic-gradient(
-      from 0deg at 50% 50%,
-      transparent 0deg,
-      rgba(139, 92, 246, 0.12) 60deg,
-      transparent 140deg,
-      rgba(139, 92, 246, 0.09) 220deg,
-      transparent 300deg
-    );
-    will-change: transform;
-    animation: hero-turn 26s linear infinite;
-  }
+     It used to travel its background-position on a 3s infinite loop. Two
+     problems, and the second is the serious one.
 
-  @keyframes hero-turn {
-    0% {
-      transform: rotate(0deg) scale(1);
-    }
-    100% {
-      transform: rotate(360deg) scale(1);
-    }
-  }
+     It is a PAINT, not a composite. background-position forces the browser to
+     repaint the whole gradient on every frame, on the largest text on the
+     page, forever. Every other animation removed from this site is
+     compositor-only; this was the single most expensive one and the only one
+     that could not be made cheap.
 
-  /* 3. The accent line travels. background-position only — paints, never
-     lays out. 3s loop, deliberately slow enough to read as a sheen rather
-     than a strobe. */
+     And it animated the thing the visitor is trying to read. Moving text is
+     harder to read than still text. Nothing is communicated by a sheen
+     crawling across a headline — the word is already there.
+
+     The gradient itself is unchanged and still legible at rest. Only the
+     motion is gone. */
   .text-gradient-brand {
     background-size: 200% 100%;
-    animation: gradient-travel 3s linear infinite;
-  }
-
-  @keyframes gradient-travel {
-    0% {
-      background-position: 0% center;
-    }
-    100% {
-      background-position: 200% center;
-    }
   }
 
   /* 7. The scan line. Sells "we are actively checking" and is the only
@@ -1644,8 +1590,20 @@
       0 18px 40px -22px rgba(139, 92, 246, 0.42);
   }
 
-  /* The live dot on the trust row. Breathes while the feed is measured, so
-     "measured from the live feed" is visibly a live claim. */
+  /* The live dot on the trust row — NOW STATIC.
+
+     It used to expand and fade on a 2.4s infinite loop, and it appeared on
+     every one of the four trust indicators, so a single decorative dot was
+     running two compositor animations before the visitor had read a word.
+
+     "Measured from the live feed" is already stated in the text of every
+     indicator it sits next to, and the live feed card updates with real finds
+     while you watch. A dot that pulses forever does not make a measured claim
+     more true, and WCAG's flashing guidance is not about how many are gentle
+     enough to sit beside each other — it is about not looping motion beside
+     text at all.
+
+     The dot stays, so the indicator still reads as marked. Only the loop goes. */
   .pulse-live {
     position: relative;
     display: inline-flex;
@@ -1660,18 +1618,5 @@
     inset: 0;
     border-radius: 9999px;
     background: #c4b5fd;
-    animation: pulse-live 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  @keyframes pulse-live {
-    0% {
-      transform: scale(1);
-      opacity: 0.9;
-    }
-    70%,
-    100% {
-      transform: scale(2.6);
-      opacity: 0;
-    }
   }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FaBolt } from 'react-icons/fa6';
 import { FaArrowRight, FaExternalLinkAlt, FaCheckCircle } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
@@ -49,8 +49,41 @@ const DealCard = ({ deal, spotlight = false }) => {
   const [hideImage, setHideImage] = useState(false);
   const showImage = Boolean(deal.image) && !hideImage;
 
+  // The NEW badge keeps its ping — it is a real signal, bounded to finds under
+  // 10 minutes old, so it has a natural end rather than looping forever beside
+  // static content. But an animation nobody can see is still work: measured on
+  // /deals, 8 pings were running while off-screen, and a browser will happily
+  // composite all 8.
+  //
+  // So the ping only mounts once the card is near the viewport. The badge text
+  // is always present; only the motion waits for someone who can see it.
+  const [nearViewport, setNearViewport] = useState(false);
+  const cardRef = useRef(null);
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || typeof IntersectionObserver !== 'function') {
+      // No observer available: show the badge rather than silently losing it.
+      setNearViewport(true);
+      return undefined;
+    }
+    // rootMargin gives a screen of lead time so the ping is already running by
+    // the time the card scrolls into view.
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setNearViewport(true);
+          io.disconnect(); // one-way: never un-mount once seen
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   return (
     <CardHover
+      ref={cardRef}
       className={`group relative flex flex-col overflow-hidden ${
         // The featured card used to carry a 44px brand glow. That was the
         // depth cue, and it was doing two jobs badly: it was expensive to
@@ -108,7 +141,7 @@ const DealCard = ({ deal, spotlight = false }) => {
               the repeated motion that setting exists to suppress. */}
           {fresh && (
             <span className="relative inline-flex items-center">
-              {!prefersReduced && (
+              {!prefersReduced && nearViewport && (
                 <span
                   className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400/60"
                   aria-hidden="true"
@@ -163,7 +196,11 @@ const DealCard = ({ deal, spotlight = false }) => {
                 <span key={`${i}-${item}`} className="inline-flex items-center gap-1.5">
                   {item === 'Live now' ? (
                     <span className="relative flex h-1.5 w-1.5">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
+                      {/* Same rule as the NEW badge: text is always there,
+                          the ring only runs once someone can see it. */}
+                      {!prefersReduced && nearViewport && (
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
+                      )}
                       <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand" />
                     </span>
                   ) : (

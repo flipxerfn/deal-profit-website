@@ -38,7 +38,8 @@ const SpotlightDeal = ({ deal }) => {
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand">
             {verifiable ? (
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-70" />
+                {/* Static dot — was an infinite ping ring. "Verifiable" is
+                    stated in the label beside it. */}
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
               </span>
             ) : (

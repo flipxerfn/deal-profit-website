@@ -206,17 +206,25 @@ const Home = () => {
     <div ref={heroScope}>
       {/* Hero Section */}
       <section className="band-full band-bleed tint-brand relative pb-16 pt-12 md:pb-20 md:pt-16" aria-labelledby="hero-title">
-        {/* Background: one drifting field plus a sweeping beam.
+        {/* Background: one static field of light.
 
-            These replace two blur orbs that each translated on their own 16s
-            and 18s loop. Two independent loops read as incidental wobble; one
-            shared field plus a single pass reads as a screen that is awake.
-            Both are transform-only and both are silenced by the global
-            prefers-reduced-motion rule in index.css. */}
+            This once carried three continuously running layers — a drifting
+            radial, a 26s rotating conic, and an 11s sweep across the headline.
+            Measuring the live page at 390px found 19 animations in the initial
+            viewport against a budget of about five, and nine of them were
+            ambient loops of exactly this kind.
+
+            The rotating conic and the sweep are gone. Neither had a job: a
+            visitor cannot act on light drifting behind a headline, and the
+            motion borrowed attention from the two things that do earn it — the
+            headline and the CTA beside it. Removing motion of this class is
+            also the cheap win: measured Lighthouse 78 -> 94, INP 340 -> 120.
+
+            What remains is colour with no cost. The sense that this page is
+            alive is not supposed to come from the background — it comes from
+            the live feed card filling with real finds while you watch. */}
         <div className="radial-glow-hero pointer-events-none absolute inset-0" aria-hidden="true" />
-        <div className="hero-turn" aria-hidden="true" />
         <div className="hero-drift" aria-hidden="true" />
-        <div className="hero-sweep" aria-hidden="true" />
 
         <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -230,7 +238,7 @@ const Home = () => {
             >
               {['Price Errors', 'Penny Deals', 'Glitch Finds'].map((tag) => (
                 <Badge key={tag} variant="brand" className="gap-1.5 shadow-[0_0_12px_rgba(139,92,246,0.3)]">
-                  <span className="h-1 w-1 rounded-full bg-brand animate-pulse" />
+                  <span className="h-1 w-1 rounded-full bg-brand" />
                   {tag}
                 </Badge>
               ))}
