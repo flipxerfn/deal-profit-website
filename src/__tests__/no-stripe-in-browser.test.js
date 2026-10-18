@@ -45,10 +45,17 @@ describe('no Stripe in the browser', () => {
     // Purchases and the free trial now both happen on Whop. The trial used to
     // go to the Discord invite because no card was taken; it takes one now, so
     // there is no reason for two paths.
+    //
+    // There used to be one destination for both, because the storefront's
+    // product page chose the plan. That is no longer true: the Whop product
+    // page shows PLANS, not the trial, so a visitor who clicked "Start Free
+    // Trial" landed on a page with no trial on it. Each path now goes to a plan
+    // checkout directly, and only the monthly plan carries the 7-day trial.
     expect(checkout).toContain('WHOP_CHECKOUT_URL');
     expect(checkout).toContain('DISCORD_INVITE');
     expect(checkout).not.toMatch(/trial \? DISCORD_INVITE/);
-    expect(checkout).toMatch(/window\.location\.href = WHOP_CHECKOUT_URL/);
+    expect(checkout).toMatch(/window\.location\.href = getCheckoutUrl\(/);
+    expect(checkout).toMatch(/whop\.com\/checkout\/plan_/);
   });
 });
 

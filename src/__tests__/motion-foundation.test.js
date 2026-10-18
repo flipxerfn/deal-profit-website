@@ -116,12 +116,21 @@ describe('motion foundation', () => {
     // track of. That is the invariant worth pinning.
     const upgrade = read('routes/Upgrade.jsx');
 
-    const swap = upgrade.slice(upgrade.indexOf('.price-swap'), upgrade.indexOf('.price-swap') + 400);
-    expect(swap, 'the price swap no longer uses .price-swap').toBeTruthy();
+    // Anchored on the className attribute, not on the bare string
+    // ".price-swap": that string used to appear only inside a comment, and
+    // deleting the comment made this test fail while the mechanism was intact.
+    // An assertion that depends on prose is an assertion about prose.
+    const at = upgrade.indexOf('className="price-swap');
+    expect(at, 'the price swap no longer uses a .price-swap class').toBeGreaterThan(-1);
+    const swap = upgrade.slice(at, at + 400);
 
     // The animated element must be a plain span, not a motion component.
-    const holder = upgrade.match(/<(\w+)[^>]*className="price-swap"/);
-    expect(holder?.[1], 'price-swap must be on a plain element').toBe('span');
+    // The class list is allowed to carry more than the marker — it does, so
+    // that the same class serves the small plan cards and the large comparison
+    // price. Matching only `className="price-swap"` exactly would pass or fail
+    // on the order the styles happen to be written in.
+    const holder = upgrade.match(/<(\w+)[^>]*className="price-swap[^"]*"/);
+    expect(holder?.[1], 'price-swap must be on a plain span, never motion.span').toBe('span');
 
     // No exit, no AnimatePresence, anywhere near it.
     expect(upgrade).not.toMatch(/<AnimatePresence/);

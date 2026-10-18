@@ -31,7 +31,7 @@ import {
 import { useReducedMotion, motionVariants, getMotionProps } from '../lib/motion';
 import ScrollReveal, { RevealGroup, RevealItem } from '../components/ScrollReveal';
 import { useSplitReveal, refreshScrollTriggers } from '../lib/useGsapText';
-import { startCheckout, WHOP_SETUP_URL, DISCORD_INVITE } from '../lib/checkout';
+import { startCheckout, WHOP_SETUP_URL, WHOP_MONTHLY_URL, WHOP_YEARLY_URL, DISCORD_INVITE } from '../lib/checkout';
 import PaymentFlow from '../components/PaymentFlow';
 import LinkDiscordToWhop from '../components/LinkDiscordToWhop';
 import BillingTransparency from '../components/BillingTransparency';
@@ -176,23 +176,32 @@ const Upgrade = () => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [trialLoading, setTrialLoading] = useState(false);
   const [interval, setInterval] = useState(DEFAULT_INTERVAL); // 'month' or 'year'
+  const [checkoutError, setCheckoutError] = useState('');
 
   const handleUpgrade = async () => {
-    if (checkoutLoading) return;
+    if (checkoutLoading || trialLoading) return;
     setCheckoutLoading(true);
-    const result = await startCheckout({ interval });
-    if (!result.ok) {
-      console.error('Checkout failed to start:', result.error);
+    setCheckoutError('');
+    try {
+      const result = await startCheckout({ interval });
+      if (!result.ok) throw new Error('checkout_failed');
+    } catch {
+      setCheckoutError('Checkout could not open. Please try again, or use the direct Whop links above.');
+    } finally {
       setCheckoutLoading(false);
     }
   };
 
   const handleStartTrial = async () => {
-    if (trialLoading) return;
+    if (trialLoading || checkoutLoading) return;
     setTrialLoading(true);
-    const result = await startCheckout({ trial: true, interval });
-    if (!result.ok) {
-      console.error('Trial checkout failed to start:', result.error);
+    setCheckoutError('');
+    try {
+      const result = await startCheckout({ trial: true });
+      if (!result.ok) throw new Error('checkout_failed');
+    } catch {
+      setCheckoutError('Checkout could not open. Please try again, or use the direct Whop links above.');
+    } finally {
       setTrialLoading(false);
     }
   };
@@ -209,7 +218,7 @@ const Upgrade = () => {
   return (
     <section
       ref={revealScope}
-      className="band-full band-bleed tint-brand relative pb-4 pt-12"
+      className="band-full band-bleed tint-brand relative pb-4 pt-8 sm:pt-12"
       aria-labelledby="upgrade-title"
     >
       {/* Background glow */}
@@ -230,16 +239,15 @@ const Upgrade = () => {
         </Badge>
         <h1
           id="upgrade-title"
-          className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl md:text-[44px]"
+          className="mt-2 text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl md:text-[44px]"
         >
-          Get more than the free feed.{' '}
+          Less searching.{' '}
           <span className="text-gradient-brand">
-            Upgrade for faster alerts and more deals.
+            More deal alerts.
           </span>
         </h1>
-        <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-zinc-400 sm:text-lg">
-          Free deals are just the beginning. Upgrade for faster alerts, more deal opportunities, and
-          access to premium features designed to help you catch deals before they disappear.
+        <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-zinc-300 sm:text-lg">
+          Price errors, penny deals and member-only finds in your Discord. Choose how you want to join.
         </p>
 
         {/* Three ways in.
@@ -255,12 +263,12 @@ const Upgrade = () => {
             frictionless option and it should be read that way. */}
         <motion.div
           {...getMotionProps(prefersReduced, motionVariants.fadeInUp)}
-          className="mx-auto mt-12 max-w-[1100px]"
+          className="mx-auto mt-6 max-w-[1100px]"
           aria-labelledby="start-title"
         >
           <h2
             id="start-title"
-            className="text-center text-sm font-bold uppercase tracking-wider text-zinc-400"
+            className="sr-only"
           >
             Start here — pick one
           </h2>
@@ -269,33 +277,73 @@ const Upgrade = () => {
               They used to cascade on MOUNT, which meant the one decision this
               page exists to present had already finished animating before the
               reader had scrolled to it. */}
-          <RevealGroup stagger={0.12} className="mt-6 grid gap-4 md:grid-cols-3">
-            {/* 1. Discord — free, no card. Recommended for TikTok traffic. */}
-            <RevealItem className="card relative flex flex-col overflow-hidden border-brand/40 p-6">
+          <div className="upgrade-choices grid gap-4 text-left md:grid-cols-3">
+            {/* Primary action stays first in both DOM and mobile reading order. */}
+            <div className="card relative flex flex-col overflow-hidden border-brand/60 p-6" data-plan="trial">
               <div
                 className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand to-transparent"
                 aria-hidden="true"
               />
               <div className="flex items-center justify-between gap-2">
                 <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-brand">
-                  <FaDiscord className="text-base" aria-hidden="true" />
-                  Join Discord
+                  <FaCrown className="text-base" aria-hidden="true" />
+                  Free Trial
                 </h3>
                 <Badge variant="glow" className="text-[10px]">
-                  Free
+                  7 days
                 </Badge>
               </div>
               <p className="mt-3 text-2xl font-extrabold tracking-tight text-white">
-                Free, no card
+                $0 for a week
               </p>
+              <p className="mt-2 text-sm text-zinc-200">Then {PRICE_MONTHLY_MO} + applicable tax.</p>
               <ul className="mt-4 mb-5 space-y-2 text-sm text-zinc-300">
                 <li className="flex items-start gap-2">
                   <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
-                  The live deal feed, as it lands
+                  Member-only deal channels
                 </li>
                 <li className="flex items-start gap-2">
                   <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
-                  Public channels and other members' finds
+                  Price error and penny deal alerts
+                </li>
+                <li className="flex items-start gap-2">
+                  <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
+                  Card required. Cancel before the trial ends to avoid a charge.
+                </li>
+              </ul>
+              <a
+                href={WHOP_MONTHLY_URL}
+                className={clsx('mt-auto w-full', buttonClass({ variant: 'primary', size: 'lg' }))}
+              >
+                Start Free Trial
+                <FaArrowRight className="text-sm" aria-hidden="true" />
+              </a>
+              <p className="mt-3 text-xs text-zinc-300">Secure checkout on Whop. Renews monthly unless canceled.</p>
+            </div>
+
+            {/* 2. Discord — free, no card. Kept second rather than first: the
+                trial is the paid path this page exists to sell, and a reader
+                who wants the community will scroll one card for it. */}
+            <div className="card relative flex flex-col overflow-hidden border-white/15 p-6">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-300">
+                  <FaDiscord className="text-base text-brand-2" aria-hidden="true" />
+                  Join Discord
+                </h3>
+                <Badge variant="outline" className="text-[10px]">
+                  Free
+                </Badge>
+              </div>
+              <p className="mt-3 text-2xl font-extrabold tracking-tight text-white">Free, no card</p>
+              <p className="mt-2 text-sm text-zinc-300">Explore the community first.</p>
+              <ul className="mt-4 mb-5 space-y-2 text-sm text-zinc-300">
+                <li className="flex items-start gap-2">
+                  <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
+                  The public deal feed
+                </li>
+                <li className="flex items-start gap-2">
+                  <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
+                  Public channels and community finds
                 </li>
                 <li className="flex items-start gap-2">
                   <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
@@ -306,94 +354,43 @@ const Upgrade = () => {
                 href={DISCORD_INVITE}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={clsx('mt-auto w-full', buttonClass({ variant: 'primary', size: 'lg' }))}
+                className={clsx('mt-auto w-full', buttonClass({ variant: 'outline', size: 'lg' }))}
               >
                 <FaDiscord className="text-sm" aria-hidden="true" />
                 Join Discord here
               </a>
-            </RevealItem>
+            </div>
 
-            {/* 2. Free trial — the middle path, and the one the video should push. */}
-            <RevealItem className="ring-spin card relative flex flex-col overflow-hidden border-white/15 p-6">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-300">
-                  <FaCrown className="text-base text-brand-2" aria-hidden="true" />
-                  Free Trial
-                </h3>
-                <Badge variant="outline" className="text-[10px]">
-                  7 days
-                </Badge>
-              </div>
-              <p className="mt-3 text-2xl font-extrabold tracking-tight text-white">$0 for a week</p>
-              <ul className="mt-4 mb-5 space-y-2 text-sm text-zinc-300">
-                <li className="flex items-start gap-2">
-                  <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
-                  Everything in the member channels
-                </li>
-                <li className="flex items-start gap-2">
-                  <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
-                  Faster alerts than the free feed
-                </li>
-                <li className="flex items-start gap-2">
-                  <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
-                  Card on file, so cancel before day 7 and you pay nothing
-                </li>
-              </ul>
-              <button
-                type="button"
-                onClick={handleStartTrial}
-                disabled={trialLoading}
-                className={clsx('mt-auto w-full', buttonClass({ variant: 'outline', size: 'lg' }))}
-              >
-                <FaCrown className="text-sm" aria-hidden="true" />
-                {trialLoading ? 'Opening Whop…' : 'Start Free Trial'}
-              </button>
-            </RevealItem>
-
-            {/* 3. Paid — for someone already sold. */}
-            <RevealItem className="card relative flex flex-col overflow-hidden border-white/15 p-6">
+            {/* 3. Yearly — for someone already sold.
+                Deliberately NOT a monthly option. Whop's monthly plan carries
+                the 7-day trial and the yearly plan does not, so a monthly card
+                here would be a second, trial-less way to buy the same thing
+                next to a card that says "free trial" — the exact comparison
+                that reads as bait-and-switch. Yearly is the only paid tier that
+                needs its own card; monthly is reached through the trial. */}
+            <div className="card relative flex flex-col overflow-hidden border-white/15 p-6">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-zinc-300">
                   <FaBolt className="text-base text-brand-2" aria-hidden="true" />
-                  Subscribe
+                  Annual membership
                 </h3>
-                <Badge variant="outline" className="text-[10px]">
+                <Badge variant="outline" className="shrink-0 whitespace-nowrap text-[10px]">
                   No trial
                 </Badge>
               </div>
-              {/* THE PRICE SWAP
-
-                  Three implementations were wrong before this one worked:
-
-                  1. Plain text. The number silently changed under the cursor,
-                     so a reader comparing $25/mo against $200/yr had no signal
-                     that anything had happened.
-                  2. AnimatePresence mode="wait". Measured deadlocking — the
-                     price settled at opacity 0 with stale text. Same mechanism
-                     that blanked whole pages on route change.
-                  3. framer-motion on a keyed motion.p. The text swapped
-                     correctly but the enter animation completed only about half
-                     the time: across four toggles the price settled at
-                     opacity 0 on the second and fourth, its halo frozen at the
-                     keyframe's 0% value.
-
-                  So there is no JS animation driver here at all. The `key`
-                  changes with the price, the node remounts, and a CSS
-                  animation restarts. That is deterministic — there is no
-                  animation lifecycle to lose track of, and no exit to sequence.
-
-                  `.price-swap` carries both the entrance and the halo. It is
-                  transform and opacity only. */}
-              <div className="relative mt-3 h-[2.25rem] overflow-hidden">
-                <p className="absolute inset-0 text-2xl font-extrabold tracking-tight text-white">
-                  <span
-                    key={interval === 'month' ? PRICE_MONTHLY_MO : PRICE_YEARLY_YR}
-                    className="price-swap"
-                  >
-                    {interval === 'month' ? PRICE_MONTHLY_MO : PRICE_YEARLY_YR}
-                  </span>
-                </p>
-              </div>
+              {/* This card holds one price, so the old price-swap machinery that
+                  lived here is gone with it. That machinery was fragile for
+                  reasons worth remembering: AnimatePresence mode="wait"
+                  deadlocked and settled at opacity 0, and a keyed motion.p
+                  completed its enter animation only about half the time. Both
+                  were removed rather than tuned. The comparison card further
+                  down still swaps on interval — and it does so with a CSS
+                  animation on a remounted node, which has no lifecycle to lose
+                  track of. Do not reintroduce a JS driver for a price here. */}
+              <p className="mt-3 text-2xl font-extrabold tracking-tight text-white">
+                <span className="font-mono tabular-nums">{PRICE_YEARLY_YR}</span>
+              </p>
+              <p className="mt-2 text-sm text-zinc-300">Billed upfront, plus applicable tax.</p>
               <ul className="mt-4 mb-5 space-y-2 text-sm text-zinc-300">
                 <li className="flex items-start gap-2">
                   <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
@@ -401,28 +398,27 @@ const Upgrade = () => {
                 </li>
                 <li className="flex items-start gap-2">
                   <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
-                  {interval === 'month' ? 'Billed monthly' : 'Billed annually'}
+                  Billed annually — no free trial
                 </li>
                 <li className="flex items-start gap-2">
                   <FaCheck className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
                   Cancel any time from your Whop account
                 </li>
               </ul>
-              <button
-                type="button"
-                onClick={handleUpgrade}
-                className={clsx('mt-auto w-full', buttonClass({ variant: 'primary', size: 'lg' }))}
+              <a
+                href={WHOP_YEARLY_URL}
+                className={clsx('mt-auto w-full', buttonClass({ variant: 'outline', size: 'lg' }))}
               >
                 <FaCrown className="text-sm" aria-hidden="true" />
-                Subscribe {interval === 'month' ? 'Monthly' : 'Yearly'}
-              </button>
-            </RevealItem>
-          </RevealGroup>
+                Subscribe Yearly
+              </a>
+            </div>
+          </div>
 
-          <p className="mx-auto mt-5 max-w-2xl text-center text-xs text-zinc-500">
-            All three go through the same checkout on Whop. The Discord is free and stays free —
-            the trial and the subscription are the paid tiers.
+          <p className="mx-auto mt-5 max-w-2xl text-center text-sm text-zinc-300">
+            Premium checkout is handled by Whop. Joining the free Discord opens Discord directly.
           </p>
+          <p role="alert" className="mt-3 text-sm text-zinc-200">{checkoutError}</p>
         </motion.div>
 
       {/* Free vs Premium comparison with billing interval selector */}

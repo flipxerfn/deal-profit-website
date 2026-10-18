@@ -122,9 +122,23 @@ export default function SiteSearch({ className = '', id = 'site-search', autoFoc
           placeholder="Search…"
           autoComplete="off"
           autoFocus={autoFocus}
+          // role="combobox" is required for aria-expanded/aria-controls to be
+          // legal: an <input type="search"> maps to role="searchbox", and
+          // aria-expanded is NOT an allowed attribute there — it was being
+          // ignored and flagged. This is a real combobox (input owns a listbox
+          // popup, arrows move the highlight), so the combobox role is also the
+          // honest one.
+          role="combobox"
           aria-label="Search the site"
           aria-expanded={showPanel}
           aria-controls={`${id}-results`}
+          aria-autocomplete="list"
+          // Without this the highlighted row exists only as a background colour,
+          // so a screen reader hears the results but never which one Enter will
+          // open. Guarded on the option actually being rendered.
+          aria-activedescendant={
+            showPanel && results[active] ? `${id}-opt-${active}` : undefined
+          }
           className="w-full rounded-lg border border-white/10 bg-white/[0.04] py-2 pl-9 pr-8 text-sm text-white placeholder-zinc-500 transition-colors focus:border-brand/50 focus:outline-none focus:ring-2 focus:ring-brand/20"
         />
         {!query && (
@@ -141,8 +155,12 @@ export default function SiteSearch({ className = '', id = 'site-search', autoFoc
         {showPanel && (
           <motion.div
             id={`${id}-results`}
-            role="listbox"
-            aria-label="Search results"
+            // A listbox must own options, so it is only a listbox while there
+            // are options to own. When nothing matches, the panel holds a
+            // sentence instead, and calling that a listbox is the same
+            // violation wearing a different hat.
+            role={results.length > 0 ? 'listbox' : undefined}
+            aria-label={results.length > 0 ? 'Search results' : undefined}
             initial={prefersReduced ? false : { opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
@@ -150,15 +168,20 @@ export default function SiteSearch({ className = '', id = 'site-search', autoFoc
             className="absolute left-0 top-full z-50 mt-2 w-[min(34rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-white/10 bg-charcoal shadow-[0_24px_60px_rgba(0,0,0,0.6)]"
           >
             {results.length === 0 ? (
-              <p className="px-4 py-5 text-sm text-zinc-500">
+              <p role="status" className="px-4 py-5 text-sm text-zinc-500">
                 Nothing matches “{query.trim()}”.
               </p>
             ) : (
-              <ul className="max-h-[70vh] overflow-y-auto py-1">
+              // role="presentation" on the list and its items so the options
+              // are owned by the listbox directly. A <ul>/<li> in between
+              // injects list/listitem roles into the chain and the options end
+              // up with no legal parent — which is exactly what axe reported.
+              <ul role="presentation" className="max-h-[70vh] overflow-y-auto py-1">
                 {results.map((r, i) => (
-                  <li key={`${r.to}${r.hash}${r.label}`}>
+                  <li key={`${r.to}${r.hash}${r.label}`} role="presentation">
                     <a
                       href={`${r.to}${r.hash ?? ''}`}
+                      id={`${id}-opt-${i}`}
                       role="option"
                       aria-selected={i === active}
                       onClick={(e) => {
@@ -174,7 +197,13 @@ export default function SiteSearch({ className = '', id = 'site-search', autoFoc
                         <span className="min-w-0 flex-1 truncate text-sm font-medium text-white">
                           {r.label}
                         </span>
-                        <span className="shrink-0 text-[10px] uppercase tracking-wider text-zinc-500">
+                        {/* zinc-400, not zinc-500: on the highlighted row the
+                            background lightens to bg-brand/10 and zinc-500
+                            measured 4.13:1 against it — under the 4.5:1 floor
+                            for 10px type. zinc-400 measures 5.4:1 on the same
+                            background and still sits clearly under the white
+                            label it annotates. */}
+                        <span className="shrink-0 text-[10px] uppercase tracking-wider text-zinc-400">
                           {r.group}
                         </span>
                       </span>

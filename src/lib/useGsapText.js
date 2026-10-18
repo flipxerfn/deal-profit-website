@@ -76,6 +76,16 @@ export function useSplitReveal(options = {}) {
           // thing that stops this looking like every other reveal.
           mask: type,
           autoSplit: true,
+          // SplitText's default ("auto") writes aria-label onto the target and
+          // aria-hidden onto every split piece. On a bare <span> that aria-label
+          // is illegal — a span has no role, so aria-label is not permitted and
+          // assistive tech is free to ignore it (axe flags it, correctly). The
+          // element is left readable instead: the heading's accessible name is
+          // then simply its text, which is what it was anyway — the aria-label
+          // was set to the element's own textContent. Verified with the a11y
+          // tree, not assumed: name stays "Catch the deals before everyone
+          // else." with no label attribute present.
+          aria: 'none',
         });
         el._split = split;
 

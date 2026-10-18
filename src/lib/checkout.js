@@ -27,6 +27,12 @@ export async function fetchSubscription() {
 
 // Where a member actually subscribes, and where the free trial happens.
 export const WHOP_CHECKOUT_URL = 'https://whop.com/dealprofitco/premium-access-d5-f664/';
+// Verified against Whop's plan records. Only the monthly plan has a trial.
+export const WHOP_MONTHLY_URL = 'https://whop.com/checkout/plan_h6zSr2uB5L1hZ';
+export const WHOP_YEARLY_URL = 'https://whop.com/checkout/plan_FRJ5tm80gKfCq';
+export function getCheckoutUrl({ trial = false, interval = 'month' } = {}) {
+  return !trial && interval === 'year' ? WHOP_YEARLY_URL : WHOP_MONTHLY_URL;
+}
 export const DISCORD_INVITE = 'https://discord.gg/dealprofit';
 
 // The one-time setup service. Separate product, separate price, and NOT
@@ -73,10 +79,8 @@ export const WHOP_BILLING_URL = 'https://whop.com/?dashboard=home';
 //
 // Discord is still the community and support channel. It is just no longer
 // where the trial happens, and nothing on this site may imply otherwise.
-export async function startCheckout({ trial = false } = {}) {
-  // Both paths land on Whop. Whop applies the 7-day trial itself when the
-  // buyer starts from the product page, so a separate trial URL is not needed.
-  window.location.href = WHOP_CHECKOUT_URL;
+export async function startCheckout({ trial = false, interval = 'month' } = {}) {
+  window.location.href = getCheckoutUrl({ trial, interval });
   return { ok: true, redirected: true };
 }
 

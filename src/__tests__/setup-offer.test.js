@@ -60,11 +60,12 @@ describe('startCheckout cannot sell the one-time service', () => {
     const start = src.indexOf('export async function startCheckout');
     const body = src.slice(start, src.indexOf('\n}', start) + 2);
     const hrefs = [...body.matchAll(/window\.location\.href\s*=\s*([^;]+);/g)].map((m) => m[1]);
-    // The trial and the paid plan both go to Whop checkout now. The Discord
-    // invite used to be the trial destination; a card is now taken, so there
-    // is one destination, and a third one still has nowhere to hide.
+    // Exactly one assignment, and it is resolved by getCheckoutUrl() rather
+    // than written inline. The count is the invariant: a second assignment is
+    // how a third destination would hide. The resolver is allowed to branch as
+    // long as every branch is a Whop plan checkout — the test below pins that.
     expect(hrefs).toHaveLength(1);
-    expect(hrefs[0].trim()).toBe('WHOP_CHECKOUT_URL');
+    expect(hrefs[0].trim()).toBe('getCheckoutUrl({ trial, interval })');
   });
 
   it('never references the mirror URL from the checkout dispatcher', () => {
